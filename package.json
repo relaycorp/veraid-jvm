@@ -1,0 +1,6 @@
+{
+  "name": "vera",
+  "devDependencies": {
+    "gradle-semantic-release-plugin": "^1.7.2"
+  }
+}
