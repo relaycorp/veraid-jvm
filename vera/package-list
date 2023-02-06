@@ -1,0 +1,8 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:tech.relaycorp.vera////PointingToDeclaration/vera/tech.relaycorp.vera/index.html
+$dokka.location:tech.relaycorp.vera/Placeholder///PointingToDeclaration/vera/tech.relaycorp.vera/-placeholder/index.html
+$dokka.location:tech.relaycorp.vera/Placeholder/Placeholder/#/PointingToDeclaration/vera/tech.relaycorp.vera/-placeholder/-placeholder.html
+$dokka.location:tech.relaycorp.vera/Placeholder/foo/#/PointingToDeclaration/vera/tech.relaycorp.vera/-placeholder/foo.html
+tech.relaycorp.vera
+
