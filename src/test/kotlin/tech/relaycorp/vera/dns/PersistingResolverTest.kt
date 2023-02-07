@@ -1,5 +1,6 @@
 package tech.relaycorp.vera.dns
 
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -7,6 +8,7 @@ import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Record
+import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 
 const val REMOTE_RESOLVER_HOST = "8.8.8.8"
@@ -41,7 +43,9 @@ class PersistingResolverTest {
             resolver.sendAsync(queryMessage).toCompletableFuture().join()
 
             assertEquals(1, resolver.responses.size)
-            assertEquals(QUERY_RECORD, resolver.responses.first().question)
+            val response = resolver.responses.first()
+            assertEquals(QUERY_RECORD, response.question)
+            assertTrue(response.findRRset(QUERY_RECORD.name, QUERY_RECORD.type, Section.ANSWER))
         }
     }
 }
