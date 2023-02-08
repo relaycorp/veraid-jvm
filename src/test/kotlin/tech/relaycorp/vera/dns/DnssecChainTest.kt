@@ -27,26 +27,29 @@ import org.xbill.DNS.dnssec.ValidatingResolver
 
 class DnssecChainTest {
     @Nested
-    @Isolated("We alter the resolver initialiser")
+    @Isolated("We alter the resolver initialisers")
     inner class Retrieve {
         private val recordType = "A"
 
-        private lateinit var originalInitialiser: DnssecResolverInitialiser
+        private lateinit var originalPersistingInitialiser: PersistingResolverInitialiser
+        private lateinit var originalValidatingInitialiser: ValidatingResolverInitialiser
 
         @BeforeEach
         fun storeOriginalInitialiser() {
-            originalInitialiser = DnssecChain.resolverInitialiser
+            originalPersistingInitialiser = DnssecChain.persistingResolverInitialiser
+            originalValidatingInitialiser = DnssecChain.validatingResolverInitialiser
         }
 
         @AfterEach
         fun restoreOriginalInitialiser() {
-            DnssecChain.resolverInitialiser = originalInitialiser
+            DnssecChain.persistingResolverInitialiser = originalPersistingInitialiser
+            DnssecChain.validatingResolverInitialiser = originalValidatingInitialiser
         }
 
         @Test
         fun `DNSSEC resolver should be configured with IANA root keys`() = runTest {
             val spiedResolver = spy(makeValidatingResolver())
-            DnssecChain.resolverInitialiser = { spiedResolver }
+            DnssecChain.validatingResolverInitialiser = { spiedResolver }
 
             DnssecChain.retrieve(DnsTestStubs.DOMAIN_NAME, recordType, DnsTestStubs.REMOTE_RESOLVER)
 
@@ -62,9 +65,9 @@ class DnssecChainTest {
         @Test
         fun `Specified DNS resolver host should be honoured`() = runTest {
             var hostName: String? = null
-            DnssecChain.resolverInitialiser = { resolverHostName ->
+            DnssecChain.persistingResolverInitialiser = { resolverHostName ->
                 hostName = resolverHostName
-                ValidatingResolver(SimpleResolver(resolverHostName))
+                PersistingResolver(resolverHostName)
             }
 
             DnssecChain.retrieve(DnsTestStubs.DOMAIN_NAME, recordType, DnsTestStubs.REMOTE_RESOLVER)
@@ -75,7 +78,7 @@ class DnssecChainTest {
         @Test
         fun `Specified domain name should be queried`() = runTest {
             val spiedResolver = spy(makeValidatingResolver())
-            DnssecChain.resolverInitialiser = { spiedResolver }
+            DnssecChain.validatingResolverInitialiser = { spiedResolver }
 
             DnssecChain.retrieve(DnsTestStubs.DOMAIN_NAME, recordType, DnsTestStubs.REMOTE_RESOLVER)
 
@@ -89,7 +92,7 @@ class DnssecChainTest {
         @Test
         fun `Specified record type should be queried`() = runTest {
             val spiedResolver = spy(makeValidatingResolver())
-            DnssecChain.resolverInitialiser = { spiedResolver }
+            DnssecChain.validatingResolverInitialiser = { spiedResolver }
 
             DnssecChain.retrieve(DnsTestStubs.DOMAIN_NAME, recordType, DnsTestStubs.REMOTE_RESOLVER)
 
@@ -103,7 +106,7 @@ class DnssecChainTest {
         @Test
         fun `Queried record class should be IN`() = runTest {
             val spiedResolver = spy(makeValidatingResolver())
-            DnssecChain.resolverInitialiser = { spiedResolver }
+            DnssecChain.validatingResolverInitialiser = { spiedResolver }
 
             DnssecChain.retrieve(DnsTestStubs.DOMAIN_NAME, recordType, DnsTestStubs.REMOTE_RESOLVER)
 
@@ -151,7 +154,7 @@ class DnssecChainTest {
                 val answers = response.getSectionRRsets(Section.ANSWER)
                 answers shouldHaveSingleElement { rrset ->
                     rrset.name.toString() == DnsTestStubs.DOMAIN_NAME &&
-                        rrset.type.toString() == recordType
+                        rrset.type == Type.value(recordType)
                 }
             }
         }
