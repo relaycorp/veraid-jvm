@@ -5,6 +5,9 @@ import org.xbill.DNS.SimpleResolver
 import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
 
+/**
+ * DNSJava resolver that simply stores the responses it resolved.
+ */
 internal class PersistingResolver(hostName: String) : SimpleResolver(hostName) {
     private val _responses = mutableListOf<Message>()
     val responses: List<Message> = _responses

@@ -1,6 +1,8 @@
 package tech.relaycorp.vera.dns
 
 import kotlin.test.assertTrue
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -11,7 +13,6 @@ import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 
-const val REMOTE_RESOLVER_HOST = "8.8.8.8"
 val QUERY_RECORD: Record =
     Record.newRecord(Name.fromConstantString("example.com."), Type.A, DClass.IN)
 
@@ -20,9 +21,9 @@ class PersistingResolverTest {
     inner class Constructor {
         @Test
         fun `Specified resolver host name should be used`() {
-            val resolver = PersistingResolver(REMOTE_RESOLVER_HOST)
+            val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
 
-            assertEquals(REMOTE_RESOLVER_HOST, resolver.address.hostString)
+            assertEquals(DnsTestStubs.REMOTE_RESOLVER, resolver.address.hostString)
         }
     }
 
@@ -30,17 +31,17 @@ class PersistingResolverTest {
     inner class SendAsync {
         @Test
         fun `Persisted responses should be empty initially`() {
-            val resolver = PersistingResolver(REMOTE_RESOLVER_HOST)
+            val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
 
             assertEquals(0, resolver.responses.size)
         }
 
         @Test
-        fun `Responses should be persisted`() {
-            val resolver = PersistingResolver(REMOTE_RESOLVER_HOST)
+        fun `Responses should be persisted`() = runTest {
+            val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
             val queryMessage = Message.newQuery(QUERY_RECORD)
 
-            resolver.sendAsync(queryMessage).toCompletableFuture().join()
+            resolver.sendAsync(queryMessage).await()
 
             assertEquals(1, resolver.responses.size)
             val response = resolver.responses.first()
