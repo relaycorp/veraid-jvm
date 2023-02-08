@@ -25,6 +25,7 @@ internal class DnssecChain private constructor(val responses: List<ByteArray>) {
         var validatingResolverInitialiser: ValidatingResolverInitialiser =
             { resolver -> ValidatingResolver(resolver) }
 
+        @Throws(DnsException::class)
         suspend fun retrieve(
             domainName: String,
             recordType: String,
@@ -36,7 +37,8 @@ internal class DnssecChain private constructor(val responses: List<ByteArray>) {
 
             val queryRecord =
                 Record.newRecord(Name.fromString(domainName), Type.value(recordType), DClass.IN)
-            val response = validatingResolver.sendAsync(Message.newQuery(queryRecord)).await()
+            val queryMessage = Message.newQuery(queryRecord)
+            val response = validatingResolver.sendAsync(queryMessage).await()
 
             if (!response.header.getFlag(Flags.AD.toInt())) {
                 throw DnsException(
