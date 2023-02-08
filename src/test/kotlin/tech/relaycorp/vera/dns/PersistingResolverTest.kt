@@ -1,9 +1,9 @@
 package tech.relaycorp.vera.dns
 
-import kotlin.test.assertTrue
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.xbill.DNS.DClass
@@ -23,7 +23,7 @@ class PersistingResolverTest {
         fun `Specified resolver host name should be used`() {
             val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
 
-            assertEquals(DnsTestStubs.REMOTE_RESOLVER, resolver.address.hostString)
+            resolver.address.hostString shouldBe DnsTestStubs.REMOTE_RESOLVER
         }
     }
 
@@ -33,7 +33,7 @@ class PersistingResolverTest {
         fun `Persisted responses should be empty initially`() {
             val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
 
-            assertEquals(0, resolver.responses.size)
+            resolver.responses shouldHaveSize 0
         }
 
         @Test
@@ -43,10 +43,10 @@ class PersistingResolverTest {
 
             resolver.sendAsync(queryMessage).await()
 
-            assertEquals(1, resolver.responses.size)
+            resolver.responses shouldHaveSize 1
             val response = resolver.responses.first()
-            assertEquals(QUERY_RECORD, response.question)
-            assertTrue(response.findRRset(QUERY_RECORD.name, QUERY_RECORD.type, Section.ANSWER))
+            response.question shouldBe QUERY_RECORD
+            response.findRRset(QUERY_RECORD.name, QUERY_RECORD.type, Section.ANSWER) shouldBe true
         }
     }
 }
