@@ -12,7 +12,6 @@ import io.kotest.matchers.string.shouldStartWith
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import java.util.concurrent.CompletableFuture
-import kotlin.test.assertEquals
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -61,7 +60,7 @@ class DnssecChainTest {
 
                 firstValue.reset()
                 val anchors = firstValue.readAllBytes().toString(Charset.defaultCharset())
-                assertEquals(DnsUtils.DNSSEC_ROOT_DS, anchors)
+                anchors shouldBe DnsUtils.DNSSEC_ROOT_DS
             }
         }
 
@@ -88,7 +87,7 @@ class DnssecChainTest {
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
 
-                assertEquals(DnsTestStubs.DOMAIN_NAME, firstValue.question.name.toString())
+                firstValue.question.name.toString() shouldBe DnsTestStubs.DOMAIN_NAME
             }
         }
 
@@ -101,7 +100,7 @@ class DnssecChainTest {
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
 
-                assertEquals(Type.value(recordType), firstValue.question.type)
+                firstValue.question.type shouldBe Type.value(recordType)
             }
         }
 
@@ -114,7 +113,7 @@ class DnssecChainTest {
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
 
-                assertEquals(DClass.IN, firstValue.question.dClass)
+                firstValue.question.dClass shouldBe DClass.IN
             }
         }
 
