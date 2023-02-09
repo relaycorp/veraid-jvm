@@ -7,12 +7,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.xbill.DNS.DClass
-import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 import tech.relaycorp.vera.dns.DnsStubs
+import tech.relaycorp.vera.dns.makeQuery
 
 val QUERY_RECORD: Record =
     Record.newRecord(Name.fromConstantString("example.com."), Type.A, DClass.IN)
@@ -40,9 +40,8 @@ class PersistingResolverTest {
         @Test
         fun `Responses should be persisted`() = runTest {
             val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
-            val queryMessage = Message.newQuery(QUERY_RECORD)
 
-            resolver.sendAsync(queryMessage).await()
+            resolver.sendAsync(QUERY_RECORD.makeQuery()).await()
 
             resolver.responses shouldHaveSize 1
             val response = resolver.responses.first()
