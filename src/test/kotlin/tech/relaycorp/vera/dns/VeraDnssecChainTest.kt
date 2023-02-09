@@ -1,12 +1,16 @@
 package tech.relaycorp.vera.dns
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import kotlinx.coroutines.test.runTest
+import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Set
+import org.bouncycastle.asn1.DERNull
 import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DERSet
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -119,6 +123,46 @@ class VeraDnssecChainTest {
             (set.first() as DEROctetString).octets shouldBe response1
             set.last() should beInstanceOf<DEROctetString>()
             (set.last() as DEROctetString).octets shouldBe response2
+        }
+    }
+
+    @Nested
+    inner class Decode {
+        @Test
+        fun `Non-OCTET STRING item should be refused`() {
+            val vector = ASN1EncodableVector(1)
+            vector.add(DERNull.INSTANCE)
+            val invalidSet = DERSet(vector)
+
+            val error = shouldThrow<InvalidChainException> {
+                VeraDnssecChain.decode(invalidSet)
+            }
+
+            error.message shouldBe "Chain SET contains non-OCTET STRING item (${DERNull.INSTANCE})"
+        }
+
+        @Test
+        fun `Empty set should be supported`() {
+            val set = DERSet()
+
+            val chain = VeraDnssecChain.decode(set)
+
+            chain.responses shouldHaveSize 0
+        }
+
+        @Test
+        fun `Chain should be initialised from valid SET`() {
+            val chain = VeraDnssecChain(
+                listOf(
+                    "response #1".toByteArray(),
+                    "response #2".toByteArray()
+                )
+            )
+            val encoding = parseDer(chain.serialise()) as ASN1Set
+
+            val chainDecoded = VeraDnssecChain.decode(encoding)
+
+            chainDecoded.responses shouldBe chain.responses
         }
     }
 }

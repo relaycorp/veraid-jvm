@@ -2,6 +2,7 @@ package tech.relaycorp.vera.dns
 
 import kotlin.jvm.Throws
 import org.bouncycastle.asn1.ASN1EncodableVector
+import org.bouncycastle.asn1.ASN1Set
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSet
 
@@ -43,6 +44,19 @@ public class VeraDnssecChain internal constructor(internal val responses: List<B
             val domainName = "_vera.${organisationName.trimEnd('.')}."
             val dnssecChain = dnssecChainRetriever(domainName, VERA_RECORD_TYPE, resolverHost)
             return VeraDnssecChain(dnssecChain.responses)
+        }
+
+        @Throws(DnsException::class)
+        public fun decode(set: ASN1Set): VeraDnssecChain {
+            val responses = set.map {
+                if (it !is DEROctetString) {
+                    throw InvalidChainException(
+                        "Chain SET contains non-OCTET STRING item ($it)"
+                    )
+                }
+                it.octets
+            }
+            return VeraDnssecChain(responses)
         }
     }
 }
