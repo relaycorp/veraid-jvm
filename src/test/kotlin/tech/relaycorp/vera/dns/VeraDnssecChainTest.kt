@@ -1,13 +1,18 @@
 package tech.relaycorp.vera.dns
 
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.beInstanceOf
 import kotlinx.coroutines.test.runTest
+import org.bouncycastle.asn1.ASN1Set
+import org.bouncycastle.asn1.DEROctetString
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.xbill.DNS.Message
+import tech.relaycorp.vera.asn1.parseDer
 
 data class RetrieverCallArgs(
     val domainName: String,
@@ -95,5 +100,25 @@ class VeraDnssecChainTest {
                 retrieverCallArgs = RetrieverCallArgs(domainName, recordType, resolverHostName)
                 DnssecChain(responses)
             }
+    }
+
+    @Nested
+    inner class Serialise {
+        @Test
+        fun `Responses should be wrapped in an explicitly tagged SET`() {
+            val response1 = "response #1".toByteArray()
+            val response2 = "response #2".toByteArray()
+            val chain = VeraDnssecChain(listOf(response1, response2))
+
+            val serialisation = chain.serialise()
+
+            val asn1Set = parseDer(serialisation)
+            val set = ASN1Set.getInstance(asn1Set)
+            set shouldHaveSize 2
+            set.first() should beInstanceOf<DEROctetString>()
+            (set.first() as DEROctetString).octets shouldBe response1
+            set.last() should beInstanceOf<DEROctetString>()
+            (set.last() as DEROctetString).octets shouldBe response2
+        }
     }
 }
