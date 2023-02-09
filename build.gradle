@@ -75,10 +75,6 @@ tasks.withType(KotlinCompile).configureEach {
   ]
 }
 
-test {
-  useJUnitPlatform()
-}
-
 tasks.register('integrationTest', Test) {
   description = 'Integration tests'
   group = 'verification'

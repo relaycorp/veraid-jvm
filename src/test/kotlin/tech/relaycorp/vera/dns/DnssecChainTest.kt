@@ -12,6 +12,7 @@ import io.kotest.matchers.string.shouldStartWith
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -23,7 +24,9 @@ import org.xbill.DNS.Flags
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Rcode
+import org.xbill.DNS.Record
 import org.xbill.DNS.Section
+import org.xbill.DNS.SimpleResolver
 import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
@@ -47,6 +50,26 @@ class DnssecChainTest {
         fun restoreOriginalInitialiser() {
             DnssecChain.persistingResolverInitialiser = originalPersistingInitialiser
             DnssecChain.validatingResolverInitialiser = originalValidatingInitialiser
+        }
+
+        @Test
+        fun `Validating resolver should simply wrap specified resolver`() = runTest {
+            val headResolver = mock<SimpleResolver>()
+            val response = Message()
+            whenever(headResolver.sendAsync(any())).thenReturn(
+                CompletableFuture.completedFuture(response)
+            )
+            val validatingResolver = DnssecChain.validatingResolverInitialiser(headResolver)
+            val queryRecord = Record.newRecord(
+                Name.fromString(DnsStubs.DOMAIN_NAME),
+                Type.value(recordType),
+                DClass.IN
+            )
+            val queryMessage = Message.newQuery(queryRecord)
+
+            validatingResolver.sendAsync(queryMessage).await()
+
+            verify(headResolver).sendAsync(any())
         }
 
         @Test
