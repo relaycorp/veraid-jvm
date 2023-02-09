@@ -1,8 +1,15 @@
 $dokka.format:html-v1
 $dokka.linkExtension:html
+$dokka.location:tech.relaycorp.vera.dns////PointingToDeclaration/vera/tech.relaycorp.vera.dns/index.html
+$dokka.location:tech.relaycorp.vera.dns/DnsException///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-dns-exception/index.html
+$dokka.location:tech.relaycorp.vera.dns/DnsException/DnsException/#kotlin.String/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-dns-exception/-dns-exception.html
+$dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain.Companion///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/-companion/index.html
+$dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain.Companion/retrieve/#kotlin.String#kotlin.String/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/-companion/retrieve.html
+$dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/index.html
+$dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain/serialise/#/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/serialise.html
 $dokka.location:tech.relaycorp.vera////PointingToDeclaration/vera/tech.relaycorp.vera/index.html
-$dokka.location:tech.relaycorp.vera/Placeholder///PointingToDeclaration/vera/tech.relaycorp.vera/-placeholder/index.html
-$dokka.location:tech.relaycorp.vera/Placeholder/Placeholder/#/PointingToDeclaration/vera/tech.relaycorp.vera/-placeholder/-placeholder.html
-$dokka.location:tech.relaycorp.vera/Placeholder/foo/#/PointingToDeclaration/vera/tech.relaycorp.vera/-placeholder/foo.html
+$dokka.location:tech.relaycorp.vera/VeraException///PointingToDeclaration/vera/tech.relaycorp.vera/-vera-exception/index.html
+$dokka.location:tech.relaycorp.vera/VeraException/VeraException/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/vera/tech.relaycorp.vera/-vera-exception/-vera-exception.html
 tech.relaycorp.vera
+tech.relaycorp.vera.dns
 
