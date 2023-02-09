@@ -21,9 +21,9 @@ class PersistingResolverTest {
     inner class Constructor {
         @Test
         fun `Specified resolver host name should be used`() {
-            val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
 
-            resolver.address.hostString shouldBe DnsTestStubs.REMOTE_RESOLVER
+            resolver.address.hostString shouldBe DnsStubs.REMOTE_RESOLVER
         }
     }
 
@@ -31,14 +31,14 @@ class PersistingResolverTest {
     inner class SendAsync {
         @Test
         fun `Persisted responses should be empty initially`() {
-            val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
 
             resolver.responses shouldHaveSize 0
         }
 
         @Test
         fun `Responses should be persisted`() = runTest {
-            val resolver = PersistingResolver(DnsTestStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
             val queryMessage = Message.newQuery(QUERY_RECORD)
 
             resolver.sendAsync(queryMessage).await()

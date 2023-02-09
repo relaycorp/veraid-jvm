@@ -16,7 +16,13 @@ import org.xbill.DNS.dnssec.ValidatingResolver
 internal typealias PersistingResolverInitialiser = (resolverHostName: String) -> PersistingResolver
 internal typealias ValidatingResolverInitialiser = (headResolver: Resolver) -> ValidatingResolver
 
-internal class DnssecChain private constructor(val responses: List<ByteArray>) {
+internal typealias ChainRetriever = suspend (
+    domainName: String,
+    recordType: String,
+    resolverHostName: String
+) -> DnssecChain
+
+internal class DnssecChain internal constructor(val responses: List<ByteArray>) {
     companion object {
         private val DNSSEC_ROOT_DS = DnsUtils.DNSSEC_ROOT_DS.toByteArray(Charset.defaultCharset())
 
@@ -25,6 +31,7 @@ internal class DnssecChain private constructor(val responses: List<ByteArray>) {
         var validatingResolverInitialiser: ValidatingResolverInitialiser =
             { resolver -> ValidatingResolver(resolver) }
 
+        @JvmStatic
         @Throws(DnsException::class)
         suspend fun retrieve(
             domainName: String,

@@ -48,7 +48,7 @@ class MessageUtilsTest {
         @Test
         fun `Record name should be the root`() {
             val invalidRecord = Record.newRecord(
-                Name.fromString(DnsTestStubs.DOMAIN_NAME),
+                Name.fromString(DnsStubs.DOMAIN_NAME),
                 failureReasonRecord.type,
                 failureReasonRecord.dClass,
                 failureReasonRecord.ttl,
