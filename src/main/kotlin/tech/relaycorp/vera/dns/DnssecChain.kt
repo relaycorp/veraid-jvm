@@ -12,6 +12,7 @@ import org.xbill.DNS.Record
 import org.xbill.DNS.Resolver
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
+import tech.relaycorp.vera.dns.resolvers.PersistingResolver
 
 internal typealias PersistingResolverInitialiser = (resolverHostName: String) -> PersistingResolver
 internal typealias ValidatingResolverInitialiser = (headResolver: Resolver) -> ValidatingResolver

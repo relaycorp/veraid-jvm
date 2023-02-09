@@ -1,4 +1,4 @@
-package tech.relaycorp.vera.dns
+package tech.relaycorp.vera.dns.resolvers
 
 import org.xbill.DNS.Message
 import org.xbill.DNS.SimpleResolver

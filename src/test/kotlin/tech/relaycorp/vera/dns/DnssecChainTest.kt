@@ -30,6 +30,7 @@ import org.xbill.DNS.SimpleResolver
 import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
+import tech.relaycorp.vera.dns.resolvers.PersistingResolver
 
 class DnssecChainTest {
     @Nested

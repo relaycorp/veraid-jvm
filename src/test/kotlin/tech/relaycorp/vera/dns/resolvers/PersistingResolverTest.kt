@@ -1,4 +1,4 @@
-package tech.relaycorp.vera.dns
+package tech.relaycorp.vera.dns.resolvers
 
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -12,6 +12,7 @@ import org.xbill.DNS.Name
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.Type
+import tech.relaycorp.vera.dns.DnsStubs
 
 val QUERY_RECORD: Record =
     Record.newRecord(Name.fromConstantString("example.com."), Type.A, DClass.IN)
