@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 buildscript{
   ext {
     kotlinCoroutinesVersion = '1.6.4'
-    ktorVersion = '2.2.3'
     junit5Version = '5.9.2'
     okhttpVersion = '4.10.0'
   }
@@ -44,21 +43,20 @@ repositories {
 }
 
 dependencies {
-  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion"
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
+  implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion")
 
-  implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
+  implementation("org.bouncycastle:bcprov-jdk15on:1.70") // ASN.1 serialization
+
   implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
   implementation("dnsjava:dnsjava:3.5.2")
 
-  testImplementation("org.jetbrains.kotlin:kotlin-test")
   testImplementation("org.junit.jupiter:junit-jupiter:$junit5Version")
   testImplementation("org.junit.jupiter:junit-jupiter-params:$junit5Version")
-  testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinCoroutinesVersion")
+  testImplementation("io.kotest:kotest-assertions-core-jvm:5.5.5")
   testImplementation("com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0")
   testImplementation("org.mockito:mockito-inline:5.1.1")
-  testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
-  testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$kotlinCoroutinesVersion")
 }
 
 kotlin {
@@ -71,19 +69,10 @@ java {
 }
 
 tasks.withType(KotlinCompile).configureEach {
-  kotlinOptions.jvmTarget = "1.8"
-}
-
-tasks.withType(KotlinCompile).configureEach {
-  kotlinOptions.freeCompilerArgs = kotlinOptions.freeCompilerArgs + [
-          "-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi",
-          "-Xuse-experimental=kotlinx.coroutines.FlowPreview",
-          "-Xuse-experimental=kotlin.time.ExperimentalTime"
+  kotlinOptions.jvmTarget = JavaVersion.VERSION_11
+  kotlinOptions.freeCompilerArgs += [
+      "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
   ]
-}
-
-test {
-  useJUnitPlatform()
 }
 
 tasks.register('integrationTest', Test) {

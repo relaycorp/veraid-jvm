@@ -1,10 +1,10 @@
+import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
 
 class PlaceholderTest {
     @Test
     fun placeholder() = runBlocking {
-        assertEquals(2, 2)
+        2 shouldBe 2
     }
 }
