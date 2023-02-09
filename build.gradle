@@ -46,6 +46,8 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion")
 
+  implementation("org.bouncycastle:bcprov-jdk15on:1.70") // ASN.1 serialization
+
   implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
   implementation("dnsjava:dnsjava:3.5.2")
 
@@ -67,7 +69,7 @@ java {
 }
 
 tasks.withType(KotlinCompile).configureEach {
-  kotlinOptions.jvmTarget = "1.8"
+  kotlinOptions.jvmTarget = JavaVersion.VERSION_11
   kotlinOptions.freeCompilerArgs += [
       "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
   ]
