@@ -152,17 +152,13 @@ class VeraDnssecChainTest {
 
         @Test
         fun `Chain should be initialised from valid SET`() {
-            val chain = VeraDnssecChain(
-                listOf(
-                    "response #1".toByteArray(),
-                    "response #2".toByteArray()
-                )
-            )
+            val responses = listOf("response #1".toByteArray(), "response #2".toByteArray())
+            val chain = VeraDnssecChain(responses)
             val encoding = parseDer(chain.serialise()) as ASN1Set
 
             val chainDecoded = VeraDnssecChain.decode(encoding)
 
-            chainDecoded.responses shouldBe chain.responses
+            chainDecoded.responses shouldBe responses
         }
     }
 }

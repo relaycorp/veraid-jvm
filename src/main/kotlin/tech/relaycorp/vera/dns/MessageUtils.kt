@@ -30,7 +30,5 @@ internal val Message.signatureValidityPeriod: ClosedRange<Instant>?
         if (rrset.sigs().isEmpty()) {
             return null
         }
-        val latestSignatureInception = rrset.latestSignatureInception!!
-        val earliestSignatureExpiry = rrset.earliestSignatureExpiry!!
-        return latestSignatureInception..earliestSignatureExpiry
+        return rrset.signatureValidityPeriod
     }

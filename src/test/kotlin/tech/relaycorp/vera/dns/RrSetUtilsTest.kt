@@ -8,19 +8,19 @@ import org.xbill.DNS.RRset
 
 class RrSetUtilsTest {
     @Nested
-    inner class LatestSignatureInception {
+    inner class SignatureValidityPeriod {
         @Test
         fun `Unsigned RRset should result in null`() {
             val rrset = RRset(RECORD)
 
-            rrset.latestSignatureInception shouldBe null
+            rrset.signatureValidityPeriod shouldBe null
         }
 
         @Test
-        fun `Inception time should be that of sole signature`() {
+        fun `Period should be that of sole signature`() {
             val rrset = RRset(RECORD, RRSIG)
 
-            rrset.latestSignatureInception shouldBe RRSIG.timeSigned
+            rrset.signatureValidityPeriod shouldBe RRSIG.timeSigned..RRSIG.expire
         }
 
         @Test
@@ -40,24 +40,7 @@ class RrSetUtilsTest {
             )
             val rrset = RRset(RECORD, RRSIG, newerRrsig)
 
-            rrset.latestSignatureInception shouldBe newerRrsig.timeSigned
-        }
-    }
-
-    @Nested
-    inner class EarliestSignatureExpiry {
-        @Test
-        fun `Unsigned RRset should result in null`() {
-            val rrset = RRset(RECORD)
-
-            rrset.earliestSignatureExpiry shouldBe null
-        }
-
-        @Test
-        fun `Expiry time should be that of sole signature`() {
-            val rrset = RRset(RECORD, RRSIG)
-
-            rrset.earliestSignatureExpiry shouldBe RRSIG.expire
+            rrset.signatureValidityPeriod?.start shouldBe newerRrsig.timeSigned
         }
 
         @Test
@@ -77,7 +60,7 @@ class RrSetUtilsTest {
             )
             val rrset = RRset(RECORD, RRSIG, olderRrsig)
 
-            rrset.earliestSignatureExpiry shouldBe olderRrsig.expire
+            rrset.signatureValidityPeriod?.endInclusive shouldBe olderRrsig.expire
         }
     }
 }
