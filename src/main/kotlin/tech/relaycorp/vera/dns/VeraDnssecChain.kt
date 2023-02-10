@@ -5,18 +5,20 @@ import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Set
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSet
+import org.xbill.DNS.Message
+import org.xbill.DNS.WireParseException
 
 /**
  * Vera DNSSEC chain.
  *
  * It contains the DNSSEC chain for the Vera TXT RRSet (e.g., `_vera.example.com./TXT`).
  */
-public class VeraDnssecChain internal constructor(internal val responses: List<ByteArray>) {
+public class VeraDnssecChain internal constructor(internal val responses: List<Message>) {
     /**
      * Serialise the chain.
      */
     public fun serialise(): ByteArray {
-        val responsesWrapped = responses.map { DEROctetString(it) }
+        val responsesWrapped = responses.map { DEROctetString(it.toWire()) }
         val vector = ASN1EncodableVector(responsesWrapped.size)
         vector.addAll(responsesWrapped.toTypedArray())
         return DERSet(vector).encoded
@@ -54,7 +56,11 @@ public class VeraDnssecChain internal constructor(internal val responses: List<B
                         "Chain SET contains non-OCTET STRING item ($it)"
                     )
                 }
-                it.octets
+                try {
+                    Message(it.octets)
+                } catch (exc: WireParseException) {
+                    throw InvalidChainException("Chain contains a malformed DNS message", exc)
+                }
             }
             return VeraDnssecChain(responses)
         }

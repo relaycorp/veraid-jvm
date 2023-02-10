@@ -1,6 +1,7 @@
 package tech.relaycorp.vera.dns
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.xbill.DNS.Message
+import org.xbill.DNS.WireParseException
 import tech.relaycorp.vera.asn1.parseDer
 
 data class RetrieverCallArgs(
@@ -90,16 +92,15 @@ class VeraDnssecChainTest {
         fun `Responses should be stored in Vera chain`() = runTest {
             val response = Message()
             response.header.id = 42
-            val responseSerialised = response.toWire()
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever(listOf(responseSerialised))
+            VeraDnssecChain.dnssecChainRetriever = makeRetriever(listOf(response))
 
             val chain = VeraDnssecChain.retrieve(VeraStubs.ORGANISATION_NAME)
 
             chain.responses shouldHaveSize 1
-            chain.responses.first() shouldBe responseSerialised
+            chain.responses.first() shouldBe response
         }
 
-        private fun makeRetriever(responses: List<ByteArray> = emptyList()): ChainRetriever =
+        private fun makeRetriever(responses: List<Message> = emptyList()): ChainRetriever =
             { domainName, recordType, resolverHostName ->
                 retrieverCallArgs = RetrieverCallArgs(domainName, recordType, resolverHostName)
                 DnssecChain(responses)
@@ -110,8 +111,8 @@ class VeraDnssecChainTest {
     inner class Serialise {
         @Test
         fun `Responses should be wrapped in an explicitly tagged SET`() {
-            val response1 = "response #1".toByteArray()
-            val response2 = "response #2".toByteArray()
+            val response1 = Message()
+            val response2 = Message(response1.header.id + 1)
             val chain = VeraDnssecChain(listOf(response1, response2))
 
             val serialisation = chain.serialise()
@@ -120,9 +121,9 @@ class VeraDnssecChainTest {
             val set = ASN1Set.getInstance(asn1Set)
             set shouldHaveSize 2
             set.first() should beInstanceOf<DEROctetString>()
-            (set.first() as DEROctetString).octets shouldBe response1
+            (set.first() as DEROctetString).octets shouldBe response1.toWire()
             set.last() should beInstanceOf<DEROctetString>()
-            (set.last() as DEROctetString).octets shouldBe response2
+            (set.last() as DEROctetString).octets shouldBe response2.toWire()
         }
     }
 
@@ -151,14 +152,33 @@ class VeraDnssecChainTest {
         }
 
         @Test
+        fun `Malformed response should be refused`() {
+            val vector = ASN1EncodableVector(1)
+            vector.add(DEROctetString("malformed message".toByteArray()))
+            val invalidSet = DERSet(vector)
+
+            val error = shouldThrow<InvalidChainException> {
+                VeraDnssecChain.decode(invalidSet)
+            }
+
+            error.message shouldBe "Chain contains a malformed DNS message"
+            error.cause should beInstanceOf<WireParseException>()
+        }
+
+        @Test
         fun `Chain should be initialised from valid SET`() {
-            val responses = listOf("response #1".toByteArray(), "response #2".toByteArray())
-            val chain = VeraDnssecChain(responses)
+            val response1 = Message()
+            val response2 = Message(response1.header.id + 1)
+            val chain = VeraDnssecChain(listOf(response1, response2))
             val encoding = parseDer(chain.serialise()) as ASN1Set
 
             val chainDecoded = VeraDnssecChain.decode(encoding)
 
-            chainDecoded.responses shouldBe responses
+            val responsesSerialised = chainDecoded.responses.map { it.toWire().asList() }
+            responsesSerialised shouldContainExactlyInAnyOrder listOf(
+                response1.toWire().asList(),
+                response2.toWire().asList(),
+            )
         }
     }
 }

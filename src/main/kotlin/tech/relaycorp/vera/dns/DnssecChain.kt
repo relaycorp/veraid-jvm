@@ -23,7 +23,7 @@ internal typealias ChainRetriever = suspend (
     resolverHostName: String
 ) -> DnssecChain
 
-internal class DnssecChain internal constructor(val responses: List<ByteArray>) {
+internal class DnssecChain internal constructor(val responses: List<Message>) {
     companion object {
         private val DNSSEC_ROOT_DS = DnsUtils.DNSSEC_ROOT_DS.toByteArray(Charset.defaultCharset())
 
@@ -58,8 +58,7 @@ internal class DnssecChain internal constructor(val responses: List<ByteArray>) 
                 throw DnsException("DNS lookup failed ($rcodeName)")
             }
 
-            val responses = persistingResolver.responses.map { it.toWire() }
-            return DnssecChain(responses)
+            return DnssecChain(persistingResolver.responses)
         }
     }
 }

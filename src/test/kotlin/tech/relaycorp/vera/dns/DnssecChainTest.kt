@@ -205,7 +205,7 @@ class DnssecChainTest {
             )
 
             chain.responses shouldHaveSize 1
-            chain.responses.first() shouldBe response.toWire()
+            chain.responses.first() shouldBe response
         }
 
         private fun mockValidatingResolver(response: Message? = null): ValidatingResolver {
