@@ -27,8 +27,5 @@ internal val Message.signatureValidityPeriod: ClosedRange<Instant>?
         val rrset = this.getSectionRRsets(Section.ANSWER).firstOrNull {
             question.sameRRset(it.first())
         } ?: return null
-        if (rrset.sigs().isEmpty()) {
-            return null
-        }
         return rrset.signatureValidityPeriod
     }
