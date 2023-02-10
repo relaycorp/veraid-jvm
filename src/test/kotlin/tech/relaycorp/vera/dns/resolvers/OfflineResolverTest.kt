@@ -144,7 +144,13 @@ class OfflineResolverTest {
     fun `Existing response shouldn't be returned unless the question type matches`() = runTest {
         val storedResponse = record.makeResponse()
         val resolver = OfflineResolver(listOf(storedResponse))
-        val query = record.copy(type = Type.A, rdata = byteArrayOf(1, 1, 1, 1)).makeQuery()
+        val query = Record.newRecord(
+            record.name,
+            Type.A,
+            record.dClass,
+            record.ttl,
+            byteArrayOf(1, 1, 1, 1),
+        ).makeQuery()
 
         val response = resolver.sendAsync(query).await()
 

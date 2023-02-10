@@ -1,5 +1,8 @@
+@file:JvmName("MessageUtils")
+
 package tech.relaycorp.vera.dns
 
+import java.time.Instant
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Section
@@ -16,4 +19,18 @@ internal val Message.dnssecFailureDescription: String?
                 it.dClass == ValidatingResolver.VALIDATION_REASON_QCLASS
         } ?: return null
         return (rrset.first() as TXTRecord).strings.first()
+    }
+
+internal val Message.signatureValidityPeriod: ClosedRange<Instant>?
+    get() {
+        val question = this.question
+        val rrset = this.getSectionRRsets(Section.ANSWER).firstOrNull {
+            question.sameRRset(it.first())
+        } ?: return null
+        if (rrset.sigs().isEmpty()) {
+            return null
+        }
+        val latestSignatureInception = rrset.latestSignatureInception!!
+        val earliestSignatureExpiry = rrset.earliestSignatureExpiry!!
+        return latestSignatureInception..earliestSignatureExpiry
     }
