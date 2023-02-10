@@ -50,7 +50,7 @@ class RrSetUtilsTest {
         }
 
         @Test
-        fun `Latest inception time should be latest of all signatures`() {
+        fun `Inception time should be that of latest signature inceptions`() {
             val newerSignature = RRSIGRecord(
                 signature.name,
                 signature.dClass,
@@ -67,6 +67,43 @@ class RrSetUtilsTest {
             val rrset = RRset(record, signature, newerSignature)
 
             rrset.latestSignatureInception shouldBe newerSignature.timeSigned
+        }
+    }
+
+    @Nested
+    inner class EarliestSignatureExpiry {
+        @Test
+        fun `Unsigned RRset should result in null`() {
+            val rrset = RRset(record)
+
+            rrset.earliestSignatureExpiry shouldBe null
+        }
+
+        @Test
+        fun `Expiry time should be that of sole signature`() {
+            val rrset = RRset(record, signature)
+
+            rrset.earliestSignatureExpiry shouldBe signature.expire
+        }
+
+        @Test
+        fun `Expiry time should be that of earliest signature expiry`() {
+            val olderSignature = RRSIGRecord(
+                signature.name,
+                signature.dClass,
+                signature.ttl,
+                signature.typeCovered,
+                signature.algorithm,
+                signature.origTTL,
+                signature.timeSigned,
+                signature.expire.minusSeconds(1),
+                signature.footprint,
+                signature.signer,
+                signature.signature
+            )
+            val rrset = RRset(record, signature, olderSignature)
+
+            rrset.earliestSignatureExpiry shouldBe olderSignature.expire
         }
     }
 }

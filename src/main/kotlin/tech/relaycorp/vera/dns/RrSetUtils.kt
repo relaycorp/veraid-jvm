@@ -8,3 +8,9 @@ internal val RRset.latestSignatureInception: Instant?
         val rrsig = this.sigs().sortedBy { it.timeSigned }.firstOrNull()
         return rrsig?.timeSigned
     }
+
+internal val RRset.earliestSignatureExpiry: Instant?
+    get() {
+        val rrsig = this.sigs().sortedByDescending { it.expire }.firstOrNull()
+        return rrsig?.expire
+    }
