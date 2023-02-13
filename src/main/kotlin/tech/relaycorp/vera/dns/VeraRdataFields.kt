@@ -8,7 +8,7 @@ import tech.relaycorp.vera.KeyAlgorithm
 import tech.relaycorp.vera.OrganisationKeySpec
 
 internal data class VeraRdataFields(
-    val organisationKeySpec: OrganisationKeySpec,
+    private val organisationKeySpec: OrganisationKeySpec,
     val ttlOverride: Duration,
     val service: ASN1ObjectIdentifier? = null,
 ) {
