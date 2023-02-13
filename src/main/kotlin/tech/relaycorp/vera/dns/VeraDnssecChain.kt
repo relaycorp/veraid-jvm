@@ -1,11 +1,18 @@
 package tech.relaycorp.vera.dns
 
+import java.time.Instant
 import org.bouncycastle.asn1.ASN1EncodableVector
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Set
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSet
+import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
+import org.xbill.DNS.Name
+import org.xbill.DNS.Record
+import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
+import tech.relaycorp.vera.OrganisationKeySpec
 
 /**
  * Vera DNSSEC chain.
@@ -15,7 +22,7 @@ import org.xbill.DNS.WireParseException
 public class VeraDnssecChain internal constructor(
     organisationName: String,
     responses: List<Message>,
-) : DnssecChain(organisationName, "TXT", responses) {
+) : DnssecChain("_vera.$organisationName.", "TXT", responses) {
     /**
      * Serialise the chain.
      */
@@ -24,6 +31,35 @@ public class VeraDnssecChain internal constructor(
         val vector = ASN1EncodableVector(responsesWrapped.size)
         vector.addAll(responsesWrapped.toTypedArray())
         return DERSet(vector).encoded
+    }
+
+    /**
+     * Verify the chain
+     */
+    @Throws(DnsException::class)
+    internal fun verify(
+        organisationKeySpec: OrganisationKeySpec,
+        serviceOid: ASN1ObjectIdentifier,
+        datePeriod: ClosedRange<Instant>,
+    ) {
+        val veraTxtResponse = getVeraTxtResponse()
+        TODO()
+    }
+
+    private fun getVeraTxtResponse(): Message {
+        val veraRecordQuery =
+            Record.newRecord(Name.fromString(domainName), Type.value(recordType), DClass.IN)
+        val veraTxtResponses = responses.filter { it.question == veraRecordQuery }
+        if (veraTxtResponses.isEmpty()) {
+            throw InvalidChainException("Chain is missing Vera TXT response")
+        }
+        if (1 < veraTxtResponses.size) {
+            // If DNSSEC verification were to succeed, we wouldn't know which message was used, so
+            // we have to require exactly one response for the Vera TXT RRset. Without this check,
+            // we could be reading the TTL override from a bogus response.
+            throw InvalidChainException("Chain contains multiple Vera TXT responses")
+        }
+        return veraTxtResponses.single()
     }
 
     public companion object {
@@ -45,7 +81,8 @@ public class VeraDnssecChain internal constructor(
             organisationName: String,
             resolverHost: String = CLOUDFLARE_RESOLVER
         ): VeraDnssecChain {
-            val domainName = "_vera.${organisationName.trimEnd('.')}."
+            val organisationNameNormalised = organisationName.trimEnd('.')
+            val domainName = "_vera.$organisationNameNormalised."
             val dnssecChain = dnssecChainRetriever(domainName, VERA_RECORD_TYPE, resolverHost)
             return VeraDnssecChain(organisationName, dnssecChain.responses)
         }

@@ -1,6 +1,7 @@
 package tech.relaycorp.vera.dns
 
 import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
@@ -10,18 +11,19 @@ import tech.relaycorp.vera.KeyAlgorithm
 import tech.relaycorp.vera.OrganisationKeySpec
 
 class VeraRdataFieldsTest {
+    private val orgKeyAlgorithm = KeyAlgorithm.RSA_2048
+    private val orgKeyAlgorithmId = orgKeyAlgorithm.typeId
+    private val orgKeyId = "org-key-id"
+    private val ttlOverride = 2.days
+    private val ttlOverrideSeconds = ttlOverride.inWholeSeconds
+    private val service = VeraStubs.SERVICE_OID
+
     @Nested
     inner class Parse {
-        private val orgKeyAlgorithm = KeyAlgorithm.RSA_2048.typeId
-        private val orgKeyId = "org-key-id"
-        private val ttlOverride = 2.days
-        private val ttlOverrideSeconds = ttlOverride.inWholeSeconds
-        private val service = VeraStubs.SERVICE_OID
-
         @Test
         fun `There should be at least 3 space-separated fields`() {
             val exception = shouldThrow<InvalidRdataException> {
-                VeraRdataFields.parse("$orgKeyAlgorithm $orgKeyId")
+                VeraRdataFields.parse("$orgKeyAlgorithmId $orgKeyId")
             }
 
             exception.message shouldBe "RDATA should have at least 3 space-separated fields (got 2)"
@@ -59,7 +61,7 @@ class VeraRdataFieldsTest {
                 val invalidTtlOverride = 4.5
 
                 val exception = shouldThrow<InvalidRdataException> {
-                    VeraRdataFields.parse("$orgKeyAlgorithm $orgKeyId $invalidTtlOverride")
+                    VeraRdataFields.parse("$orgKeyAlgorithmId $orgKeyId $invalidTtlOverride")
                 }
 
                 exception.message shouldBe "Malformed TTL override ($invalidTtlOverride)"
@@ -70,7 +72,7 @@ class VeraRdataFieldsTest {
                 val invalidTtlOverride = -1
 
                 val exception = shouldThrow<InvalidRdataException> {
-                    VeraRdataFields.parse("$orgKeyAlgorithm $orgKeyId $invalidTtlOverride")
+                    VeraRdataFields.parse("$orgKeyAlgorithmId $orgKeyId $invalidTtlOverride")
                 }
 
                 exception.message shouldBe "Malformed TTL override ($invalidTtlOverride)"
@@ -81,7 +83,7 @@ class VeraRdataFieldsTest {
                 val ninetyDays = 90.days
 
                 val fields = VeraRdataFields.parse(
-                    "$orgKeyAlgorithm $orgKeyId ${ninetyDays.inWholeSeconds}"
+                    "$orgKeyAlgorithmId $orgKeyId ${ninetyDays.inWholeSeconds}"
                 )
 
                 fields.ttlOverride shouldBe ninetyDays
@@ -93,7 +95,7 @@ class VeraRdataFieldsTest {
                 val over90Days = ninetyDays + 1.milliseconds
 
                 val fields = VeraRdataFields.parse(
-                    "$orgKeyAlgorithm $orgKeyId ${over90Days.inWholeSeconds}"
+                    "$orgKeyAlgorithmId $orgKeyId ${over90Days.inWholeSeconds}"
                 )
 
                 fields.ttlOverride shouldBe ninetyDays
@@ -102,10 +104,10 @@ class VeraRdataFieldsTest {
 
         @Test
         fun `Fields should be output if value is valid`() {
-            val fields = VeraRdataFields.parse("$orgKeyAlgorithm $orgKeyId $ttlOverrideSeconds")
+            val fields = VeraRdataFields.parse("$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds")
 
             fields shouldBe VeraRdataFields(
-                OrganisationKeySpec(KeyAlgorithm[orgKeyAlgorithm]!!, orgKeyId),
+                OrganisationKeySpec(KeyAlgorithm[orgKeyAlgorithmId]!!, orgKeyId),
                 ttlOverride,
             )
         }
@@ -114,7 +116,8 @@ class VeraRdataFieldsTest {
         inner class ServiceOid {
             @Test
             fun `Service OID should be absent if unspecified`() {
-                val fields = VeraRdataFields.parse("$orgKeyAlgorithm $orgKeyId $ttlOverrideSeconds")
+                val fields =
+                    VeraRdataFields.parse("$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds")
 
                 fields.service shouldBe null
             }
@@ -125,7 +128,7 @@ class VeraRdataFieldsTest {
 
                 val exception = shouldThrow<InvalidRdataException> {
                     VeraRdataFields.parse(
-                        "$orgKeyAlgorithm $orgKeyId $ttlOverrideSeconds $malformedServiceOid"
+                        "$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds $malformedServiceOid"
                     )
                 }
 
@@ -135,7 +138,7 @@ class VeraRdataFieldsTest {
             @Test
             fun `Service OID should be present if specified`() {
                 val fields = VeraRdataFields.parse(
-                    "$orgKeyAlgorithm $orgKeyId $ttlOverrideSeconds ${service.id}"
+                    "$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds ${service.id}"
                 )
 
                 fields.service shouldBe service
@@ -145,14 +148,14 @@ class VeraRdataFieldsTest {
         @Nested
         inner class ExtraneousWhitespace {
             private val expectedFields = VeraRdataFields(
-                OrganisationKeySpec(KeyAlgorithm[orgKeyAlgorithm]!!, orgKeyId),
+                OrganisationKeySpec(KeyAlgorithm[orgKeyAlgorithmId]!!, orgKeyId),
                 ttlOverride,
             )
 
             @Test
             fun `Leading whitespace should be ignored`() {
                 val fields =
-                    VeraRdataFields.parse(" \t $orgKeyAlgorithm $orgKeyId $ttlOverrideSeconds")
+                    VeraRdataFields.parse(" \t $orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds")
 
                 fields shouldBe expectedFields
             }
@@ -160,7 +163,7 @@ class VeraRdataFieldsTest {
             @Test
             fun `Trailing whitespace should be ignored`() {
                 val fields =
-                    VeraRdataFields.parse("$orgKeyAlgorithm $orgKeyId $ttlOverrideSeconds \t ")
+                    VeraRdataFields.parse("$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds \t ")
 
                 fields shouldBe expectedFields
             }
@@ -168,10 +171,57 @@ class VeraRdataFieldsTest {
             @Test
             fun `Extra whitespace in separator should be ignored`() {
                 val fields =
-                    VeraRdataFields.parse("$orgKeyAlgorithm  \t $orgKeyId $ttlOverrideSeconds")
+                    VeraRdataFields.parse("$orgKeyAlgorithmId  \t $orgKeyId $ttlOverrideSeconds")
 
                 fields shouldBe expectedFields
             }
+        }
+    }
+
+    @Nested
+    inner class ToString {
+        private val fields = VeraRdataFields(
+            OrganisationKeySpec(orgKeyAlgorithm, orgKeyId),
+            ttlOverride,
+        )
+
+        @Test
+        fun `Key algorithm should be the first field`() {
+            val string = fields.toString()
+
+            string.split(" ")[0] shouldBe orgKeyAlgorithmId.toString()
+        }
+
+        @Test
+        fun `Key id should be the second field`() {
+            val string = fields.toString()
+
+            string.split(" ")[1] shouldBe orgKeyId
+        }
+
+        @Test
+        fun `TTL override should be the third field`() {
+            val string = fields.toString()
+
+            string.split(" ")[2] shouldBe ttlOverrideSeconds.toString()
+        }
+
+        @Test
+        fun `Service OID should be absent if unset`() {
+            val fieldsWithoutService = fields.copy(service = null)
+
+            val string = fieldsWithoutService.toString()
+
+            string.split(" ") shouldHaveSize 3
+        }
+
+        @Test
+        fun `Service OID should be fourth field if set`() {
+            val fieldsWithService = fields.copy(service = service)
+
+            val string = fieldsWithService.toString()
+
+            string.split(" ")[3] shouldBe service.id
         }
     }
 }

@@ -6,6 +6,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
+import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Set
@@ -14,9 +15,13 @@ import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSet
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.xbill.DNS.Message
+import org.xbill.DNS.Name
+import org.xbill.DNS.Record
+import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
 import tech.relaycorp.vera.asn1.parseDer
 
@@ -101,12 +106,12 @@ class VeraDnssecChainTest {
         }
 
         @Test
-        fun `Organisation name should be stored in chain`() = runTest {
+        fun `Domain name should be stored in chain`() = runTest {
             VeraDnssecChain.dnssecChainRetriever = makeRetriever()
 
             val chain = VeraDnssecChain.retrieve(VeraStubs.ORGANISATION_NAME)
 
-            chain.domainName shouldBe VeraStubs.ORGANISATION_NAME
+            chain.domainName shouldBe "_vera.${VeraStubs.ORGANISATION_NAME}."
         }
 
         private fun makeRetriever(responses: List<Message> = emptyList()): ChainRetriever =
@@ -198,7 +203,140 @@ class VeraDnssecChainTest {
 
             val chainDecoded = VeraDnssecChain.decode(VeraStubs.ORGANISATION_NAME, encoding)
 
-            chainDecoded.domainName shouldBe VeraStubs.ORGANISATION_NAME
+            chainDecoded.domainName shouldBe "_vera.${VeraStubs.ORGANISATION_NAME}."
+        }
+    }
+
+    @Nested
+    inner class Verify {
+        private val orgKeySpec = VeraStubs.ORG_KEY_SPEC
+        private val serviceOid = VeraStubs.SERVICE_OID
+
+        private val now = Instant.now()
+        private val datePeriod = now..now.plusSeconds(10)
+
+        @Nested
+        inner class VeraTxtResponse {
+            @Test
+            fun `Vera response should use the _vera subdomain`() {
+                val record = RECORD.copy(name = Name.fromString(DnsStubs.DOMAIN_NAME))
+                val response = record.makeResponse()
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Chain is missing Vera TXT response"
+            }
+
+            @Test
+            fun `Vera response should use the TXT record type`() {
+                val record = Record.newRecord(
+                    RECORD.name,
+                    Type.A,
+                    RECORD.dClass,
+                    RECORD.ttl,
+                    byteArrayOf(1, 1, 1, 1),
+                )
+                val response = record.makeResponse()
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Chain is missing Vera TXT response"
+            }
+
+            @Test
+            fun `Vera response should use the IN class`() {
+                val record = RECORD.copy(dClass = RECORD.dClass + 1)
+                val response = record.makeResponse()
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Chain is missing Vera TXT response"
+            }
+
+            @Test
+            fun `Multiple Vera TXT responses should be refused`() {
+                val responses = listOf(RECORD.makeResponse(), RECORD.makeResponse())
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, responses)
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Chain contains multiple Vera TXT responses"
+            }
+
+            @Test
+            @Disabled
+            fun `Rdata should be valid`() {
+            }
+        }
+
+        @Nested
+        inner class KeySpec {
+            @Test
+            @Disabled
+            fun `Algorithm id should match that of specified key spec`() {
+            }
+
+            @Test
+            @Disabled
+            fun `Key id should match that of specified key spec`() {
+            }
+        }
+
+        @Nested
+        inner class ServiceOid {
+            @Test
+            @Disabled
+            fun `Absence of service OID should allow any service`() {
+            }
+
+            @Test
+            @Disabled
+            fun `Presence of service OID should only allow matching service`() {
+            }
+
+            @Test
+            @Disabled
+            fun `Presence of service OID should only deny mismatching service`() {
+            }
+
+            @Test
+            @Disabled
+            fun `Explicit service OID should take precedence over wildcard`() {
+            }
+        }
+
+        @Nested
+        inner class DatePeriod {
+            @Test
+            @Disabled
+            fun `There should be at least one message with an RRSig`() {
+            }
+
+            @Test
+            @Disabled
+            fun `Responses without RRSigs should be gracefully ignored if irrelevant`() {
+            }
+
+            @Test
+            @Disabled
+            fun `TTL override should truncate validity period of chain`() {
+            }
+        }
+
+        @Test
+        @Disabled
+        fun `Valid chain should verify successfully`() {
         }
     }
 }

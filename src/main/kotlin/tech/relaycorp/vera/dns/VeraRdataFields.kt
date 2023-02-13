@@ -12,6 +12,15 @@ internal data class VeraRdataFields(
     val ttlOverride: Duration,
     val service: ASN1ObjectIdentifier? = null,
 ) {
+    override fun toString(): String {
+        val fieldsOrdered = listOf(
+            organisationKeySpec.algorithm.typeId.toString(),
+            organisationKeySpec.id,
+            ttlOverride.inWholeSeconds.toString(),
+        ) + (if (service != null) listOf(service.id) else emptyList())
+        return fieldsOrdered.joinToString(" ")
+    }
+
     companion object {
         private val MAX_TTL = 90.days
 

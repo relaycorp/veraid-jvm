@@ -1,6 +1,7 @@
 package tech.relaycorp.vera.dns
 
 import java.time.Instant
+import kotlin.time.Duration.Companion.days
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Flags
 import org.xbill.DNS.Message
@@ -23,21 +24,23 @@ internal fun <RecordType : Record> RecordType.copy(
     rdata ?: this.rdataToWireCanonical()
 ) as RecordType
 
-internal fun Record.makeQuery() = Message.newQuery(this)
+internal fun Record.makeQuestion() = Record.newRecord(name, type, dClass, ttl)
+
+internal fun Record.makeQuery() = Message.newQuery(this.makeQuestion())
 
 internal fun Record.makeResponse(): Message {
     val response = Message()
     response.header.setFlag(Flags.QR.toInt())
-    response.addRecord(this, Section.QUESTION)
+    response.addRecord(this.makeQuestion(), Section.QUESTION)
     response.addRecord(this, Section.ANSWER)
     return response
 }
 
 val RECORD = TXTRecord(
-    Name.fromString(DnsStubs.DOMAIN_NAME),
+    Name.fromString("_vera.${DnsStubs.DOMAIN_NAME}"),
     DClass.IN,
     42,
-    "foo"
+    VeraRdataFields(VeraStubs.ORG_KEY_SPEC, 2.days, VeraStubs.SERVICE_OID).toString()
 )
 private val now: Instant = Instant.now()
 val RRSIG = RRSIGRecord(
