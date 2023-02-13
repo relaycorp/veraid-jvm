@@ -8,4 +8,4 @@ VeraId library for the JVM
 
 We stick to the general naming conventions at Relaycorp, with the following exceptions:
 
-- We distinguish between _serialisation_ and _encoding_: The former applies when processing `ByteArray`s, and the latter when processing ASN.1 (DER) instances from Bouncy Castle.
+- We distinguish between _serialisation_ (i.e., processing `ByteArray`s), _encoding_ (i.e., processing BouncyCastle ASN.1 objects) and _parsing_ (i.e., processing `String`s).
