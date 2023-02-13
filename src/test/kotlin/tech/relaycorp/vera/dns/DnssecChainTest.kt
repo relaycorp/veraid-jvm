@@ -408,8 +408,8 @@ class DnssecChainTest {
     }
 
     private fun makeSuccessfulEmptyResponse(): Message {
-        val defaultResponse = Message()
-        defaultResponse.header.setFlag(Flags.AD.toInt())
-        return defaultResponse
+        val response = Message()
+        response.header.setFlag(Flags.AD.toInt())
+        return response
     }
 }
