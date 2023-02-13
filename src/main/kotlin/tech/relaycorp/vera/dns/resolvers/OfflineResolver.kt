@@ -11,7 +11,7 @@ import org.xbill.DNS.Rcode
 import org.xbill.DNS.Resolver
 import org.xbill.DNS.TSIG
 
-internal class OfflineResolver(private val responses: List<Message>) : Resolver {
+internal class OfflineResolver(val responses: List<Message>) : Resolver {
     override fun sendAsync(query: Message, executor: Executor?): CompletionStage<Message> {
         val response = responses.firstOrNull { it.question == query.question }
             ?: makeNxdomainResponse(query.header.id)
@@ -30,14 +30,14 @@ internal class OfflineResolver(private val responses: List<Message>) : Resolver 
 
     override fun setTCP(flag: Boolean) = throw NotImplementedError()
 
-    override fun setIgnoreTruncation(flag: Boolean) = throw NotImplementedError()
+    override fun setIgnoreTruncation(flag: Boolean) = Unit
 
     override fun setEDNS(
         version: Int,
         payloadSize: Int,
         flags: Int,
         options: MutableList<EDNSOption>?
-    ) = throw NotImplementedError()
+    ) = Unit
 
     override fun setTSIGKey(key: TSIG?) = throw NotImplementedError()
 

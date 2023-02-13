@@ -48,21 +48,17 @@ class OfflineResolverTest {
     }
 
     @Test
-    fun `setIgnoreTruncation should not be implemented`() {
+    fun `setIgnoreTruncation should do nothing`() {
         val resolver = OfflineResolver(emptyList())
 
-        assertThrows<NotImplementedError> {
-            resolver.setIgnoreTruncation(true)
-        }
+        resolver.setIgnoreTruncation(true)
     }
 
     @Test
-    fun `setEDNS should not be implemented`() {
+    fun `setEDNS should do nothing`() {
         val resolver = OfflineResolver(emptyList())
 
-        assertThrows<NotImplementedError> {
-            resolver.setEDNS(1, 1, 1)
-        }
+        resolver.setEDNS(1, 1, 1)
     }
 
     @Test
