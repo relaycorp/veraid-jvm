@@ -3,6 +3,8 @@ package tech.relaycorp.vera.dns
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.future.await
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Flags
@@ -37,8 +39,9 @@ public open class DnssecChain internal constructor(
     internal val responses: List<Message>
 ) {
     @Throws(DnsException::class)
-    internal suspend fun verify(clock: Clock) {
+    internal suspend fun verify(instant: Instant) {
         val offlineResolver = OfflineResolver(responses)
+        val clock = Clock.fixed(instant, ZoneOffset.UTC)
         val validatingResolver = offlineResolverInitialiser(offlineResolver, clock)
         validatingResolver.resolve(domainName, recordType)
     }

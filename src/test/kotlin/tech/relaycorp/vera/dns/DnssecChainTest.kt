@@ -12,6 +12,7 @@ import io.kotest.matchers.string.shouldStartWith
 import java.io.ByteArrayInputStream
 import java.nio.charset.Charset
 import java.time.Clock
+import java.time.Instant
 import java.util.concurrent.CompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.test.runTest
@@ -248,6 +249,8 @@ class DnssecChainTest {
     @Nested
     @Isolated("We alter the resolver initialisers")
     inner class Verify {
+        private val instant = Instant.now()
+
         private val originalValidatingInitialiser = DnssecChain.offlineResolverInitialiser
 
         @BeforeEach
@@ -265,7 +268,7 @@ class DnssecChainTest {
                 mockResolver
             }
 
-            chain.verify(Clock.systemUTC())
+            chain.verify(instant)
 
             receivedHeadResolver?.responses shouldBe chain.responses
         }
@@ -295,7 +298,7 @@ class DnssecChainTest {
             val mockResolver = mockValidatingResolver()
             val chain = DnssecChain(DnsStubs.DOMAIN_NAME, recordType, listOf(Message()))
 
-            chain.verify(Clock.systemUTC())
+            chain.verify(instant)
 
             argumentCaptor<ByteArrayInputStream>().apply {
                 verify(mockResolver).loadTrustAnchors(capture())
@@ -311,7 +314,7 @@ class DnssecChainTest {
             val mockResolver = mockValidatingResolver()
             val chain = DnssecChain(DnsStubs.DOMAIN_NAME, recordType, listOf(Message()))
 
-            chain.verify(Clock.systemUTC())
+            chain.verify(instant)
 
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
@@ -325,7 +328,7 @@ class DnssecChainTest {
             val mockResolver = mockValidatingResolver()
             val chain = DnssecChain(DnsStubs.DOMAIN_NAME, recordType, listOf(Message()))
 
-            chain.verify(Clock.systemUTC())
+            chain.verify(instant)
 
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
@@ -339,7 +342,7 @@ class DnssecChainTest {
             val mockResolver = mockValidatingResolver()
             val chain = DnssecChain(DnsStubs.DOMAIN_NAME, recordType, listOf(Message()))
 
-            chain.verify(Clock.systemUTC())
+            chain.verify(instant)
 
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
@@ -357,11 +360,10 @@ class DnssecChainTest {
                 receivedClock = clock
                 mockResolver
             }
-            val finalClock = Clock.systemUTC()
 
-            chain.verify(finalClock)
+            chain.verify(instant)
 
-            receivedClock shouldBe finalClock
+            receivedClock?.instant() shouldBe instant
         }
 
         @Test
@@ -379,7 +381,7 @@ class DnssecChainTest {
             val chain = DnssecChain(DnsStubs.DOMAIN_NAME, recordType, emptyList())
 
             val exception = shouldThrow<DnsException> {
-                chain.verify(Clock.systemUTC())
+                chain.verify(instant)
             }
 
             exception.message shouldBe "DNSSEC verification failed: $failureReason"
@@ -394,7 +396,7 @@ class DnssecChainTest {
             val chain = DnssecChain(DnsStubs.DOMAIN_NAME, recordType, emptyList())
 
             val exception = shouldThrow<DnsException> {
-                chain.verify(Clock.systemUTC())
+                chain.verify(instant)
             }
 
             exception.message shouldStartWith "DNS lookup failed (NXDOMAIN)"
@@ -414,7 +416,7 @@ class DnssecChainTest {
             mockValidatingResolver(response)
             val chain = DnssecChain(DnsStubs.DOMAIN_NAME, recordType, emptyList())
 
-            chain.verify(Clock.systemUTC())
+            chain.verify(instant)
         }
 
         private fun mockValidatingResolver(response: Message? = null): ValidatingResolver {
