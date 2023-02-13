@@ -89,7 +89,7 @@ class VeraDnssecChainTest {
         }
 
         @Test
-        fun `Responses should be stored in Vera chain`() = runTest {
+        fun `Responses should be stored in chain`() = runTest {
             val response = Message()
             response.header.id = 42
             VeraDnssecChain.dnssecChainRetriever = makeRetriever(listOf(response))
@@ -100,10 +100,19 @@ class VeraDnssecChainTest {
             chain.responses.first() shouldBe response
         }
 
+        @Test
+        fun `Organisation name should be stored in chain`() = runTest {
+            VeraDnssecChain.dnssecChainRetriever = makeRetriever()
+
+            val chain = VeraDnssecChain.retrieve(VeraStubs.ORGANISATION_NAME)
+
+            chain.domainName shouldBe VeraStubs.ORGANISATION_NAME
+        }
+
         private fun makeRetriever(responses: List<Message> = emptyList()): ChainRetriever =
             { domainName, recordType, resolverHostName ->
                 retrieverCallArgs = RetrieverCallArgs(domainName, recordType, resolverHostName)
-                DnssecChain(responses)
+                DnssecChain(DnsStubs.DOMAIN_NAME, "TXT", responses)
             }
     }
 
@@ -113,7 +122,7 @@ class VeraDnssecChainTest {
         fun `Responses should be wrapped in an explicitly tagged SET`() {
             val response1 = Message()
             val response2 = Message(response1.header.id + 1)
-            val chain = VeraDnssecChain(listOf(response1, response2))
+            val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response1, response2))
 
             val serialisation = chain.serialise()
 
@@ -136,7 +145,7 @@ class VeraDnssecChainTest {
             val invalidSet = DERSet(vector)
 
             val error = shouldThrow<InvalidChainException> {
-                VeraDnssecChain.decode(invalidSet)
+                VeraDnssecChain.decode(VeraStubs.ORGANISATION_NAME, invalidSet)
             }
 
             error.message shouldBe "Chain SET contains non-OCTET STRING item (${DERNull.INSTANCE})"
@@ -146,7 +155,7 @@ class VeraDnssecChainTest {
         fun `Empty set should be supported`() {
             val set = DERSet()
 
-            val chain = VeraDnssecChain.decode(set)
+            val chain = VeraDnssecChain.decode(VeraStubs.ORGANISATION_NAME, set)
 
             chain.responses shouldHaveSize 0
         }
@@ -158,7 +167,7 @@ class VeraDnssecChainTest {
             val invalidSet = DERSet(vector)
 
             val error = shouldThrow<InvalidChainException> {
-                VeraDnssecChain.decode(invalidSet)
+                VeraDnssecChain.decode(VeraStubs.ORGANISATION_NAME, invalidSet)
             }
 
             error.message shouldBe "Chain contains a malformed DNS message"
@@ -169,16 +178,27 @@ class VeraDnssecChainTest {
         fun `Chain should be initialised from valid SET`() {
             val response1 = Message()
             val response2 = Message(response1.header.id + 1)
-            val chain = VeraDnssecChain(listOf(response1, response2))
+            val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response1, response2))
             val encoding = parseDer(chain.serialise()) as ASN1Set
 
-            val chainDecoded = VeraDnssecChain.decode(encoding)
+            val chainDecoded = VeraDnssecChain.decode(VeraStubs.ORGANISATION_NAME, encoding)
 
             val responsesSerialised = chainDecoded.responses.map { it.toWire().asList() }
             responsesSerialised shouldContainExactlyInAnyOrder listOf(
                 response1.toWire().asList(),
                 response2.toWire().asList(),
             )
+        }
+
+        @Test
+        fun `Organisation name should be stored`() {
+            val response1 = Message()
+            val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response1))
+            val encoding = parseDer(chain.serialise()) as ASN1Set
+
+            val chainDecoded = VeraDnssecChain.decode(VeraStubs.ORGANISATION_NAME, encoding)
+
+            chainDecoded.domainName shouldBe VeraStubs.ORGANISATION_NAME
         }
     }
 }

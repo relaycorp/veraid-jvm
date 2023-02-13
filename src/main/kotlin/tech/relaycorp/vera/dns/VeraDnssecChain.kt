@@ -1,6 +1,5 @@
 package tech.relaycorp.vera.dns
 
-import kotlin.jvm.Throws
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Set
 import org.bouncycastle.asn1.DEROctetString
@@ -13,7 +12,10 @@ import org.xbill.DNS.WireParseException
  *
  * It contains the DNSSEC chain for the Vera TXT RRSet (e.g., `_vera.example.com./TXT`).
  */
-public class VeraDnssecChain internal constructor(internal val responses: List<Message>) {
+public class VeraDnssecChain internal constructor(
+    organisationName: String,
+    responses: List<Message>,
+) : DnssecChain(organisationName, "TXT", responses) {
     /**
      * Serialise the chain.
      */
@@ -45,11 +47,11 @@ public class VeraDnssecChain internal constructor(internal val responses: List<M
         ): VeraDnssecChain {
             val domainName = "_vera.${organisationName.trimEnd('.')}."
             val dnssecChain = dnssecChainRetriever(domainName, VERA_RECORD_TYPE, resolverHost)
-            return VeraDnssecChain(dnssecChain.responses)
+            return VeraDnssecChain(organisationName, dnssecChain.responses)
         }
 
         @Throws(DnsException::class)
-        public fun decode(set: ASN1Set): VeraDnssecChain {
+        internal fun decode(organisationName: String, set: ASN1Set): VeraDnssecChain {
             val responses = set.map {
                 if (it !is DEROctetString) {
                     throw InvalidChainException(
@@ -62,7 +64,7 @@ public class VeraDnssecChain internal constructor(internal val responses: List<M
                     throw InvalidChainException("Chain contains a malformed DNS message", exc)
                 }
             }
-            return VeraDnssecChain(responses)
+            return VeraDnssecChain(organisationName, responses)
         }
     }
 }
