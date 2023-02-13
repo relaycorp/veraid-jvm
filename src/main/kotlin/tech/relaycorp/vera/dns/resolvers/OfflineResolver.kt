@@ -13,8 +13,12 @@ import org.xbill.DNS.TSIG
 
 internal class OfflineResolver(val responses: List<Message>) : Resolver {
     override fun sendAsync(query: Message, executor: Executor?): CompletionStage<Message> {
-        val response = responses.firstOrNull { it.question == query.question }
-            ?: makeNxdomainResponse(query.header.id)
+        val question = query.question
+        val matchingResponse = if (question != null)
+            responses.firstOrNull { it.question == question }
+        else
+            null
+        val response = matchingResponse ?: makeNxdomainResponse(query.header.id)
         return CompletableFuture.completedFuture(response)
     }
 

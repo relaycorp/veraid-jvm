@@ -155,6 +155,19 @@ class OfflineResolverTest {
     }
 
     @Test
+    fun `Question-less response shouldn't match question-less query`() = runTest {
+        val storedResponse = Message()
+        val resolver = OfflineResolver(listOf(storedResponse))
+        val query = Message()
+
+        val response = resolver.sendAsync(query).await()
+
+        response shouldNotBe storedResponse
+        response.rcode shouldBe Rcode.NXDOMAIN
+        response.header.id shouldBe query.header.id
+    }
+
+    @Test
     fun `Existing response shouldn't be returned unless the question class matches`() = runTest {
         val storedResponse = record.makeResponse()
         val resolver = OfflineResolver(listOf(storedResponse))
@@ -164,6 +177,7 @@ class OfflineResolverTest {
 
         response shouldNotBe storedResponse
         response.rcode shouldBe Rcode.NXDOMAIN
+        response.header.id shouldBe query.header.id
     }
 
     @Test
