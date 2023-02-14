@@ -3,6 +3,11 @@ $dokka.linkExtension:html
 $dokka.location:tech.relaycorp.vera.dns////PointingToDeclaration/vera/tech.relaycorp.vera.dns/index.html
 $dokka.location:tech.relaycorp.vera.dns/DnsException///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-dns-exception/index.html
 $dokka.location:tech.relaycorp.vera.dns/DnsException/DnsException/#kotlin.String/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-dns-exception/-dns-exception.html
+$dokka.location:tech.relaycorp.vera.dns/DnssecChain///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-dnssec-chain/index.html
+$dokka.location:tech.relaycorp.vera.dns/InvalidChainException///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-invalid-chain-exception/index.html
+$dokka.location:tech.relaycorp.vera.dns/InvalidChainException/InvalidChainException/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-invalid-chain-exception/-invalid-chain-exception.html
+$dokka.location:tech.relaycorp.vera.dns/InvalidRdataException///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-invalid-rdata-exception/index.html
+$dokka.location:tech.relaycorp.vera.dns/InvalidRdataException/InvalidRdataException/#kotlin.String/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-invalid-rdata-exception/-invalid-rdata-exception.html
 $dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain.Companion///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/-companion/index.html
 $dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain.Companion/retrieve/#kotlin.String#kotlin.String/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/-companion/retrieve.html
 $dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/index.html
