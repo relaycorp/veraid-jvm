@@ -76,9 +76,9 @@ internal fun ByteArray.txtRdataSerialise(): ByteArray {
 }
 
 internal val VERA_RDATA_FIELDS =
-    VeraRdataFields(VeraStubs.ORG_KEY_SPEC, 2.days, VeraStubs.SERVICE_OID)
+    VeraRdataFields(ORG_KEY_SPEC, 2.days, SERVICE_OID)
 val RECORD = TXTRecord(
-    Name.fromString("_vera.${DnsStubs.DOMAIN_NAME}"),
+    Name.fromString("_vera.$DOMAIN_NAME"),
     DClass.IN,
     42,
     VERA_RDATA_FIELDS.toString()

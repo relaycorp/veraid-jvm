@@ -11,7 +11,7 @@ import org.xbill.DNS.Name
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.Type
-import tech.relaycorp.vera.dns.DnsStubs
+import tech.relaycorp.vera.dns.REMOTE_RESOLVER
 import tech.relaycorp.vera.dns.makeQuery
 
 val QUERY_RECORD: Record =
@@ -22,9 +22,9 @@ class PersistingResolverTest {
     inner class Constructor {
         @Test
         fun `Specified resolver host name should be used`() {
-            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(REMOTE_RESOLVER)
 
-            resolver.address.hostString shouldBe DnsStubs.REMOTE_RESOLVER
+            resolver.address.hostString shouldBe REMOTE_RESOLVER
         }
     }
 
@@ -32,14 +32,14 @@ class PersistingResolverTest {
     inner class SendAsync {
         @Test
         fun `Persisted responses should be empty initially`() {
-            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(REMOTE_RESOLVER)
 
             resolver.responses shouldHaveSize 0
         }
 
         @Test
         fun `Responses should be persisted`() = runTest {
-            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(REMOTE_RESOLVER)
 
             resolver.sendAsync(QUERY_RECORD.makeQuery()).await()
 

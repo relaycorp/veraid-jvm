@@ -14,7 +14,7 @@ import org.xbill.DNS.Name
 import org.xbill.DNS.Rcode
 import org.xbill.DNS.Record
 import org.xbill.DNS.Type
-import tech.relaycorp.vera.dns.DnsStubs
+import tech.relaycorp.vera.dns.DOMAIN_NAME
 import tech.relaycorp.vera.dns.copy
 import tech.relaycorp.vera.dns.makeQuery
 import tech.relaycorp.vera.dns.makeResponse
@@ -23,7 +23,7 @@ import tech.relaycorp.vera.dns.txtRdataSerialise
 
 class OfflineResolverTest {
     private val record: Record = Record.newRecord(
-        Name.fromString(DnsStubs.DOMAIN_NAME),
+        Name.fromString(DOMAIN_NAME),
         Type.TXT,
         DClass.IN,
         42,

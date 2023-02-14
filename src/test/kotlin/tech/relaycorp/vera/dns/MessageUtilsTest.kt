@@ -10,7 +10,6 @@ import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
-import tech.relaycorp.vera.dns.DnsStubs.DOMAIN_NAME
 
 class MessageUtilsTest {
     @Nested

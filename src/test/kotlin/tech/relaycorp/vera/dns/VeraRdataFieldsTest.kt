@@ -16,7 +16,7 @@ class VeraRdataFieldsTest {
     private val orgKeyId = "org-key-id"
     private val ttlOverride = 2.days
     private val ttlOverrideSeconds = ttlOverride.inWholeSeconds
-    private val service = VeraStubs.SERVICE_OID
+    private val service = SERVICE_OID
 
     @Nested
     inner class Parse {
