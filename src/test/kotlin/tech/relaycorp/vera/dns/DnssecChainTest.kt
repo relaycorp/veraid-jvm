@@ -24,7 +24,6 @@ import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Rcode
-import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.SimpleResolver
 import org.xbill.DNS.TXTRecord
@@ -56,12 +55,7 @@ class DnssecChainTest {
                 CompletableFuture.completedFuture(response)
             )
             val validatingResolver = DnssecChain.onlineResolverInitialiser(headResolver)
-            val queryRecord = Record.newRecord(
-                Name.fromString(DnsStubs.DOMAIN_NAME),
-                Type.value(recordType),
-                DClass.IN
-            )
-            val queryMessage = Message.newQuery(queryRecord)
+            val queryMessage = RECORD.makeQuery()
 
             validatingResolver.sendAsync(queryMessage).await()
 
@@ -187,8 +181,7 @@ class DnssecChainTest {
                 42,
                 "foo"
             )
-            val response = Message()
-            response.addRecord(record, Section.ANSWER)
+            val response = record.makeResponse()
             mockPersistingResolver(response)
             mockValidatingResolver()
 
@@ -280,12 +273,7 @@ class DnssecChainTest {
             )
             val validatingResolver =
                 DnssecChain.offlineResolverInitialiser(headResolver, Clock.systemUTC())
-            val queryRecord = Record.newRecord(
-                Name.fromString(DnsStubs.DOMAIN_NAME),
-                Type.value(recordType),
-                DClass.IN
-            )
-            val queryMessage = Message.newQuery(queryRecord)
+            val queryMessage = RECORD.makeQuery()
 
             validatingResolver.sendAsync(queryMessage).await()
 

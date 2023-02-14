@@ -26,7 +26,7 @@ import tech.relaycorp.vera.utils.intersect
 public class VeraDnssecChain internal constructor(
     organisationName: String,
     responses: List<Message>,
-) : DnssecChain("_vera.$organisationName.", "TXT", responses) {
+) : DnssecChain("_vera.$organisationName.", VERA_RECORD_TYPE, responses) {
     /**
      * Serialise the chain.
      */
@@ -46,13 +46,16 @@ public class VeraDnssecChain internal constructor(
         serviceOid: ASN1ObjectIdentifier,
         datePeriod: ClosedRange<Instant>,
     ) {
-        val matchingFields = getRdataFields(orgKeySpec, serviceOid)
-        val ttlOverride = matchingFields.ttlOverride
-        val rdataPeriod = maxOf(
-            datePeriod.start,
-            datePeriod.endInclusive.minus(ttlOverride.toJavaDuration())
-        )..datePeriod.endInclusive
+        val verificationPeriod = calculateVerificationPeriod(datePeriod, orgKeySpec, serviceOid)
+        val chainValidityPeriod = getChainValidityPeriod()
+        val intersectingPeriod =
+            verificationPeriod.intersect(chainValidityPeriod) ?: throw InvalidChainException(
+                "Chain validity period does not overlap with required period"
+            )
+        super.verify(intersectingPeriod.start)
+    }
 
+    private fun getChainValidityPeriod(): ClosedRange<Instant> {
         val chainValidityPeriod = responses
             .mapNotNull { it.signatureValidityPeriod }.ifEmpty {
                 throw InvalidChainException("Chain does not contain RRSig records")
@@ -62,12 +65,19 @@ public class VeraDnssecChain internal constructor(
                     "Chain contains RRSigs whose validity periods do not overlap"
                 )
             }
+        return chainValidityPeriod
+    }
 
-        val verificationPeriod =
-            rdataPeriod.intersect(chainValidityPeriod) ?: throw InvalidChainException(
-                "Chain validity period does not overlap with required period"
-            )
-        super.verify(verificationPeriod.start)
+    private fun calculateVerificationPeriod(
+        datePeriod: ClosedRange<Instant>,
+        orgKeySpec: OrganisationKeySpec,
+        serviceOid: ASN1ObjectIdentifier
+    ): ClosedRange<Instant> {
+        val matchingFields = getRdataFields(orgKeySpec, serviceOid)
+        val ttlOverride = matchingFields.ttlOverride
+        val truncatedStart = datePeriod.endInclusive.minus(ttlOverride.toJavaDuration())
+        val start = maxOf(datePeriod.start, truncatedStart)
+        return start..datePeriod.endInclusive
     }
 
     private fun getRdataFields(
