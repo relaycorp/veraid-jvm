@@ -1,4 +1,4 @@
-package tech.relaycorp.vera.dns
+package tech.relaycorp.vera.dns.resolvers
 
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -7,11 +7,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.xbill.DNS.DClass
-import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.Type
+import tech.relaycorp.vera.dns.REMOTE_RESOLVER
+import tech.relaycorp.vera.dns.makeQuery
 
 val QUERY_RECORD: Record =
     Record.newRecord(Name.fromConstantString("example.com."), Type.A, DClass.IN)
@@ -21,9 +22,9 @@ class PersistingResolverTest {
     inner class Constructor {
         @Test
         fun `Specified resolver host name should be used`() {
-            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(REMOTE_RESOLVER)
 
-            resolver.address.hostString shouldBe DnsStubs.REMOTE_RESOLVER
+            resolver.address.hostString shouldBe REMOTE_RESOLVER
         }
     }
 
@@ -31,17 +32,16 @@ class PersistingResolverTest {
     inner class SendAsync {
         @Test
         fun `Persisted responses should be empty initially`() {
-            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
+            val resolver = PersistingResolver(REMOTE_RESOLVER)
 
             resolver.responses shouldHaveSize 0
         }
 
         @Test
         fun `Responses should be persisted`() = runTest {
-            val resolver = PersistingResolver(DnsStubs.REMOTE_RESOLVER)
-            val queryMessage = Message.newQuery(QUERY_RECORD)
+            val resolver = PersistingResolver(REMOTE_RESOLVER)
 
-            resolver.sendAsync(queryMessage).await()
+            resolver.sendAsync(QUERY_RECORD.makeQuery()).await()
 
             resolver.responses shouldHaveSize 1
             val response = resolver.responses.first()
