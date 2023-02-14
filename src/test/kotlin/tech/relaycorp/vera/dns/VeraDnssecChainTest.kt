@@ -1,28 +1,35 @@
 package tech.relaycorp.vera.dns
 
+import com.nhaarman.mockitokotlin2.spy
+import com.nhaarman.mockitokotlin2.verify
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.beInstanceOf
 import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Set
 import org.bouncycastle.asn1.DERNull
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSet
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.parallel.Isolated
 import org.xbill.DNS.Message
-import org.xbill.DNS.Name
 import org.xbill.DNS.Record
+import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
+import tech.relaycorp.vera.KeyAlgorithm
 import tech.relaycorp.vera.asn1.parseDer
 
 data class RetrieverCallArgs(
@@ -208,6 +215,7 @@ class VeraDnssecChainTest {
     }
 
     @Nested
+    @Isolated("We alter the resolver initialisers")
     inner class Verify {
         private val orgKeySpec = VeraStubs.ORG_KEY_SPEC
         private val serviceOid = VeraStubs.SERVICE_OID
@@ -215,11 +223,24 @@ class VeraDnssecChainTest {
         private val now = Instant.now()
         private val datePeriod = now..now.plusSeconds(10)
 
+        private val originalValidatingInitialiser = DnssecChain.offlineResolverInitialiser
+
+        @BeforeEach
+        fun spyOnValidatingInitialiser() {
+            val resolverSpy = makeMockValidatingResolver()
+            DnssecChain.offlineResolverInitialiser = { _, _ -> resolverSpy }
+        }
+
+        @AfterAll
+        fun restoreValidatingInitialiser() {
+            DnssecChain.offlineResolverInitialiser = originalValidatingInitialiser
+        }
+
         @Nested
         inner class VeraTxtResponse {
             @Test
-            fun `Vera response should use the _vera subdomain`() {
-                val record = RECORD.copy(name = Name.fromString(DnsStubs.DOMAIN_NAME))
+            fun `Vera response should use the _vera subdomain`() = runTest {
+                val record = RECORD.copy(name = RECORD.name.makeSubdomain("sub"))
                 val response = record.makeResponse()
                 val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
 
@@ -231,7 +252,7 @@ class VeraDnssecChainTest {
             }
 
             @Test
-            fun `Vera response should use the TXT record type`() {
+            fun `Vera response should use the TXT record type`() = runTest {
                 val record = Record.newRecord(
                     RECORD.name,
                     Type.A,
@@ -250,7 +271,7 @@ class VeraDnssecChainTest {
             }
 
             @Test
-            fun `Vera response should use the IN class`() {
+            fun `Vera response should use the IN class`() = runTest {
                 val record = RECORD.copy(dClass = RECORD.dClass + 1)
                 val response = record.makeResponse()
                 val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
@@ -263,7 +284,7 @@ class VeraDnssecChainTest {
             }
 
             @Test
-            fun `Multiple Vera TXT responses should be refused`() {
+            fun `Multiple Vera TXT responses should be refused`() = runTest {
                 val responses = listOf(RECORD.makeResponse(), RECORD.makeResponse())
                 val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, responses)
 
@@ -275,68 +296,310 @@ class VeraDnssecChainTest {
             }
 
             @Test
-            @Disabled
-            fun `Rdata should be valid`() {
+            fun `Vera TXT response should contain an answer`() = runTest {
+                val response = RECORD.makeResponse()
+                response.removeAllRecords(Section.ANSWER)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Vera TXT response does not contain an answer"
+            }
+
+            @Test
+            fun `Rdata should not be empty`() = runTest {
+                val record = RECORD.copy(rdata = byteArrayOf())
+                val response = record.makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Vera TXT answer rdata must contain one string (got 0)"
+            }
+
+            @Test
+            fun `Answer should not have more than one rdata string`() = runTest {
+                val record = RECORD.copy(
+                    rdata = "one".toByteArray().txtRdataSerialise() + "two".toByteArray()
+                        .txtRdataSerialise()
+                )
+                val response = record.makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Vera TXT answer rdata must contain one string (got 2)"
+            }
+
+            @Test
+            fun `Rdata should be valid`() = runTest {
+                val record = RECORD.copy(rdata = "malformed".toByteArray().txtRdataSerialise())
+                val response = record.makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Vera TXT response contains invalid RDATA"
+                exception.cause should beInstanceOf<InvalidRdataException>()
             }
         }
 
         @Nested
         inner class KeySpec {
             @Test
-            @Disabled
-            fun `Algorithm id should match that of specified key spec`() {
+            fun `Algorithm id should match that of specified key spec`() = runTest {
+                val otherAlgorithm = KeyAlgorithm.RSA_3072
+                otherAlgorithm shouldNotBe VeraStubs.ORG_KEY_SPEC.algorithm
+                val otherKeySpec = VeraStubs.ORG_KEY_SPEC.copy(algorithm = otherAlgorithm)
+                val otherFields = VERA_RDATA_FIELDS.copy(orgKeySpec = otherKeySpec)
+                val record = RECORD.copyWithDifferentRdata(otherFields)
+                val response = record.makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe
+                    "Could not find Vera record for specified key or service"
             }
 
             @Test
-            @Disabled
-            fun `Key id should match that of specified key spec`() {
+            fun `Key id should match that of specified key spec`() = runTest {
+                val otherKeyId = "not-${VeraStubs.ORG_KEY_SPEC.id}"
+                val otherKeySpec = VeraStubs.ORG_KEY_SPEC.copy(id = otherKeyId)
+                val otherFields = VERA_RDATA_FIELDS.copy(orgKeySpec = otherKeySpec)
+                val record = RECORD.copyWithDifferentRdata(otherFields)
+                val response = record.makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe
+                    "Could not find Vera record for specified key or service"
             }
         }
 
         @Nested
         inner class ServiceOid {
             @Test
-            @Disabled
-            fun `Absence of service OID should allow any service`() {
+            fun `Absence of service OID should allow any service`() = runTest {
+                val otherFields = VERA_RDATA_FIELDS.copy(service = null)
+                val response =
+                    RECORD.copyWithDifferentRdata(otherFields).makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                chain.verify(orgKeySpec, serviceOid, datePeriod)
             }
 
             @Test
-            @Disabled
-            fun `Presence of service OID should only allow matching service`() {
+            fun `Presence of service OID should only allow matching service`() = runTest {
+                val otherFields = VERA_RDATA_FIELDS.copy(service = serviceOid)
+                val response =
+                    RECORD.copyWithDifferentRdata(otherFields).makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                chain.verify(orgKeySpec, serviceOid, datePeriod)
             }
 
             @Test
-            @Disabled
-            fun `Presence of service OID should only deny mismatching service`() {
-            }
+            fun `Presence of service OID should only deny mismatching service`() = runTest {
+                val otherService = serviceOid.branch("42")
+                val otherFields = VERA_RDATA_FIELDS.copy(service = otherService)
+                val response =
+                    RECORD.copyWithDifferentRdata(otherFields).makeResponseWithRrsig(datePeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
 
-            @Test
-            @Disabled
-            fun `Explicit service OID should take precedence over wildcard`() {
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe
+                    "Could not find Vera record for specified key or service"
             }
         }
 
         @Nested
         inner class DatePeriod {
             @Test
-            @Disabled
-            fun `There should be at least one message with an RRSig`() {
+            fun `At least one response should have an RRSig`() = runTest {
+                val response = RECORD.makeResponse()
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe "Chain does not contain RRSig records"
             }
 
             @Test
-            @Disabled
-            fun `Responses without RRSigs should be gracefully ignored if irrelevant`() {
+            fun `All RRSigs should have overlapping validity periods`() = runTest {
+                val response1 = RECORD.makeResponseWithRrsig(datePeriod)
+                val nonOverlappingPeriod =
+                    datePeriod.endInclusive.plusSeconds(1)..datePeriod.endInclusive.plusSeconds(2)
+                val response2 = RECORD.copy(name = RECORD.name.makeSubdomain("sub"))
+                    .makeResponseWithRrsig(nonOverlappingPeriod)
+                val chain =
+                    VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response1, response2))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe
+                    "Chain contains RRSigs whose validity periods do not overlap"
             }
 
             @Test
-            @Disabled
-            fun `TTL override should truncate validity period of chain`() {
+            fun `Responses without RRSigs should be ignored if irrelevant`() = runTest {
+                val responseWithRrsig = RECORD.makeResponseWithRrsig(datePeriod)
+                val responseWithoutRrsig =
+                    RECORD.copy(name = RECORD.name.makeSubdomain("sub")).makeResponse()
+                val chain = VeraDnssecChain(
+                    VeraStubs.ORGANISATION_NAME,
+                    listOf(responseWithRrsig, responseWithoutRrsig)
+                )
+
+                chain.verify(orgKeySpec, serviceOid, datePeriod)
+            }
+
+            @Test
+            fun `TTL override should truncate validity period of chain`() = runTest {
+                val ttl = 3.seconds
+                val record =
+                    RECORD.copyWithDifferentRdata(VERA_RDATA_FIELDS.copy(ttlOverride = ttl))
+                val response = record.makeResponseWithRrsig(datePeriod)
+                val chainSpy = spy(VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response)))
+
+                chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
+
+                verify(chainSpy).verify(datePeriod.endInclusive.minus(ttl.toJavaDuration()))
+            }
+
+            @Test
+            fun `TTL override should not truncate period if period is shorter`() = runTest {
+                val ttl = 3.seconds
+                val start = datePeriod.endInclusive.minus(ttl.toJavaDuration()).plusSeconds(1)
+                val record =
+                    RECORD.copyWithDifferentRdata(VERA_RDATA_FIELDS.copy(ttlOverride = ttl))
+                val response = record.makeResponseWithRrsig(datePeriod)
+                val chainSpy = spy(VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response)))
+
+                chainSpy.verify(orgKeySpec, serviceOid, start..datePeriod.endInclusive)
+
+                verify(chainSpy).verify(start)
+            }
+
+            @Test
+            fun `TTL override from rdata with concrete service should take precedence`() = runTest {
+                val concreteTtl = 3.seconds
+                val concreteRecord = RECORD.copyWithDifferentRdata(
+                    VERA_RDATA_FIELDS.copy(ttlOverride = concreteTtl, service = serviceOid)
+                )
+                val wildcardRecord = RECORD.copyWithDifferentRdata(
+                    VERA_RDATA_FIELDS.copy(
+                        ttlOverride = concreteTtl.plus(2.seconds),
+                        service = null
+                    )
+                )
+                val response = wildcardRecord.makeResponseWithRrsig(datePeriod)
+                // Leave the concrete record to the end, to ensure we don't just pick the first
+                response.addRecord(concreteRecord, Section.ANSWER)
+                val chainSpy = spy(VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response)))
+
+                chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
+
+                verify(chainSpy).verify(datePeriod.endInclusive.minus(concreteTtl.toJavaDuration()))
+            }
+
+            @Test
+            fun `Chain validity period should overlap with required period`() = runTest {
+                val nonOverlappingPeriod =
+                    datePeriod.endInclusive.plusSeconds(1)..datePeriod.endInclusive.plusSeconds(2)
+                val responseWithRrsig = RECORD.makeResponseWithRrsig(nonOverlappingPeriod)
+                val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(responseWithRrsig))
+
+                val exception = shouldThrow<InvalidChainException> {
+                    chain.verify(orgKeySpec, serviceOid, datePeriod)
+                }
+
+                exception.message shouldBe
+                    "Chain validity period does not overlap with required period"
+            }
+
+            @Test
+            fun `Verification time should be intersection of chain and specified one`() = runTest {
+                val narrowPeriod =
+                    datePeriod.endInclusive.minusSeconds(2)..datePeriod.endInclusive
+                val response1WithRrsig = RECORD.makeResponseWithRrsig(narrowPeriod)
+                val response2WithRrsig = RECORD.copy(name = RECORD.name.makeSubdomain("sub"))
+                    .makeResponseWithRrsig(datePeriod)
+                val chainSpy = spy(
+                    VeraDnssecChain(
+                        VeraStubs.ORGANISATION_NAME,
+                        listOf(response1WithRrsig, response2WithRrsig)
+                    )
+                )
+
+                chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
+
+                verify(chainSpy).verify(narrowPeriod.start)
             }
         }
 
         @Test
-        @Disabled
-        fun `Valid chain should verify successfully`() {
+        fun `Multiple records for the same key and service should be refused`() = runTest {
+            val fields = VERA_RDATA_FIELDS.copy(service = serviceOid)
+            val record1 = RECORD.copyWithDifferentRdata(fields)
+            val response = record1.makeResponseWithRrsig(datePeriod)
+            val record2 = record1.copyWithDifferentRdata(
+                fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds))
+            )
+            response.addRecord(record2, Section.ANSWER)
+            val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+            val exception = shouldThrow<InvalidChainException> {
+                chain.verify(orgKeySpec, serviceOid, datePeriod)
+            }
+
+            exception.message shouldBe "Found multiple Vera records for the same key and service"
+        }
+
+        @Test
+        fun `Multiple records for the same key and no service should be refused`() = runTest {
+            val fields = VERA_RDATA_FIELDS.copy(service = null)
+            val record1 = RECORD.copyWithDifferentRdata(fields)
+            val response = record1.makeResponseWithRrsig(datePeriod)
+            val record2 = record1.copyWithDifferentRdata(
+                fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds))
+            )
+            response.addRecord(record2, Section.ANSWER)
+            val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+            val exception = shouldThrow<InvalidChainException> {
+                chain.verify(orgKeySpec, serviceOid, datePeriod)
+            }
+
+            exception.message shouldBe "Found multiple Vera records for the same key and no service"
+        }
+
+        @Test
+        fun `Valid chain should verify successfully`() = runTest {
+            val response = RECORD.makeResponseWithRrsig(datePeriod)
+            val chain = VeraDnssecChain(VeraStubs.ORGANISATION_NAME, listOf(response))
+
+            chain.verify(orgKeySpec, serviceOid, datePeriod)
         }
     }
 }

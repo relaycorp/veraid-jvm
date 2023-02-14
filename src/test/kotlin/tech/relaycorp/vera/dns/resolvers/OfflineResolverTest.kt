@@ -18,15 +18,16 @@ import tech.relaycorp.vera.dns.DnsStubs
 import tech.relaycorp.vera.dns.copy
 import tech.relaycorp.vera.dns.makeQuery
 import tech.relaycorp.vera.dns.makeResponse
+import tech.relaycorp.vera.dns.makeSubdomain
+import tech.relaycorp.vera.dns.txtRdataSerialise
 
 class OfflineResolverTest {
-    private val rdata = "the rdata".toByteArray()
     private val record: Record = Record.newRecord(
         Name.fromString(DnsStubs.DOMAIN_NAME),
         Type.TXT,
         DClass.IN,
         42,
-        byteArrayOf(rdata.size.toByte(), *rdata)
+        "the rdata".toByteArray().txtRdataSerialise()
     )
 
     @Test
@@ -128,7 +129,7 @@ class OfflineResolverTest {
     fun `Existing response shouldn't be returned unless the question name matches`() = runTest {
         val storedResponse = record.makeResponse()
         val resolver = OfflineResolver(listOf(storedResponse))
-        val query = record.copy(name = Name.fromString("sub.${record.name}")).makeQuery()
+        val query = record.copy(name = record.name.makeSubdomain("sub")).makeQuery()
 
         val response = resolver.sendAsync(query).await()
 

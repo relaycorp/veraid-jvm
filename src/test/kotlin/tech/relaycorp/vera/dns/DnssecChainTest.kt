@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Isolated
 import org.xbill.DNS.DClass
-import org.xbill.DNS.Flags
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Rcode
@@ -424,20 +423,5 @@ class DnssecChainTest {
             DnssecChain.offlineResolverInitialiser = { _, _ -> mockResolver }
             return mockResolver
         }
-    }
-
-    private fun makeMockValidatingResolver(response: Message? = null): ValidatingResolver {
-        val finalResponse = response ?: makeSuccessfulEmptyResponse()
-        val mockResolver = mock<ValidatingResolver>()
-        whenever(mockResolver.sendAsync(any())).thenReturn(
-            CompletableFuture.completedFuture(finalResponse)
-        )
-        return mockResolver
-    }
-
-    private fun makeSuccessfulEmptyResponse(): Message {
-        val response = Message()
-        response.header.setFlag(Flags.AD.toInt())
-        return response
     }
 }

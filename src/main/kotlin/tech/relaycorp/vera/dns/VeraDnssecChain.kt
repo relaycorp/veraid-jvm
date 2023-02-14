@@ -1,6 +1,7 @@
 package tech.relaycorp.vera.dns
 
 import java.time.Instant
+import kotlin.time.toJavaDuration
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Set
@@ -10,9 +11,12 @@ import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Record
+import org.xbill.DNS.Section
+import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
 import tech.relaycorp.vera.OrganisationKeySpec
+import tech.relaycorp.vera.utils.intersect
 
 /**
  * Vera DNSSEC chain.
@@ -37,16 +41,69 @@ public class VeraDnssecChain internal constructor(
      * Verify the chain
      */
     @Throws(DnsException::class)
-    internal fun verify(
-        organisationKeySpec: OrganisationKeySpec,
+    internal suspend fun verify(
+        orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
         datePeriod: ClosedRange<Instant>,
     ) {
-        val veraTxtResponse = getVeraTxtResponse()
-        TODO()
+        val matchingFields = getRdataFields(orgKeySpec, serviceOid)
+        val ttlOverride = matchingFields.ttlOverride
+        val rdataPeriod = maxOf(
+            datePeriod.start,
+            datePeriod.endInclusive.minus(ttlOverride.toJavaDuration())
+        )..datePeriod.endInclusive
+
+        val chainValidityPeriod = responses
+            .mapNotNull { it.signatureValidityPeriod }.ifEmpty {
+                throw InvalidChainException("Chain does not contain RRSig records")
+            }
+            .reduce { acc, period ->
+                acc.intersect(period) ?: throw InvalidChainException(
+                    "Chain contains RRSigs whose validity periods do not overlap"
+                )
+            }
+
+        val verificationPeriod =
+            rdataPeriod.intersect(chainValidityPeriod) ?: throw InvalidChainException(
+                "Chain validity period does not overlap with required period"
+            )
+        super.verify(verificationPeriod.start)
     }
 
-    private fun getVeraTxtResponse(): Message {
+    private fun getRdataFields(
+        orgKeySpec: OrganisationKeySpec,
+        serviceOid: ASN1ObjectIdentifier
+    ): VeraRdataFields {
+        val answers = getVeraTxtAnswers()
+        val fieldSet = answers.map {
+            val rdata = it.strings.singleOrNull() ?: throw InvalidChainException(
+                "Vera TXT answer rdata must contain one string (got ${it.strings.size})"
+            )
+            try {
+                VeraRdataFields.parse(rdata)
+            } catch (exc: InvalidRdataException) {
+                throw InvalidChainException("Vera TXT response contains invalid RDATA", exc)
+            }
+        }
+        val matchingSet = fieldSet.filter {
+            it.orgKeySpec == orgKeySpec && (it.service == null || it.service == serviceOid)
+        }.ifEmpty {
+            throw InvalidChainException("Could not find Vera record for specified key or service")
+        }
+        val concreteFields = matchingSet.filter { it.service == serviceOid }
+        if (1 < concreteFields.size) {
+            throw InvalidChainException("Found multiple Vera records for the same key and service")
+        }
+        val wildcardFields = matchingSet.filter { it.service == null }
+        if (1 < wildcardFields.size) {
+            throw InvalidChainException(
+                "Found multiple Vera records for the same key and no service"
+            )
+        }
+        return concreteFields.singleOrNull() ?: wildcardFields.single()
+    }
+
+    private fun getVeraTxtAnswers(): List<TXTRecord> {
         val veraRecordQuery =
             Record.newRecord(Name.fromString(domainName), Type.value(recordType), DClass.IN)
         val veraTxtResponses = responses.filter { it.question == veraRecordQuery }
@@ -59,7 +116,10 @@ public class VeraDnssecChain internal constructor(
             // we could be reading the TTL override from a bogus response.
             throw InvalidChainException("Chain contains multiple Vera TXT responses")
         }
-        return veraTxtResponses.single()
+        val veraTxtResponse = veraTxtResponses.single()
+        val rrset = veraTxtResponse.getRrset(veraRecordQuery, Section.ANSWER)
+            ?: throw InvalidChainException("Vera TXT response does not contain an answer")
+        @Suppress("UNCHECKED_CAST") return rrset.rrs() as List<TXTRecord>
     }
 
     public companion object {

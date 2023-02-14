@@ -8,14 +8,14 @@ import tech.relaycorp.vera.KeyAlgorithm
 import tech.relaycorp.vera.OrganisationKeySpec
 
 internal data class VeraRdataFields(
-    private val organisationKeySpec: OrganisationKeySpec,
+    val orgKeySpec: OrganisationKeySpec,
     val ttlOverride: Duration,
     val service: ASN1ObjectIdentifier? = null,
 ) {
     override fun toString(): String {
         val fieldsOrdered = listOf(
-            organisationKeySpec.algorithm.typeId.toString(),
-            organisationKeySpec.id,
+            orgKeySpec.algorithm.typeId.toString(),
+            orgKeySpec.id,
             ttlOverride.inWholeSeconds.toString(),
         ) + (if (service != null) listOf(service.id) else emptyList())
         return fieldsOrdered.joinToString(" ")

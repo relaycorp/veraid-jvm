@@ -10,18 +10,88 @@ import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
+import tech.relaycorp.vera.dns.DnsStubs.DOMAIN_NAME
 
 class MessageUtilsTest {
     @Nested
+    inner class GetRrset {
+        private val question = RECORD.makeQuestion()
+
+        @Test
+        fun `Empty section should be ignored gracefully`() {
+            val message = Message()
+
+            message.getRrset(question, Section.ANSWER) shouldBe null
+        }
+
+        @Test
+        fun `RRset should be taken from the specified section`() {
+            val message = Message()
+            val section = Section.ANSWER
+            message.addRecord(RECORD, section)
+
+            message.getRrset(question, section + 1) shouldBe null
+        }
+
+        @Test
+        fun `RRset should match question name`() {
+            val message = Message()
+            message.addRecord(
+                RECORD.copy(name = RECORD.name.makeSubdomain("sub")),
+                Section.ANSWER
+            )
+
+            message.getRrset(question, Section.ANSWER) shouldBe null
+        }
+
+        @Test
+        fun `RRset should match question type`() {
+            val message = Message()
+            message.addRecord(
+                Record.newRecord(
+                    RECORD.name,
+                    Type.A,
+                    RECORD.dClass,
+                    RECORD.ttl,
+                    byteArrayOf(1, 1, 1, 1)
+                ),
+                Section.ANSWER
+            )
+
+            message.getRrset(question, Section.ANSWER) shouldBe null
+        }
+
+        @Test
+        fun `RRset should match question class`() {
+            val message = Message()
+            message.addRecord(
+                RECORD.copy(dClass = RECORD.dClass + 1),
+                Section.ANSWER
+            )
+
+            message.getRrset(question, Section.ANSWER) shouldBe null
+        }
+
+        @Test
+        fun `Matching RRset should be returned`() {
+            val message = Message()
+            message.addRecord(RECORD, Section.ANSWER)
+
+            val rrset = message.getRrset(question, Section.ANSWER)
+            rrset?.size() shouldBe 1
+            rrset?.first() shouldBe RECORD
+        }
+    }
+
+    @Nested
     inner class DnssecFailureDescription {
         private val failureReason = "Something went wrong"
-        private val failureReasonEncoded = failureReason.toByteArray()
         private val failureReasonRecord: Record = Record.newRecord(
             Name.root,
             Type.TXT,
             ValidatingResolver.VALIDATION_REASON_QCLASS,
             42,
-            byteArrayOf(failureReasonEncoded.size.toByte(), *failureReasonEncoded),
+            failureReason.toByteArray().txtRdataSerialise(),
         )
 
         @Test
@@ -49,7 +119,7 @@ class MessageUtilsTest {
         @Test
         fun `Record name should be the root`() {
             val invalidRecord = Record.newRecord(
-                Name.fromString(DnsStubs.DOMAIN_NAME),
+                Name.fromString(DOMAIN_NAME),
                 failureReasonRecord.type,
                 failureReasonRecord.dClass,
                 failureReasonRecord.ttl,
@@ -88,8 +158,16 @@ class MessageUtilsTest {
     @Nested
     inner class SignatureValidityPeriod {
         @Test
-        fun `Empty answers should result in null`() {
+        fun `Empty questions should result in null`() {
             val message = Message()
+
+            message.signatureValidityPeriod shouldBe null
+        }
+
+        @Test
+        fun `Empty answers should result in null`() {
+            val message = RECORD.makeResponse()
+            message.removeAllRecords(Section.ANSWER)
 
             message.signatureValidityPeriod shouldBe null
         }
@@ -155,7 +233,7 @@ class MessageUtilsTest {
 
         @Test
         fun `Irrelevant RRset should be ignored`() {
-            val irrelevantRecord = RECORD.copy(name = Name("subdomain", RECORD.name))
+            val irrelevantRecord = RECORD.copy(name = RECORD.name.makeSubdomain("sub"))
             val irrelevantRrsig = RRSIGRecord(
                 irrelevantRecord.name,
                 RRSIG.dClass,

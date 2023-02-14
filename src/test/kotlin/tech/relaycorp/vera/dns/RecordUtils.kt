@@ -1,6 +1,8 @@
 package tech.relaycorp.vera.dns
 
+import io.kotest.matchers.ints.shouldBeLessThan
 import java.time.Instant
+import kotlin.math.pow
 import kotlin.time.Duration.Companion.days
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Flags
@@ -10,6 +12,11 @@ import org.xbill.DNS.RRSIGRecord
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
+
+/**
+ * Max size of TXT rdata fields (size must be representable with a single octet).
+ */
+private val maxTxtRdataSize = (2.toDouble().pow(8) - 1).toInt()
 
 @Suppress("UNCHECKED_CAST")
 internal fun <RecordType : Record> RecordType.copy(
@@ -26,21 +33,55 @@ internal fun <RecordType : Record> RecordType.copy(
 
 internal fun Record.makeQuestion() = Record.newRecord(name, type, dClass, ttl)
 
-internal fun Record.makeQuery() = Message.newQuery(this.makeQuestion())
+internal fun Record.makeRrsig(validityPeriod: ClosedRange<Instant>) = RRSIGRecord(
+    name,
+    dClass,
+    ttl,
+    type,
+    3,
+    ttl,
+    validityPeriod.endInclusive,
+    validityPeriod.start,
+    42,
+    Name.root,
+    "the signature".toByteArray()
+)
+
+internal fun Record.makeQuery() = Message.newQuery(makeQuestion())
 
 internal fun Record.makeResponse(): Message {
     val response = Message()
     response.header.setFlag(Flags.QR.toInt())
-    response.addRecord(this.makeQuestion(), Section.QUESTION)
+    response.addRecord(makeQuestion(), Section.QUESTION)
     response.addRecord(this, Section.ANSWER)
     return response
 }
 
+internal fun Record.makeResponseWithRrsig(validityPeriod: ClosedRange<Instant>): Message {
+    val response = makeResponse()
+    response.addRecord(makeRrsig(validityPeriod), Section.ANSWER)
+    return response
+}
+
+internal fun TXTRecord.copyWithDifferentRdata(fields: VeraRdataFields) = TXTRecord(
+    name,
+    dClass,
+    ttl,
+    fields.toString()
+)
+
+internal fun ByteArray.txtRdataSerialise(): ByteArray {
+    size shouldBeLessThan maxTxtRdataSize
+    return byteArrayOf(size.toByte()) + this
+}
+
+internal val VERA_RDATA_FIELDS =
+    VeraRdataFields(VeraStubs.ORG_KEY_SPEC, 2.days, VeraStubs.SERVICE_OID)
 val RECORD = TXTRecord(
     Name.fromString("_vera.${DnsStubs.DOMAIN_NAME}"),
     DClass.IN,
     42,
-    VeraRdataFields(VeraStubs.ORG_KEY_SPEC, 2.days, VeraStubs.SERVICE_OID).toString()
+    VERA_RDATA_FIELDS.toString()
 )
 private val now: Instant = Instant.now()
 val RRSIG = RRSIGRecord(
