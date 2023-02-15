@@ -120,12 +120,12 @@ public open class Certificate internal constructor(
         }
 
         /**
-         * Deserialize certificate,
+         * Deserialise certificate,
          *
-         * @param certificateSerialized The DER-encoded serialization of the certificate
+         * @param certificateSerialized The DER-encoded serialisation of the certificate
          */
         @Throws(CertificateException::class)
-        fun deserialize(certificateSerialized: ByteArray): Certificate {
+        fun deserialise(certificateSerialized: ByteArray): Certificate {
             val certificateHolder = try {
                 X509CertificateHolder(certificateSerialized)
             } catch (exc: IOException) {
@@ -201,9 +201,9 @@ public open class Certificate internal constructor(
     }
 
     /**
-     * Return the DER serialization of the certificate.
+     * Return the DER serialisation of the certificate.
      */
-    public fun serialize(): ByteArray {
+    public fun serialise(): ByteArray {
         return certificateHolder.encoded
     }
 

@@ -551,7 +551,7 @@ class CertificateTest {
     }
 
     @Nested
-    inner class Deserialize {
+    inner class Deserialise {
         @Test
         fun `Valid certificates should be parsed`() {
             val certificate = Certificate.issue(
@@ -560,9 +560,9 @@ class CertificateTest {
                 subjectKeyPair.private,
                 validityEndDate
             )
-            val certificateSerialized = certificate.serialize()
+            val certificateSerialized = certificate.serialise()
 
-            val certificateDeserialized = Certificate.deserialize(certificateSerialized)
+            val certificateDeserialized = Certificate.deserialise(certificateSerialized)
 
             certificateDeserialized shouldBe certificate
         }
@@ -570,7 +570,7 @@ class CertificateTest {
         @Test
         fun `Invalid certificates should result in errors`() {
             val exception = assertThrows<CertificateException> {
-                Certificate.deserialize("Not a certificate".toByteArray())
+                Certificate.deserialise("Not a certificate".toByteArray())
             }
 
             exception.message shouldBe "Value should be a DER-encoded, X.509 v3 certificate"
@@ -651,7 +651,7 @@ class CertificateTest {
     }
 
     @Nested
-    inner class Serialize {
+    inner class Serialise {
         @Test
         fun `Output should be DER-encoded`() {
             val certificate = Certificate.issue(
@@ -661,7 +661,7 @@ class CertificateTest {
                 validityEndDate
             )
 
-            val certificateSerialized = certificate.serialize()
+            val certificateSerialized = certificate.serialise()
 
             val certificateHolderDeserialized = X509CertificateHolder(certificateSerialized)
             certificateHolderDeserialized shouldBe certificate.certificateHolder
