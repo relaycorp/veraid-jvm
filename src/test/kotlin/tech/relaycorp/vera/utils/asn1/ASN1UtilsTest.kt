@@ -1,4 +1,4 @@
-package tech.relaycorp.vera.asn1
+package tech.relaycorp.vera.utils.asn1
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize

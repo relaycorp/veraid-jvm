@@ -1,4 +1,4 @@
-package tech.relaycorp.vera.asn1
+package tech.relaycorp.vera.utils.asn1
 
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Primitive

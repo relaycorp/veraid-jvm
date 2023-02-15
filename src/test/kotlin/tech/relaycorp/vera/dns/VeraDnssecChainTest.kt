@@ -30,7 +30,7 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
 import tech.relaycorp.vera.KeyAlgorithm
-import tech.relaycorp.vera.asn1.parseDer
+import tech.relaycorp.vera.utils.asn1.parseDer
 
 data class RetrieverCallArgs(
     val domainName: String,
