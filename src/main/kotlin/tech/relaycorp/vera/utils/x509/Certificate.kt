@@ -253,7 +253,7 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
     fun getCertificationPath(
         intermediateCAs: Collection<Certificate>,
         trustedCAs: Collection<Certificate>
-    ): Array<Certificate> {
+    ): List<Certificate> {
         val pathBuilderResult = try {
             buildPath(intermediateCAs, trustedCAs)
         } catch (exc: CertPathBuilderException) {
@@ -279,7 +279,7 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
             cAs.add(rootCACert)
         }
 
-        return arrayOf(this, *cAs.toTypedArray())
+        return listOf(this, *cAs.toTypedArray())
     }
 
     @Throws(CertPathBuilderException::class)

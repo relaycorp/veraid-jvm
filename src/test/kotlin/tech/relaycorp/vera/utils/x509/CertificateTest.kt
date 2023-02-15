@@ -853,7 +853,7 @@ class CertificateTest {
         fun `Certificate self-issued by trusted CA should be trusted`() {
             val certPath = rootCACert.getCertificationPath(emptySet(), setOf(rootCACert))
 
-            certPath.asList() shouldBe listOf(rootCACert)
+            certPath shouldBe listOf(rootCACert)
         }
 
         @Test
@@ -867,7 +867,7 @@ class CertificateTest {
 
             val certPath = endEntityCert.getCertificationPath(emptySet(), setOf(rootCACert))
 
-            certPath.asList() shouldBe listOf(endEntityCert, rootCACert)
+            certPath shouldBe listOf(endEntityCert, rootCACert)
         }
 
         @Test
@@ -903,7 +903,7 @@ class CertificateTest {
             val certPath =
                 endEntityCert.getCertificationPath(setOf(intermediateCACert), setOf(rootCACert))
 
-            certPath.asList() shouldBe listOf(endEntityCert, intermediateCACert, rootCACert)
+            certPath shouldBe listOf(endEntityCert, intermediateCACert, rootCACert)
         }
 
         @Test
@@ -941,8 +941,12 @@ class CertificateTest {
                 setOf(rootCACert)
             )
 
-            listOf(endEntityCert, intermediateCA2Cert, intermediateCA1Cert, rootCACert) shouldBe
-                certPath.asList()
+            listOf(
+                endEntityCert,
+                intermediateCA2Cert,
+                intermediateCA1Cert,
+                rootCACert
+            ) shouldBe certPath
         }
 
         @Test
@@ -964,7 +968,7 @@ class CertificateTest {
             val certPath =
                 endEntityCert.getCertificationPath(emptySet(), setOf(intermediateCACert))
 
-            certPath.asList() shouldBe listOf(endEntityCert, intermediateCACert)
+            certPath shouldBe listOf(endEntityCert, intermediateCACert)
         }
 
         @Test
@@ -1044,7 +1048,7 @@ class CertificateTest {
                 setOf(trustedCA2Cert, rootCACert)
             )
 
-            certPath.asList() shouldBe listOf(endEntityCert, intermediateCACert, rootCACert)
+            certPath shouldBe listOf(endEntityCert, intermediateCACert, rootCACert)
         }
 
         @Test
