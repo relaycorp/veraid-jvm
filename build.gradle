@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 buildscript{
   ext {
+    bouncyCastleVersion = '1.70'
     kotlinCoroutinesVersion = '1.6.4'
     junit5Version = '5.9.2'
     okhttpVersion = '4.10.0'
@@ -46,7 +47,8 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion")
 
-  implementation("org.bouncycastle:bcprov-jdk15on:1.70") // ASN.1 serialization
+  implementation("org.bouncycastle:bcpkix-jdk15on:$bouncyCastleVersion") // Crypto
+  implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion") // ASN.1 serialization
 
   implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
   implementation("dnsjava:dnsjava:3.5.2")

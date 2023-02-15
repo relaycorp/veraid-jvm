@@ -19,10 +19,10 @@ class KeysTest {
         fun `Key pair should be returned when a valid modulus is passed`() {
             val keyPair = generateRSAKeyPair(4096)
 
-            assert(keyPair.private is RSAPrivateKey)
+            keyPair.private should beInstanceOf<RSAPrivateKey>()
             (keyPair.private as RSAPrivateKey).modulus.bitLength() shouldBe 4096
 
-            assert(keyPair.public is RSAPublicKey)
+            keyPair.public should beInstanceOf<RSAPublicKey>()
             (keyPair.public as RSAPublicKey).modulus.bitLength() shouldBe 4096
         }
 
