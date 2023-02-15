@@ -30,6 +30,9 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
 import tech.relaycorp.vera.KeyAlgorithm
+import tech.relaycorp.vera.ORG_NAME
+import tech.relaycorp.vera.ORG_KEY_SPEC
+import tech.relaycorp.vera.SERVICE_OID
 import tech.relaycorp.vera.utils.asn1.parseDer
 
 data class RetrieverCallArgs(
@@ -58,7 +61,7 @@ class VeraDnssecChainTest {
         fun `Subdomain _vera of specified domain should be queried`() = runTest {
             VeraDnssecChain.dnssecChainRetriever = makeRetriever()
 
-            VeraDnssecChain.retrieve(ORGANISATION_NAME)
+            VeraDnssecChain.retrieve(ORG_NAME)
 
             retrieverCallArgs?.domainName shouldBe "_vera.$DOMAIN_NAME"
         }
@@ -76,7 +79,7 @@ class VeraDnssecChainTest {
         fun `TXT record type should be queried`() = runTest {
             VeraDnssecChain.dnssecChainRetriever = makeRetriever()
 
-            VeraDnssecChain.retrieve(ORGANISATION_NAME)
+            VeraDnssecChain.retrieve(ORG_NAME)
 
             retrieverCallArgs?.recordType shouldBe "TXT"
         }
@@ -85,7 +88,7 @@ class VeraDnssecChainTest {
         fun `Cloudflare DNS resolver should be used by default`() = runTest {
             VeraDnssecChain.dnssecChainRetriever = makeRetriever()
 
-            VeraDnssecChain.retrieve(ORGANISATION_NAME)
+            VeraDnssecChain.retrieve(ORG_NAME)
 
             retrieverCallArgs?.resolverHost shouldBe "1.1.1.1"
         }
@@ -95,7 +98,7 @@ class VeraDnssecChainTest {
             val resolverHost = "1.2.3.4"
             VeraDnssecChain.dnssecChainRetriever = makeRetriever()
 
-            VeraDnssecChain.retrieve(ORGANISATION_NAME, resolverHost)
+            VeraDnssecChain.retrieve(ORG_NAME, resolverHost)
 
             retrieverCallArgs?.resolverHost shouldBe resolverHost
         }
@@ -106,7 +109,7 @@ class VeraDnssecChainTest {
             response.header.id = 42
             VeraDnssecChain.dnssecChainRetriever = makeRetriever(listOf(response))
 
-            val chain = VeraDnssecChain.retrieve(ORGANISATION_NAME)
+            val chain = VeraDnssecChain.retrieve(ORG_NAME)
 
             chain.responses shouldHaveSize 1
             chain.responses.first() shouldBe response
@@ -116,9 +119,9 @@ class VeraDnssecChainTest {
         fun `Domain name should be stored in chain`() = runTest {
             VeraDnssecChain.dnssecChainRetriever = makeRetriever()
 
-            val chain = VeraDnssecChain.retrieve(ORGANISATION_NAME)
+            val chain = VeraDnssecChain.retrieve(ORG_NAME)
 
-            chain.domainName shouldBe "_vera.$ORGANISATION_NAME."
+            chain.domainName shouldBe "_vera.$ORG_NAME."
         }
 
         private fun makeRetriever(responses: List<Message> = emptyList()): ChainRetriever =
@@ -134,7 +137,7 @@ class VeraDnssecChainTest {
         fun `Responses should be wrapped in an explicitly tagged SET`() {
             val response1 = Message()
             val response2 = Message(response1.header.id + 1)
-            val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response1, response2))
+            val chain = VeraDnssecChain(ORG_NAME, listOf(response1, response2))
 
             val serialisation = chain.serialise()
 
@@ -157,7 +160,7 @@ class VeraDnssecChainTest {
             val invalidSet = DERSet(vector)
 
             val error = shouldThrow<InvalidChainException> {
-                VeraDnssecChain.decode(ORGANISATION_NAME, invalidSet)
+                VeraDnssecChain.decode(ORG_NAME, invalidSet)
             }
 
             error.message shouldBe "Chain SET contains non-OCTET STRING item (${DERNull.INSTANCE})"
@@ -167,7 +170,7 @@ class VeraDnssecChainTest {
         fun `Empty set should be supported`() {
             val set = DERSet()
 
-            val chain = VeraDnssecChain.decode(ORGANISATION_NAME, set)
+            val chain = VeraDnssecChain.decode(ORG_NAME, set)
 
             chain.responses shouldHaveSize 0
         }
@@ -179,7 +182,7 @@ class VeraDnssecChainTest {
             val invalidSet = DERSet(vector)
 
             val error = shouldThrow<InvalidChainException> {
-                VeraDnssecChain.decode(ORGANISATION_NAME, invalidSet)
+                VeraDnssecChain.decode(ORG_NAME, invalidSet)
             }
 
             error.message shouldBe "Chain contains a malformed DNS message"
@@ -190,10 +193,10 @@ class VeraDnssecChainTest {
         fun `Chain should be initialised from valid SET`() {
             val response1 = Message()
             val response2 = Message(response1.header.id + 1)
-            val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response1, response2))
+            val chain = VeraDnssecChain(ORG_NAME, listOf(response1, response2))
             val encoding = parseDer(chain.serialise()) as ASN1Set
 
-            val chainDecoded = VeraDnssecChain.decode(ORGANISATION_NAME, encoding)
+            val chainDecoded = VeraDnssecChain.decode(ORG_NAME, encoding)
 
             val responsesSerialised = chainDecoded.responses.map { it.toWire().asList() }
             responsesSerialised shouldContainExactlyInAnyOrder listOf(
@@ -205,12 +208,12 @@ class VeraDnssecChainTest {
         @Test
         fun `Organisation name should be stored`() {
             val response1 = Message()
-            val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response1))
+            val chain = VeraDnssecChain(ORG_NAME, listOf(response1))
             val encoding = parseDer(chain.serialise()) as ASN1Set
 
-            val chainDecoded = VeraDnssecChain.decode(ORGANISATION_NAME, encoding)
+            val chainDecoded = VeraDnssecChain.decode(ORG_NAME, encoding)
 
-            chainDecoded.domainName shouldBe "_vera.$ORGANISATION_NAME."
+            chainDecoded.domainName shouldBe "_vera.$ORG_NAME."
         }
     }
 
@@ -242,7 +245,7 @@ class VeraDnssecChainTest {
             fun `Vera response should use the _vera subdomain`() = runTest {
                 val record = RECORD.copy(name = RECORD.name.makeSubdomain("sub"))
                 val response = record.makeResponse()
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -261,7 +264,7 @@ class VeraDnssecChainTest {
                     byteArrayOf(1, 1, 1, 1),
                 )
                 val response = record.makeResponse()
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -274,7 +277,7 @@ class VeraDnssecChainTest {
             fun `Vera response should use the IN class`() = runTest {
                 val record = RECORD.copy(dClass = RECORD.dClass + 1)
                 val response = record.makeResponse()
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -286,7 +289,7 @@ class VeraDnssecChainTest {
             @Test
             fun `Multiple Vera TXT responses should be refused`() = runTest {
                 val responses = listOf(RECORD.makeResponse(), RECORD.makeResponse())
-                val chain = VeraDnssecChain(ORGANISATION_NAME, responses)
+                val chain = VeraDnssecChain(ORG_NAME, responses)
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -299,7 +302,7 @@ class VeraDnssecChainTest {
             fun `Vera TXT response should contain an answer`() = runTest {
                 val response = RECORD.makeResponse()
                 response.removeAllRecords(Section.ANSWER)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -312,7 +315,7 @@ class VeraDnssecChainTest {
             fun `Rdata should not be empty`() = runTest {
                 val record = RECORD.copy(rdata = byteArrayOf())
                 val response = record.makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -328,7 +331,7 @@ class VeraDnssecChainTest {
                         .txtRdataSerialise()
                 )
                 val response = record.makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -341,7 +344,7 @@ class VeraDnssecChainTest {
             fun `Rdata should be valid`() = runTest {
                 val record = RECORD.copy(rdata = "malformed".toByteArray().txtRdataSerialise())
                 val response = record.makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -362,7 +365,7 @@ class VeraDnssecChainTest {
                 val otherFields = VERA_RDATA_FIELDS.copy(orgKeySpec = otherKeySpec)
                 val record = RECORD.copyWithDifferentRdata(otherFields)
                 val response = record.makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -379,7 +382,7 @@ class VeraDnssecChainTest {
                 val otherFields = VERA_RDATA_FIELDS.copy(orgKeySpec = otherKeySpec)
                 val record = RECORD.copyWithDifferentRdata(otherFields)
                 val response = record.makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -397,7 +400,7 @@ class VeraDnssecChainTest {
                 val otherFields = VERA_RDATA_FIELDS.copy(service = null)
                 val response =
                     RECORD.copyWithDifferentRdata(otherFields).makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 chain.verify(orgKeySpec, serviceOid, datePeriod)
             }
@@ -407,7 +410,7 @@ class VeraDnssecChainTest {
                 val otherFields = VERA_RDATA_FIELDS.copy(service = serviceOid)
                 val response =
                     RECORD.copyWithDifferentRdata(otherFields).makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 chain.verify(orgKeySpec, serviceOid, datePeriod)
             }
@@ -418,7 +421,7 @@ class VeraDnssecChainTest {
                 val otherFields = VERA_RDATA_FIELDS.copy(service = otherService)
                 val response =
                     RECORD.copyWithDifferentRdata(otherFields).makeResponseWithRrsig(datePeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -434,7 +437,7 @@ class VeraDnssecChainTest {
             @Test
             fun `At least one response should have an RRSig`() = runTest {
                 val response = RECORD.makeResponse()
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -451,7 +454,7 @@ class VeraDnssecChainTest {
                 val response2 = RECORD.copy(name = RECORD.name.makeSubdomain("sub"))
                     .makeResponseWithRrsig(nonOverlappingPeriod)
                 val chain =
-                    VeraDnssecChain(ORGANISATION_NAME, listOf(response1, response2))
+                    VeraDnssecChain(ORG_NAME, listOf(response1, response2))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -467,7 +470,7 @@ class VeraDnssecChainTest {
                 val responseWithoutRrsig =
                     RECORD.copy(name = RECORD.name.makeSubdomain("sub")).makeResponse()
                 val chain = VeraDnssecChain(
-                    ORGANISATION_NAME,
+                    ORG_NAME,
                     listOf(responseWithRrsig, responseWithoutRrsig)
                 )
 
@@ -480,7 +483,7 @@ class VeraDnssecChainTest {
                 val record =
                     RECORD.copyWithDifferentRdata(VERA_RDATA_FIELDS.copy(ttlOverride = ttl))
                 val response = record.makeResponseWithRrsig(datePeriod)
-                val chainSpy = spy(VeraDnssecChain(ORGANISATION_NAME, listOf(response)))
+                val chainSpy = spy(VeraDnssecChain(ORG_NAME, listOf(response)))
 
                 chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
 
@@ -494,7 +497,7 @@ class VeraDnssecChainTest {
                 val record =
                     RECORD.copyWithDifferentRdata(VERA_RDATA_FIELDS.copy(ttlOverride = ttl))
                 val response = record.makeResponseWithRrsig(datePeriod)
-                val chainSpy = spy(VeraDnssecChain(ORGANISATION_NAME, listOf(response)))
+                val chainSpy = spy(VeraDnssecChain(ORG_NAME, listOf(response)))
 
                 chainSpy.verify(orgKeySpec, serviceOid, start..datePeriod.endInclusive)
 
@@ -516,7 +519,7 @@ class VeraDnssecChainTest {
                 val response = wildcardRecord.makeResponseWithRrsig(datePeriod)
                 // Leave the concrete record to the end, to ensure we don't just pick the first
                 response.addRecord(concreteRecord, Section.ANSWER)
-                val chainSpy = spy(VeraDnssecChain(ORGANISATION_NAME, listOf(response)))
+                val chainSpy = spy(VeraDnssecChain(ORG_NAME, listOf(response)))
 
                 chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
 
@@ -528,7 +531,7 @@ class VeraDnssecChainTest {
                 val nonOverlappingPeriod =
                     datePeriod.endInclusive.plusSeconds(1)..datePeriod.endInclusive.plusSeconds(2)
                 val responseWithRrsig = RECORD.makeResponseWithRrsig(nonOverlappingPeriod)
-                val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(responseWithRrsig))
+                val chain = VeraDnssecChain(ORG_NAME, listOf(responseWithRrsig))
 
                 val exception = shouldThrow<InvalidChainException> {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -547,7 +550,7 @@ class VeraDnssecChainTest {
                     .makeResponseWithRrsig(datePeriod)
                 val chainSpy = spy(
                     VeraDnssecChain(
-                        ORGANISATION_NAME,
+                        ORG_NAME,
                         listOf(response1WithRrsig, response2WithRrsig)
                     )
                 )
@@ -567,7 +570,7 @@ class VeraDnssecChainTest {
                 fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds))
             )
             response.addRecord(record2, Section.ANSWER)
-            val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+            val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
             val exception = shouldThrow<InvalidChainException> {
                 chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -585,7 +588,7 @@ class VeraDnssecChainTest {
                 fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds))
             )
             response.addRecord(record2, Section.ANSWER)
-            val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+            val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
             val exception = shouldThrow<InvalidChainException> {
                 chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -597,7 +600,7 @@ class VeraDnssecChainTest {
         @Test
         fun `Valid chain should verify successfully`() = runTest {
             val response = RECORD.makeResponseWithRrsig(datePeriod)
-            val chain = VeraDnssecChain(ORGANISATION_NAME, listOf(response))
+            val chain = VeraDnssecChain(ORG_NAME, listOf(response))
 
             chain.verify(orgKeySpec, serviceOid, datePeriod)
         }

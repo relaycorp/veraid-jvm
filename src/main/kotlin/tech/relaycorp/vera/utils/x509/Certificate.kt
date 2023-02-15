@@ -34,7 +34,7 @@ import tech.relaycorp.vera.utils.generateRandomBigInteger
 import tech.relaycorp.vera.utils.getSHA256Digest
 
 /**
- * Relaynet PKI Certificate.
+ * Certificate.
  *
  * @param certificateHolder Bouncy Castle representation of the X.509 certificate
  */
@@ -44,12 +44,10 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
             JcaX509CertificateConverter().setProvider(BC_PROVIDER)
 
         /**
-         * Issue a new Relaynet PKI certificate.
-         *
-         * @suppress
+         * Issue a new certificate.
          */
         @Throws(CertificateException::class)
-        internal fun issue(
+        fun issue(
             subjectCommonName: String,
             subjectPublicKey: PublicKey,
             issuerPrivateKey: PrivateKey,
@@ -180,7 +178,7 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
     /**
      * Report whether the subject is a CA.
      */
-    internal val isCA: Boolean by lazy { basicConstraints?.isCA == true }
+    val isCA: Boolean by lazy { basicConstraints?.isCA == true }
 
     /**
      * Report whether this certificate equals another.
@@ -267,7 +265,7 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
             X509CertificateHolder(it.encoded)
         }
 
-        // Convert the BC certificates back to the original Relaynet Certificate instances.
+        // Convert the BC certificates back to the original Certificate instances.
         val cAs = bcCertPath.slice(1..bcCertPath.lastIndex).map { copy ->
             intermediateCAs.single { original -> copy == original.certificateHolder }
         }.toMutableList()
