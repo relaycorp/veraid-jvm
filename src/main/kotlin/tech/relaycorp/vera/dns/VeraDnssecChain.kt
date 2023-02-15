@@ -27,15 +27,17 @@ public class VeraDnssecChain internal constructor(
     organisationName: String,
     responses: List<Message>,
 ) : DnssecChain("_vera.$organisationName.", VERA_RECORD_TYPE, responses) {
-    /**
-     * Serialise the chain.
-     */
-    public fun serialise(): ByteArray {
+    internal fun encode(): ASN1Set {
         val responsesWrapped = responses.map { DEROctetString(it.toWire()) }
         val vector = ASN1EncodableVector(responsesWrapped.size)
         vector.addAll(responsesWrapped.toTypedArray())
-        return DERSet(vector).encoded
+        return DERSet(vector)
     }
+
+    /**
+     * Serialise the chain.
+     */
+    public fun serialise(): ByteArray = encode().encoded
 
     /**
      * Verify the chain

@@ -152,6 +152,25 @@ class VeraDnssecChainTest {
     }
 
     @Nested
+    inner class Encode {
+        @Test
+        fun `Responses should be wrapped in an explicitly tagged SET`() {
+            val response1 = Message()
+            val response2 = Message(response1.header.id + 1)
+            val chain = VeraDnssecChain(ORG_NAME, listOf(response1, response2))
+
+            val asn1Set = chain.encode()
+
+            val set = ASN1Set.getInstance(asn1Set)
+            set shouldHaveSize 2
+            set.first() should beInstanceOf<DEROctetString>()
+            (set.first() as DEROctetString).octets shouldBe response1.toWire()
+            set.last() should beInstanceOf<DEROctetString>()
+            (set.last() as DEROctetString).octets shouldBe response2.toWire()
+        }
+    }
+
+    @Nested
     inner class Decode {
         @Test
         fun `Non-OCTET STRING item should be refused`() {

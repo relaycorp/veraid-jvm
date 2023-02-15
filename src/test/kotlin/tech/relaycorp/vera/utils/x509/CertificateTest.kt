@@ -22,7 +22,7 @@ import java.util.Date
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERBMPString
 import org.bouncycastle.asn1.DERNull
-import org.bouncycastle.asn1.DERSequence
+import org.bouncycastle.asn1.DLTaggedObject
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.X500NameBuilder
@@ -553,6 +553,24 @@ class CertificateTest {
     }
 
     @Nested
+    inner class Serialise {
+        @Test
+        fun `Output should be DER-encoded`() {
+            val certificate = Certificate.issue(
+                subjectCommonName,
+                subjectKeyPair.public,
+                subjectKeyPair.private,
+                validityEndDate
+            )
+
+            val certificateSerialized = certificate.serialise()
+
+            val certificateHolderDeserialized = X509CertificateHolder(certificateSerialized)
+            certificateHolderDeserialized shouldBe certificate.certificateHolder
+        }
+    }
+
+    @Nested
     inner class Deserialise {
         @Test
         fun `Valid certificates should be parsed`() {
@@ -581,6 +599,24 @@ class CertificateTest {
     }
 
     @Nested
+    inner class Encode {
+        @Test
+        fun `Output should be ASN1 encoded`() {
+            val certificate = Certificate.issue(
+                subjectCommonName,
+                subjectKeyPair.public,
+                subjectKeyPair.private,
+                validityEndDate
+            )
+
+            val certificateEncoded = certificate.encode()
+
+            val certificateHolder = X509CertificateHolder(certificateEncoded)
+            certificateHolder shouldBe certificate.certificateHolder
+        }
+    }
+
+    @Nested
     inner class Decode {
         @Test
         fun `Valid certificates should be parsed`() {
@@ -590,8 +626,7 @@ class CertificateTest {
                 subjectKeyPair.private,
                 validityEndDate
             )
-            val certificateSerialized = certificate.serialise()
-            val certificateEncoded = DERSequence.getInstance(certificateSerialized)
+            val certificateEncoded = DLTaggedObject(false, 1, certificate.encode())
 
             val certificateDeserialized = Certificate.decode(certificateEncoded)
 
@@ -599,13 +634,31 @@ class CertificateTest {
         }
 
         @Test
-        fun `Invalid certificates should result in errors`() {
+        fun `Valid yet explicitly-tagged certificates should result in errors`() {
+            val certificate = Certificate.issue(
+                subjectCommonName,
+                subjectKeyPair.public,
+                subjectKeyPair.private,
+                validityEndDate
+            )
+            val certificateEncoded = DLTaggedObject(true, 1, certificate.encode())
+
             val exception = assertThrows<CertificateException> {
-                Certificate.decode(DERNull.INSTANCE)
+                Certificate.decode(certificateEncoded)
             }
 
             exception.message shouldBe "ASN.1 value is not an X.509 v3 certificate"
-            exception.cause should beInstanceOf<IllegalArgumentException>()
+            exception.cause should beInstanceOf<IllegalStateException>()
+        }
+
+        @Test
+        fun `Invalid certificates should result in errors`() {
+            val exception = assertThrows<CertificateException> {
+                Certificate.decode(DLTaggedObject(false, 0, DERNull.INSTANCE))
+            }
+
+            exception.message shouldBe "ASN.1 value is not an X.509 v3 certificate"
+            exception.cause should beInstanceOf<IllegalStateException>()
         }
     }
 
@@ -678,24 +731,6 @@ class CertificateTest {
             )
 
             certificate.issuerCommonName shouldBe issuerCertificate.commonName
-        }
-    }
-
-    @Nested
-    inner class Serialise {
-        @Test
-        fun `Output should be DER-encoded`() {
-            val certificate = Certificate.issue(
-                subjectCommonName,
-                subjectKeyPair.public,
-                subjectKeyPair.private,
-                validityEndDate
-            )
-
-            val certificateSerialized = certificate.serialise()
-
-            val certificateHolderDeserialized = X509CertificateHolder(certificateSerialized)
-            certificateHolderDeserialized shouldBe certificate.certificateHolder
         }
     }
 
