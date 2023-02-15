@@ -678,6 +678,11 @@ class CertificateTest {
         )
 
         @Test
+        fun `A null value should not equal`() {
+            stubCertificate shouldNotBe null
+        }
+
+        @Test
         fun `A non-Certificate object should not equal`() {
             stubCertificate shouldNotBe "Hey"
         }
@@ -696,9 +701,18 @@ class CertificateTest {
         }
 
         @Test
-        fun `An equivalent certificate should equal`() {
+        fun `An equivalent certificate of the same class should equal`() {
             val sameCertificate = Certificate(stubCertificate.certificateHolder)
             sameCertificate shouldBe stubCertificate
+        }
+
+        @Test
+        fun `An equivalent certificate of a different class should not equal`() {
+            val certificate1 = Certificate(stubCertificate.certificateHolder)
+            val certificate2 = object : Certificate(stubCertificate.certificateHolder) {
+                // This is a subclass
+            }
+            certificate1 shouldNotBe certificate2
         }
     }
 

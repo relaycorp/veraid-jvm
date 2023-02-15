@@ -38,8 +38,10 @@ import tech.relaycorp.vera.utils.getSHA256Digest
  *
  * @param certificateHolder Bouncy Castle representation of the X.509 certificate
  */
-internal class Certificate(val certificateHolder: X509CertificateHolder) {
-    companion object {
+public open class Certificate internal constructor(
+    internal val certificateHolder: X509CertificateHolder,
+) {
+    internal companion object {
         private val bcToJavaCertificateConverter: JcaX509CertificateConverter =
             JcaX509CertificateConverter().setProvider(BC_PROVIDER)
 
@@ -144,31 +146,31 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
     /**
      * Return the Common Name of the subject
      */
-    val commonName: String
+    public val commonName: String
         get() = getCommonName(certificateHolder.subject)
 
     /**
      * The public key of the subject.
      */
-    val subjectPublicKey: PublicKey
+    public val subjectPublicKey: PublicKey
         get() = convertCertToJava(this).publicKey
 
     /**
      * Return the Common Name of the issuer
      */
-    val issuerCommonName: String
+    public val issuerCommonName: String
         get() = getCommonName(certificateHolder.issuer)
 
     /**
      * The start date of the certificate.
      */
-    val startDate: ZonedDateTime
+    public val startDate: ZonedDateTime
         get() = dateToZonedDateTime(certificateHolder.notBefore)
 
     /**
      * The expiry date of the certificate.
      */
-    val expiryDate: ZonedDateTime
+    public val expiryDate: ZonedDateTime
         get() = dateToZonedDateTime(certificateHolder.notAfter)
 
     private val basicConstraints: BasicConstraints? by lazy {
@@ -178,15 +180,16 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
     /**
      * Report whether the subject is a CA.
      */
-    val isCA: Boolean by lazy { basicConstraints?.isCA == true }
+    internal val isCA: Boolean by lazy { basicConstraints?.isCA == true }
 
     /**
      * Report whether this certificate equals another.
      */
     override fun equals(other: Any?): Boolean {
-        if (other !is Certificate) {
+        if (other?.javaClass != this.javaClass) {
             return false
         }
+        other as Certificate
         return certificateHolder == other.certificateHolder
     }
 
@@ -198,9 +201,9 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
     }
 
     /**
-     * Return the DER cerialization of the certificate.
+     * Return the DER serialization of the certificate.
      */
-    fun serialize(): ByteArray {
+    public fun serialize(): ByteArray {
         return certificateHolder.encoded
     }
 
@@ -211,7 +214,7 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
      * This doesn't check that [potentialIssuer] actually signed the current certificate --
      * hence the "likely".
      */
-    fun isLikelyIssuer(potentialIssuer: Certificate) =
+    internal fun isLikelyIssuer(potentialIssuer: Certificate) =
         certificateHolder.issuer == potentialIssuer.certificateHolder.subject
 
     /**
@@ -220,7 +223,7 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
      * @throws CertificateException If the certificate is invalid
      */
     @Throws(CertificateException::class)
-    fun validate() {
+    internal fun validate() {
         validateValidityPeriod()
         validateCommonNamePresence()
     }
@@ -248,7 +251,7 @@ internal class Certificate(val certificateHolder: X509CertificateHolder) {
      * @throws CertificateException if no path could be found
      */
     @Throws(CertificateException::class)
-    fun getCertificationPath(
+    internal fun getCertificationPath(
         intermediateCAs: Collection<Certificate>,
         trustedCAs: Collection<Certificate>
     ): List<Certificate> {
