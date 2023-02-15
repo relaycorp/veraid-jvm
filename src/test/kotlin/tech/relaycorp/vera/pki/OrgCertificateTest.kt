@@ -78,18 +78,14 @@ class OrgCertificateTest {
         inner class BasicConstraintsExtension {
             @Test
             fun `Subject should be a CA`() {
-                val startDate = expiryDate.minusSeconds(2)
-
-                val cert = OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, expiryDate, startDate)
+                val cert = OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, expiryDate)
 
                 cert.isCA shouldBe true
             }
 
             @Test
             fun `Path length should be zero`() {
-                val startDate = expiryDate.minusSeconds(2)
-
-                val cert = OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, expiryDate, startDate)
+                val cert = OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, expiryDate)
 
                 val basicConstraints =
                     BasicConstraints.fromExtensions(cert.certificateHolder.extensions)

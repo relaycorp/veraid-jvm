@@ -37,7 +37,7 @@ class KeysTest {
 
         @Test
         fun `Modulus should be 2048 or greater`() {
-            val exception = assertThrows<KeyException> {
+            val exception = assertThrows<PKIException> {
                 generateRSAKeyPair(2047)
             }
             exception.message shouldBe "Modulus should be at least 2048 (got 2047)"
@@ -57,7 +57,7 @@ class KeysTest {
         @Test
         fun `Deserialize invalid key`() {
             val exception =
-                assertThrows<KeyException> { "s".toByteArray().deserializeRSAKeyPair() }
+                assertThrows<PKIException> { "s".toByteArray().deserializeRSAKeyPair() }
 
             exception.message shouldBe "Value is not a valid RSA private key"
             exception.cause should beInstanceOf<InvalidKeySpecException>()
@@ -91,7 +91,7 @@ class KeysTest {
         @Test
         fun `Deserialize invalid key`() {
             val exception =
-                assertThrows<KeyException> { "s".toByteArray().deserializeRSAPublicKey() }
+                assertThrows<PKIException> { "s".toByteArray().deserializeRSAPublicKey() }
 
             exception.message shouldBe "Value is not a valid RSA public key"
             exception.cause should beInstanceOf<InvalidKeySpecException>()
