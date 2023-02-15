@@ -21,6 +21,8 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERBMPString
+import org.bouncycastle.asn1.DERNull
+import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.X500NameBuilder
@@ -575,6 +577,35 @@ class CertificateTest {
 
             exception.message shouldBe "Value should be a DER-encoded, X.509 v3 certificate"
             exception.cause should beInstanceOf<IOException>()
+        }
+    }
+
+    @Nested
+    inner class Decode {
+        @Test
+        fun `Valid certificates should be parsed`() {
+            val certificate = Certificate.issue(
+                subjectCommonName,
+                subjectKeyPair.public,
+                subjectKeyPair.private,
+                validityEndDate
+            )
+            val certificateSerialized = certificate.serialise()
+            val certificateEncoded = DERSequence.getInstance(certificateSerialized)
+
+            val certificateDeserialized = Certificate.decode(certificateEncoded)
+
+            certificateDeserialized shouldBe certificate
+        }
+
+        @Test
+        fun `Invalid certificates should result in errors`() {
+            val exception = assertThrows<CertificateException> {
+                Certificate.decode(DERNull.INSTANCE)
+            }
+
+            exception.message shouldBe "ASN.1 value is not an X.509 v3 certificate"
+            exception.cause should beInstanceOf<IllegalArgumentException>()
         }
     }
 

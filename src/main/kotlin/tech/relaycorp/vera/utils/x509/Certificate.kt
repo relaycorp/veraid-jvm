@@ -16,6 +16,7 @@ import java.security.cert.X509CertSelector
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
+import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.DERBMPString
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.X500NameBuilder
@@ -117,6 +118,20 @@ public open class Certificate internal constructor(
             val builder = X500NameBuilder(BCStyle.INSTANCE)
             builder.addRDN(BCStyle.CN, DERBMPString(commonName))
             return builder.build()
+        }
+
+        /**
+         * Decode certificate.
+         */
+        @Throws(CertificateException::class)
+        fun decode(certificateEncoded: ASN1Encodable): Certificate {
+            val bcCertificate = try {
+                org.bouncycastle.asn1.x509.Certificate.getInstance(certificateEncoded)
+            } catch (exc: IllegalArgumentException) {
+                throw CertificateException("ASN.1 value is not an X.509 v3 certificate", exc)
+            }
+            val certificateHolder = X509CertificateHolder(bcCertificate)
+            return Certificate(certificateHolder)
         }
 
         /**
