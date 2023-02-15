@@ -679,7 +679,7 @@ class CertificateTest {
 
         @Test
         fun `A null value should not equal`() {
-            stubCertificate shouldNotBe null
+            stubCertificate.equals(null) shouldBe false
         }
 
         @Test
