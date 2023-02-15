@@ -70,8 +70,8 @@ class KeysTest {
 
             val keyPairDeserialized = privateKeySerialized.deserializeRSAKeyPair()
 
-            keyPairDeserialized.private.encoded.asList() shouldBe keyPair.private.encoded.asList()
-            keyPairDeserialized.public.encoded.asList() shouldBe keyPair.public.encoded.asList()
+            keyPairDeserialized.private shouldBe keyPair.private
+            keyPairDeserialized.public shouldBe keyPair.public
         }
 
         @Test
@@ -104,7 +104,7 @@ class KeysTest {
 
             val publicKeyDeserialized = publicKeySerialized.deserializeRSAPublicKey()
 
-            publicKeyDeserialized.encoded.asList() shouldBe publicKeySerialized.asList()
+            publicKeyDeserialized shouldBe keyPair.public
         }
 
         @Test

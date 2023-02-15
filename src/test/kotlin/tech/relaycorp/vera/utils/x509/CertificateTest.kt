@@ -479,7 +479,7 @@ class CertificateTest {
                     certificate.certificateHolder.extensions
                 )
                 val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
-                aki.keyIdentifier.asList() shouldBe sha256(subjectPublicKeyInfo.encoded).asList()
+                aki.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
             }
 
             @Test
@@ -529,7 +529,7 @@ class CertificateTest {
                 val aki = AuthorityKeyIdentifier.fromExtensions(
                     subjectCertificate.certificateHolder.extensions
                 )
-                aki.keyIdentifier.asList() shouldBe sha256(issuerPublicKeyInfo.encoded).asList()
+                aki.keyIdentifier shouldBe sha256(issuerPublicKeyInfo.encoded)
             }
         }
 
@@ -546,7 +546,7 @@ class CertificateTest {
                 certificate.certificateHolder.extensions
             )
             val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
-            ski.keyIdentifier.asList() shouldBe sha256(subjectPublicKeyInfo.encoded).asList()
+            ski.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
         }
     }
 

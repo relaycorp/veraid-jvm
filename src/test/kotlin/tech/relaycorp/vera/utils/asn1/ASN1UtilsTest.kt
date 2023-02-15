@@ -36,7 +36,7 @@ internal class ASN1UtilsTest {
 
             val item2 = sequence.getObjectAt(1)
             item2 should beInstanceOf<DEROctetString>()
-            (item2 as DEROctetString).octets.asList() shouldBe octetString.octets.asList()
+            (item2 as DEROctetString).octets shouldBe octetString.octets
         }
 
         @Test
@@ -50,7 +50,7 @@ internal class ASN1UtilsTest {
 
             val item2 = ASN1Utils.getOctetString(sequence.getObjectAt(1) as ASN1TaggedObject)
             val item2Serialization = (item2.loadedObject as DEROctetString).octets
-            item2Serialization.asList() shouldBe octetString.octets.asList()
+            item2Serialization shouldBe octetString.octets
         }
     }
 
@@ -71,7 +71,7 @@ internal class ASN1UtilsTest {
             item2 should beInstanceOf<DEROctetStringParser>()
             item2 as DEROctetStringParser
             val item2Serialisation = (item2.loadedObject as DEROctetString).octets
-            item2Serialisation.asList() shouldBe octetString.octets.asList()
+            item2Serialisation shouldBe octetString.octets
         }
 
         @Test
@@ -88,7 +88,7 @@ internal class ASN1UtilsTest {
 
             val item2 = ASN1Utils.getOctetString(sequence[1] as ASN1TaggedObject)
             val item2Serialization = (item2.loadedObject as DEROctetString).octets
-            item2Serialization.asList() shouldBe octetString.octets.asList()
+            item2Serialization shouldBe octetString.octets
         }
     }
 
@@ -157,9 +157,9 @@ internal class ASN1UtilsTest {
 
             sequence.size shouldBe 2
             val item1Serialization = ASN1Utils.getVisibleString(sequence[0]).octets
-            item1Serialization.asList() shouldBe visibleString.octets.asList()
+            item1Serialization shouldBe visibleString.octets
             val item2Serialization = ASN1Utils.getOctetString(sequence[1]).octets
-            item2Serialization.asList() shouldBe octetString.octets.asList()
+            item2Serialization shouldBe octetString.octets
         }
     }
 
