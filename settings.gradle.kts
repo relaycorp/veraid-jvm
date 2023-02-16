@@ -1,1 +1,1 @@
-rootProject.name = "vera"
+rootProject.name = "veraid"

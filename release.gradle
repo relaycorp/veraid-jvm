@@ -15,7 +15,7 @@ publishing {
             pom {
                 name.set(rootProject.name)
                 description.set("VeraId library")
-                url.set("https://github.com/relaycorp/vera-jvm")
+                url.set("https://github.com/relaycorp/veraid-jvm")
                 developers {
                     developer {
                         id.set("relaycorp")
@@ -29,11 +29,11 @@ publishing {
                     }
                 }
                 scm {
-                    connection.set("scm:git:https://github.com/relaycorp/vera-jvm.git")
+                    connection.set("scm:git:https://github.com/relaycorp/veraid-jvm.git")
                     developerConnection.set(
-                            "scm:git:https://github.com/relaycorp/vera-jvm.git"
+                            "scm:git:https://github.com/relaycorp/veraid-jvm.git"
                     )
-                    url.set("https://github.com/relaycorp/vera-jvm")
+                    url.set("https://github.com/relaycorp/veraid-jvm")
                 }
             }
         }

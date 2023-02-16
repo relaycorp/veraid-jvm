@@ -1,6 +1,4 @@
-# vera-jvm
-
-VeraId library for the JVM
+# VeraId library for the JVM
 
 ## Developer notes
 
