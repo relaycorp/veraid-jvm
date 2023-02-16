@@ -12,9 +12,38 @@ $dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain.Companion///PointingToDe
 $dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain.Companion/retrieve/#kotlin.String#kotlin.String/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/-companion/retrieve.html
 $dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain///PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/index.html
 $dokka.location:tech.relaycorp.vera.dns/VeraDnssecChain/serialise/#/PointingToDeclaration/vera/tech.relaycorp.vera.dns/-vera-dnssec-chain/serialise.html
+$dokka.location:tech.relaycorp.vera.pki////PointingToDeclaration/vera/tech.relaycorp.vera.pki/index.html
+$dokka.location:tech.relaycorp.vera.pki//deserializeRSAKeyPair/kotlin.ByteArray#/PointingToDeclaration/vera/tech.relaycorp.vera.pki/deserialize-r-s-a-key-pair.html
+$dokka.location:tech.relaycorp.vera.pki//deserializeRSAPublicKey/kotlin.ByteArray#/PointingToDeclaration/vera/tech.relaycorp.vera.pki/deserialize-r-s-a-public-key.html
+$dokka.location:tech.relaycorp.vera.pki//generateRSAKeyPair/#kotlin.Int/PointingToDeclaration/vera/tech.relaycorp.vera.pki/generate-r-s-a-key-pair.html
+$dokka.location:tech.relaycorp.vera.pki/MemberCertificate.Companion///PointingToDeclaration/vera/tech.relaycorp.vera.pki/-member-certificate/-companion/index.html
+$dokka.location:tech.relaycorp.vera.pki/MemberCertificate.Companion/issue/#kotlin.String?#java.security.PublicKey#tech.relaycorp.vera.pki.OrgCertificate#java.security.PrivateKey#java.time.ZonedDateTime#java.time.ZonedDateTime/PointingToDeclaration/vera/tech.relaycorp.vera.pki/-member-certificate/-companion/issue.html
+$dokka.location:tech.relaycorp.vera.pki/MemberCertificate///PointingToDeclaration/vera/tech.relaycorp.vera.pki/-member-certificate/index.html
+$dokka.location:tech.relaycorp.vera.pki/MemberIdBundle///PointingToDeclaration/vera/tech.relaycorp.vera.pki/-member-id-bundle/index.html
+$dokka.location:tech.relaycorp.vera.pki/MemberIdBundle/MemberIdBundle/#tech.relaycorp.vera.dns.VeraDnssecChain#tech.relaycorp.vera.pki.OrgCertificate#tech.relaycorp.vera.pki.MemberCertificate/PointingToDeclaration/vera/tech.relaycorp.vera.pki/-member-id-bundle/-member-id-bundle.html
+$dokka.location:tech.relaycorp.vera.pki/MemberIdBundle/serialise/#/PointingToDeclaration/vera/tech.relaycorp.vera.pki/-member-id-bundle/serialise.html
+$dokka.location:tech.relaycorp.vera.pki/OrgCertificate.Companion///PointingToDeclaration/vera/tech.relaycorp.vera.pki/-org-certificate/-companion/index.html
+$dokka.location:tech.relaycorp.vera.pki/OrgCertificate.Companion/selfIssue/#kotlin.String#java.security.KeyPair#java.time.ZonedDateTime#java.time.ZonedDateTime/PointingToDeclaration/vera/tech.relaycorp.vera.pki/-org-certificate/-companion/self-issue.html
+$dokka.location:tech.relaycorp.vera.pki/OrgCertificate///PointingToDeclaration/vera/tech.relaycorp.vera.pki/-org-certificate/index.html
+$dokka.location:tech.relaycorp.vera.pki/PKIException///PointingToDeclaration/vera/tech.relaycorp.vera.pki/-p-k-i-exception/index.html
+$dokka.location:tech.relaycorp.vera.pki/PKIException/PKIException/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/vera/tech.relaycorp.vera.pki/-p-k-i-exception/-p-k-i-exception.html
+$dokka.location:tech.relaycorp.vera.utils.x509////PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/index.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate///PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/index.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/commonName/#/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/common-name.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/equals/#kotlin.Any?/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/equals.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/expiryDate/#/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/expiry-date.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/hashCode/#/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/hash-code.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/issuerCommonName/#/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/issuer-common-name.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/serialise/#/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/serialise.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/startDate/#/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/start-date.html
+$dokka.location:tech.relaycorp.vera.utils.x509/Certificate/subjectPublicKey/#/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate/subject-public-key.html
+$dokka.location:tech.relaycorp.vera.utils.x509/CertificateException///PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate-exception/index.html
+$dokka.location:tech.relaycorp.vera.utils.x509/CertificateException/CertificateException/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/vera/tech.relaycorp.vera.utils.x509/-certificate-exception/-certificate-exception.html
 $dokka.location:tech.relaycorp.vera////PointingToDeclaration/vera/tech.relaycorp.vera/index.html
 $dokka.location:tech.relaycorp.vera/VeraException///PointingToDeclaration/vera/tech.relaycorp.vera/-vera-exception/index.html
 $dokka.location:tech.relaycorp.vera/VeraException/VeraException/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/vera/tech.relaycorp.vera/-vera-exception/-vera-exception.html
 tech.relaycorp.vera
 tech.relaycorp.vera.dns
+tech.relaycorp.vera.pki
+tech.relaycorp.vera.utils.x509
 
