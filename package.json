@@ -1,5 +1,5 @@
 {
-  "name": "vera",
+  "name": "veraid",
   "devDependencies": {
     "gradle-semantic-release-plugin": "^1.7.2"
   }
