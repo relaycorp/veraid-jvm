@@ -12,6 +12,8 @@ import org.xbill.DNS.RRSIGRecord
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
+import tech.relaycorp.vera.ORG_KEY_SPEC
+import tech.relaycorp.vera.SERVICE_OID
 
 /**
  * Max size of TXT rdata fields (size must be representable with a single octet).

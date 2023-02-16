@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.vera.KeyAlgorithm
 import tech.relaycorp.vera.OrganisationKeySpec
+import tech.relaycorp.vera.SERVICE_OID
 
 class VeraRdataFieldsTest {
     private val orgKeyAlgorithm = KeyAlgorithm.RSA_2048
