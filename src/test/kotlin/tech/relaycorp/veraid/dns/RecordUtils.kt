@@ -14,6 +14,7 @@ import tech.relaycorp.veraid.SERVICE_OID
 import java.time.Instant
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.days
+import tech.relaycorp.veraid.DatePeriod
 
 /**
  * Max size of TXT rdata fields (size must be representable with a single octet).
