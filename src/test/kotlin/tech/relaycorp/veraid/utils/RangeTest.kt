@@ -4,7 +4,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-class TimeTest {
+class RangeTest {
     @Nested
     inner class IntersectInstantRange {
         @Test

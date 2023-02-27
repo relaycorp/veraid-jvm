@@ -13,9 +13,9 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
+import tech.relaycorp.veraid.DatePeriod
 import tech.relaycorp.veraid.OrganisationKeySpec
 import tech.relaycorp.veraid.utils.intersect
-import java.time.Instant
 import kotlin.time.toJavaDuration
 
 /**
@@ -46,7 +46,7 @@ public class VeraDnssecChain internal constructor(
     internal suspend fun verify(
         orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
-        datePeriod: ClosedRange<Instant>,
+        datePeriod: DatePeriod,
     ) {
         val verificationPeriod = calculateVerificationPeriod(datePeriod, orgKeySpec, serviceOid)
         val chainValidityPeriod = getChainValidityPeriod()
@@ -57,7 +57,7 @@ public class VeraDnssecChain internal constructor(
         super.verify(intersectingPeriod.start)
     }
 
-    private fun getChainValidityPeriod(): ClosedRange<Instant> {
+    private fun getChainValidityPeriod(): DatePeriod {
         val chainValidityPeriod = responses
             .mapNotNull { it.signatureValidityPeriod }.ifEmpty {
                 throw InvalidChainException("Chain does not contain RRSig records")
@@ -71,10 +71,10 @@ public class VeraDnssecChain internal constructor(
     }
 
     private fun calculateVerificationPeriod(
-        datePeriod: ClosedRange<Instant>,
+        datePeriod: DatePeriod,
         orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
-    ): ClosedRange<Instant> {
+    ): DatePeriod {
         val matchingFields = getRdataFields(orgKeySpec, serviceOid)
         val ttlOverride = matchingFields.ttlOverride
         val truncatedStart = datePeriod.endInclusive.minus(ttlOverride.toJavaDuration())

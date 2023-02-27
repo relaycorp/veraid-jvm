@@ -35,7 +35,7 @@ internal fun <RecordType : Record> RecordType.copy(
 
 internal fun Record.makeQuestion() = Record.newRecord(name, type, dClass, ttl)
 
-internal fun Record.makeRrsig(validityPeriod: ClosedRange<Instant>) = RRSIGRecord(
+internal fun Record.makeRrsig(validityPeriod: DatePeriod) = RRSIGRecord(
     name,
     dClass,
     ttl,
@@ -59,7 +59,7 @@ internal fun Record.makeResponse(): Message {
     return response
 }
 
-internal fun Record.makeResponseWithRrsig(validityPeriod: ClosedRange<Instant>): Message {
+internal fun Record.makeResponseWithRrsig(validityPeriod: DatePeriod): Message {
     val response = makeResponse()
     response.addRecord(makeRrsig(validityPeriod), Section.ANSWER)
     return response

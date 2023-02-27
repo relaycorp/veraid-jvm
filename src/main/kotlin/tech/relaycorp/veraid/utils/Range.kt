@@ -1,4 +1,4 @@
-@file:JvmName("Time")
+@file:JvmName("Range")
 
 package tech.relaycorp.veraid.utils
 
