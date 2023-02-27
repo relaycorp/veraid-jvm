@@ -9,11 +9,6 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
-import java.io.ByteArrayInputStream
-import java.nio.charset.Charset
-import java.time.Clock
-import java.time.Instant
-import java.util.concurrent.CompletableFuture
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -31,6 +26,11 @@ import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
 import tech.relaycorp.veraid.dns.resolvers.OfflineResolver
 import tech.relaycorp.veraid.dns.resolvers.PersistingResolver
+import java.io.ByteArrayInputStream
+import java.nio.charset.Charset
+import java.time.Clock
+import java.time.Instant
+import java.util.concurrent.CompletableFuture
 
 class DnssecChainTest {
     private val recordType = "TXT"
@@ -52,7 +52,7 @@ class DnssecChainTest {
             val headResolver = mock<SimpleResolver>()
             val response = Message()
             whenever(headResolver.sendAsync(any())).thenReturn(
-                CompletableFuture.completedFuture(response)
+                CompletableFuture.completedFuture(response),
             )
             val validatingResolver = DnssecChain.onlineResolverInitialiser(headResolver)
             val queryMessage = RECORD.makeQuery()
@@ -147,7 +147,7 @@ class DnssecChainTest {
                 DnssecChain.retrieve(
                     DOMAIN_NAME,
                     recordType,
-                    REMOTE_RESOLVER
+                    REMOTE_RESOLVER,
                 )
             }
 
@@ -165,7 +165,7 @@ class DnssecChainTest {
                 DnssecChain.retrieve(
                     DOMAIN_NAME,
                     recordType,
-                    REMOTE_RESOLVER
+                    REMOTE_RESOLVER,
                 )
             }
 
@@ -179,7 +179,7 @@ class DnssecChainTest {
                 Name.fromString(DOMAIN_NAME),
                 DClass.IN,
                 42,
-                "foo"
+                "foo",
             )
             val response = record.makeResponse()
             mockPersistingResolver(response)
@@ -188,7 +188,7 @@ class DnssecChainTest {
             val chain = DnssecChain.retrieve(
                 DOMAIN_NAME,
                 recordType,
-                REMOTE_RESOLVER
+                REMOTE_RESOLVER,
             )
 
             chain.responses shouldHaveSize 1
@@ -202,7 +202,7 @@ class DnssecChainTest {
             val chain = DnssecChain.retrieve(
                 DOMAIN_NAME,
                 recordType,
-                REMOTE_RESOLVER
+                REMOTE_RESOLVER,
             )
 
             chain.domainName shouldBe DOMAIN_NAME
@@ -215,7 +215,7 @@ class DnssecChainTest {
             val chain = DnssecChain.retrieve(
                 DOMAIN_NAME,
                 recordType,
-                REMOTE_RESOLVER
+                REMOTE_RESOLVER,
             )
 
             chain.recordType shouldBe recordType
@@ -230,7 +230,7 @@ class DnssecChainTest {
         private fun mockPersistingResolver(response: Message): PersistingResolver {
             val mockResolver = mock<PersistingResolver>()
             whenever(mockResolver.sendAsync(any())).thenReturn(
-                CompletableFuture.completedFuture(response)
+                CompletableFuture.completedFuture(response),
             )
             whenever(mockResolver.responses).thenReturn(listOf(response))
             DnssecChain.persistingResolverInitialiser = { mockResolver }
@@ -269,7 +269,7 @@ class DnssecChainTest {
         fun `Validating resolver should wrap offline resolver`() = runTest {
             val headResolver = mock<OfflineResolver>()
             whenever(headResolver.sendAsync(any())).thenReturn(
-                CompletableFuture.completedFuture(makeSuccessfulEmptyResponse())
+                CompletableFuture.completedFuture(makeSuccessfulEmptyResponse()),
             )
             val validatingResolver =
                 DnssecChain.offlineResolverInitialiser(headResolver, Clock.systemUTC())
@@ -396,7 +396,7 @@ class DnssecChainTest {
                 Name.fromString(DOMAIN_NAME),
                 DClass.IN,
                 42,
-                "foo"
+                "foo",
             )
             val response = makeSuccessfulEmptyResponse()
             response.addRecord(record, Section.ANSWER)

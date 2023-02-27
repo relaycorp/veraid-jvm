@@ -90,7 +90,9 @@ tasks.register('integrationTest', Test) {
 
 check.dependsOn integrationTest
 
-// Documentation
+ktlint {
+    version.set("0.48.2")
+}
 
 dokkaHtml.configure {
   dokkaSourceSets {

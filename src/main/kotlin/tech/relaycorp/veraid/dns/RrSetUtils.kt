@@ -2,9 +2,9 @@
 
 package tech.relaycorp.veraid.dns
 
-import java.time.Instant
 import org.xbill.DNS.RRset
 import org.xbill.DNS.Record
+import java.time.Instant
 
 internal val RRset.question: Record
     get() = Record.newRecord(name, type, dClass)

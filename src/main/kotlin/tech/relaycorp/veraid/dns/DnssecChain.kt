@@ -1,10 +1,5 @@
 package tech.relaycorp.veraid.dns
 
-import java.io.ByteArrayInputStream
-import java.nio.charset.Charset
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneOffset
 import kotlinx.coroutines.future.await
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Flags
@@ -17,17 +12,22 @@ import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
 import tech.relaycorp.veraid.dns.resolvers.OfflineResolver
 import tech.relaycorp.veraid.dns.resolvers.PersistingResolver
+import java.io.ByteArrayInputStream
+import java.nio.charset.Charset
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 internal typealias PersistingResolverInitialiser = (resolverHostName: String) -> PersistingResolver
 internal typealias OnlineResolverInitialiser = (headResolver: Resolver) -> ValidatingResolver
 
 internal typealias OfflineResolverInitialiser =
-    (headResolver: OfflineResolver, clock: Clock) -> ValidatingResolver
+(headResolver: OfflineResolver, clock: Clock) -> ValidatingResolver
 
 internal typealias ChainRetriever = suspend (
     domainName: String,
     recordType: String,
-    resolverHostName: String
+    resolverHostName: String,
 ) -> DnssecChain
 
 /**
@@ -36,7 +36,7 @@ internal typealias ChainRetriever = suspend (
 public open class DnssecChain internal constructor(
     internal val domainName: String,
     internal val recordType: String,
-    internal val responses: List<Message>
+    internal val responses: List<Message>,
 ) {
     @Throws(DnsException::class)
     internal suspend fun verify(instant: Instant) {
@@ -62,7 +62,7 @@ public open class DnssecChain internal constructor(
         suspend fun retrieve(
             domainName: String,
             recordType: String,
-            resolverHostName: String
+            resolverHostName: String,
         ): DnssecChain {
             val persistingResolver = persistingResolverInitialiser(resolverHostName)
             val validatingResolver = onlineResolverInitialiser(persistingResolver)
@@ -73,7 +73,7 @@ public open class DnssecChain internal constructor(
         @Throws(DnsException::class)
         private suspend fun ValidatingResolver.resolve(
             domainName: String,
-            recordType: String
+            recordType: String,
         ) {
             this.loadTrustAnchors(ByteArrayInputStream(DNSSEC_ROOT_DS))
 
@@ -84,7 +84,7 @@ public open class DnssecChain internal constructor(
 
             if (!response.header.getFlag(Flags.AD.toInt())) {
                 throw DnsException(
-                    "DNSSEC verification failed: ${response.dnssecFailureDescription}"
+                    "DNSSEC verification failed: ${response.dnssecFailureDescription}",
                 )
             }
             if (response.header.rcode != Rcode.NOERROR) {

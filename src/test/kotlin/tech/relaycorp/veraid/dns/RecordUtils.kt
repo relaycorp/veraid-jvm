@@ -1,9 +1,6 @@
 package tech.relaycorp.veraid.dns
 
 import io.kotest.matchers.ints.shouldBeLessThan
-import java.time.Instant
-import kotlin.math.pow
-import kotlin.time.Duration.Companion.days
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Flags
 import org.xbill.DNS.Message
@@ -14,6 +11,9 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import tech.relaycorp.veraid.ORG_KEY_SPEC
 import tech.relaycorp.veraid.SERVICE_OID
+import java.time.Instant
+import kotlin.math.pow
+import kotlin.time.Duration.Companion.days
 
 /**
  * Max size of TXT rdata fields (size must be representable with a single octet).
@@ -24,13 +24,13 @@ private val maxTxtRdataSize = (2.toDouble().pow(8) - 1).toInt()
 internal fun <RecordType : Record> RecordType.copy(
     name: Name? = null,
     dClass: Int? = null,
-    rdata: ByteArray? = null
+    rdata: ByteArray? = null,
 ): RecordType = Record.newRecord(
     name ?: this.name,
     this.type, // Type can't be changed without changing the Java class too
     dClass ?: this.dClass,
     this.ttl,
-    rdata ?: this.rdataToWireCanonical()
+    rdata ?: this.rdataToWireCanonical(),
 ) as RecordType
 
 internal fun Record.makeQuestion() = Record.newRecord(name, type, dClass, ttl)
@@ -46,7 +46,7 @@ internal fun Record.makeRrsig(validityPeriod: ClosedRange<Instant>) = RRSIGRecor
     validityPeriod.start,
     42,
     Name.root,
-    "the signature".toByteArray()
+    "the signature".toByteArray(),
 )
 
 internal fun Record.makeQuery() = Message.newQuery(makeQuestion())
@@ -69,7 +69,7 @@ internal fun TXTRecord.copyWithDifferentRdata(fields: VeraRdataFields) = TXTReco
     name,
     dClass,
     ttl,
-    fields.toString()
+    fields.toString(),
 )
 
 internal fun ByteArray.txtRdataSerialise(): ByteArray {
@@ -83,7 +83,7 @@ val RECORD = TXTRecord(
     Name.fromString("_vera.$DOMAIN_NAME"),
     DClass.IN,
     42,
-    VERA_RDATA_FIELDS.toString()
+    VERA_RDATA_FIELDS.toString(),
 )
 private val now: Instant = Instant.now()
 val RRSIG = RRSIGRecord(
@@ -97,5 +97,5 @@ val RRSIG = RRSIGRecord(
     now,
     42,
     Name.root,
-    "the signature".toByteArray()
+    "the signature".toByteArray(),
 )

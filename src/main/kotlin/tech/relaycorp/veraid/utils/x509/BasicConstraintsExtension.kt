@@ -15,17 +15,17 @@ import org.bouncycastle.asn1.DERSequence
  */
 internal class BasicConstraintsExtension(
     private val cA: Boolean,
-    private val pathLenConstraint: Int
+    private val pathLenConstraint: Int,
 ) : ASN1Encodable {
     init {
         if (pathLenConstraint < 0 || 2 < pathLenConstraint) {
             throw CertificateException(
-                "pathLenConstraint should be between 0 and 2 (got $pathLenConstraint)"
+                "pathLenConstraint should be between 0 and 2 (got $pathLenConstraint)",
             )
         }
         if (pathLenConstraint != 0 && !cA) {
             throw CertificateException(
-                "Subject should be a CA if pathLenConstraint=$pathLenConstraint"
+                "Subject should be a CA if pathLenConstraint=$pathLenConstraint",
             )
         }
     }

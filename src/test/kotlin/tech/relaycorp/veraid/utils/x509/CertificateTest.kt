@@ -7,18 +7,6 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.beInstanceOf
-import java.io.IOException
-import java.math.BigInteger
-import java.security.InvalidAlgorithmParameterException
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.security.cert.CertPathBuilderException
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneOffset.UTC
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
-import java.util.Date
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERBMPString
 import org.bouncycastle.asn1.DERNull
@@ -44,6 +32,18 @@ import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
 import tech.relaycorp.veraid.utils.issueStubCertificate
 import tech.relaycorp.veraid.utils.sha256
+import java.io.IOException
+import java.math.BigInteger
+import java.security.InvalidAlgorithmParameterException
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.cert.CertPathBuilderException
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset.UTC
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.util.Date
 
 class CertificateTest {
     private val subjectCommonName = "The CommonName"
@@ -60,7 +60,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             certificate.certificateHolder.versionNumber shouldBe 3
@@ -72,7 +72,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             certificate.subjectPublicKey shouldBe subjectKeyPair.public
@@ -84,7 +84,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             val verifierProvider = JcaContentVerifierProviderBuilder()
@@ -99,7 +99,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             certificate.certificateHolder.signatureAlgorithm.algorithm shouldBe
@@ -112,7 +112,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             certificate.certificateHolder.serialNumber shouldBeGreaterThan BigInteger.ZERO
@@ -126,7 +126,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             val afterInstant = Instant.now()
@@ -144,7 +144,7 @@ class CertificateTest {
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
-                    endZonedDate
+                    endZonedDate,
                 )
 
                 certificate.certificateHolder.notAfter.toInstant() shouldBe endZonedDate.toInstant()
@@ -160,7 +160,7 @@ class CertificateTest {
                         subjectKeyPair.public,
                         subjectKeyPair.private,
                         validityStartDate,
-                        validityStartDate = validityStartDate // Same as start date
+                        validityStartDate = validityStartDate, // Same as start date
                     )
                 }
                 exception.message shouldBe "The end date must be later than the start date"
@@ -173,14 +173,14 @@ class CertificateTest {
                     issuerKeyPair.public,
                     issuerKeyPair.private,
                     validityEndDate,
-                    isCA = true
+                    isCA = true,
                 )
                 val subjectCertificate = Certificate.issue(
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
                     validityEndDate.plusSeconds(1),
-                    issuerCertificate
+                    issuerCertificate,
                 )
 
                 subjectCertificate.expiryDate shouldBe issuerCertificate.expiryDate
@@ -193,7 +193,7 @@ class CertificateTest {
                     issuerKeyPair.public,
                     issuerKeyPair.private,
                     validityEndDate,
-                    isCA = true
+                    isCA = true,
                 )
                 val validityStartDate = issuerCertificate.expiryDate.plusSeconds(1)
 
@@ -204,7 +204,7 @@ class CertificateTest {
                         subjectKeyPair.private,
                         validityStartDate.plusSeconds(1),
                         issuerCertificate,
-                        validityStartDate = validityStartDate
+                        validityStartDate = validityStartDate,
                     )
                 }
                 exception.message shouldBe "The end date must be later than the start date"
@@ -218,7 +218,7 @@ class CertificateTest {
                 commonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             val distinguishedNames = certificate.certificateHolder.subject.rdNs
@@ -236,7 +236,7 @@ class CertificateTest {
                 commonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             val distinguishedNames = certificate.certificateHolder.issuer.rdNs
@@ -260,7 +260,7 @@ class CertificateTest {
                     rootCAKeyPair.private,
                     validityEndDate,
                     isCA = true,
-                    pathLenConstraint = 1
+                    pathLenConstraint = 1,
                 )
                 val issuerCommonName = "The issuer"
                 val issuerCertificate = Certificate.issue(
@@ -269,14 +269,14 @@ class CertificateTest {
                     issuerKeyPair.private,
                     validityEndDate,
                     rootCACert,
-                    isCA = true
+                    isCA = true,
                 )
                 val subjectCertificate = Certificate.issue(
                     subjectCommonName,
                     subjectKeyPair.public,
                     issuerKeyPair.private,
                     validityEndDate,
-                    issuerCertificate = issuerCertificate
+                    issuerCertificate = issuerCertificate,
                 )
 
                 subjectCertificate.certificateHolder.issuer.rdNs.size shouldBe 1
@@ -289,7 +289,7 @@ class CertificateTest {
             fun `Issuer certificate should have basicConstraints extension`() {
                 val issuerCertificate = issueCertWithoutBasicConstraints(
                     issuerKeyPair.public,
-                    issuerKeyPair.private
+                    issuerKeyPair.private,
                 )
 
                 val exception = assertThrows<CertificateException> {
@@ -298,7 +298,7 @@ class CertificateTest {
                         subjectKeyPair.public,
                         issuerKeyPair.private,
                         validityEndDate,
-                        issuerCertificate = issuerCertificate
+                        issuerCertificate = issuerCertificate,
                     )
                 }
 
@@ -313,7 +313,7 @@ class CertificateTest {
                     issuerKeyPair.public,
                     issuerKeyPair.private,
                     validityEndDate,
-                    isCA = false
+                    isCA = false,
                 )
                 val exception = assertThrows<CertificateException> {
                     Certificate.issue(
@@ -321,7 +321,7 @@ class CertificateTest {
                         subjectKeyPair.public,
                         issuerKeyPair.private,
                         validityEndDate,
-                        issuerCertificate = issuerCertificate
+                        issuerCertificate = issuerCertificate,
                     )
                 }
 
@@ -339,7 +339,7 @@ class CertificateTest {
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
-                    validityEndDate
+                    validityEndDate,
                 )
 
                 certificate.certificateHolder.hasExtensions() shouldBe true
@@ -355,7 +355,7 @@ class CertificateTest {
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
-                    validityEndDate
+                    validityEndDate,
                 )
 
                 val basicConstraints =
@@ -370,7 +370,7 @@ class CertificateTest {
                     subjectKeyPair.public,
                     subjectKeyPair.private,
                     validityEndDate,
-                    isCA = true
+                    isCA = true,
                 )
 
                 val basicConstraints =
@@ -387,7 +387,7 @@ class CertificateTest {
                         subjectKeyPair.private,
                         validityEndDate,
                         isCA = false,
-                        pathLenConstraint = 1
+                        pathLenConstraint = 1,
                     )
                 }
 
@@ -400,11 +400,11 @@ class CertificateTest {
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
-                    validityEndDate
+                    validityEndDate,
                 )
 
                 val basicConstraints = BasicConstraints.fromExtensions(
-                    certificate.certificateHolder.extensions
+                    certificate.certificateHolder.extensions,
                 )
                 basicConstraints.pathLenConstraint.toInt() shouldBe 0
             }
@@ -417,11 +417,11 @@ class CertificateTest {
                     subjectKeyPair.private,
                     validityEndDate,
                     isCA = true,
-                    pathLenConstraint = 2
+                    pathLenConstraint = 2,
                 )
 
                 val basicConstraints = BasicConstraints.fromExtensions(
-                    certificate.certificateHolder.extensions
+                    certificate.certificateHolder.extensions,
                 )
                 basicConstraints.pathLenConstraint.toInt() shouldBe 2
             }
@@ -434,7 +434,7 @@ class CertificateTest {
                         subjectKeyPair.public,
                         subjectKeyPair.private,
                         validityEndDate,
-                        pathLenConstraint = 3
+                        pathLenConstraint = 3,
                     )
                 }
 
@@ -449,7 +449,7 @@ class CertificateTest {
                         subjectKeyPair.public,
                         subjectKeyPair.private,
                         validityEndDate,
-                        pathLenConstraint = -1
+                        pathLenConstraint = -1,
                     )
                 }
 
@@ -465,7 +465,7 @@ class CertificateTest {
                 issuerKeyPair.public,
                 issuerKeyPair.private,
                 validityEndDate,
-                isCA = true
+                isCA = true,
             )
 
             @Test
@@ -474,11 +474,11 @@ class CertificateTest {
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
-                    validityEndDate
+                    validityEndDate,
                 )
 
                 val aki = AuthorityKeyIdentifier.fromExtensions(
-                    certificate.certificateHolder.extensions
+                    certificate.certificateHolder.extensions,
                 )
                 val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
                 aki.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
@@ -495,7 +495,7 @@ class CertificateTest {
                     Date.from(ZonedDateTime.now().toInstant()),
                     Date.from(validityEndDate.toInstant()),
                     issuerDistinguishedName,
-                    subjectPublicKeyInfo
+                    subjectPublicKeyInfo,
                 )
                 val basicConstraints = BasicConstraintsExtension(true, 0)
                 builder.addExtension(Extension.basicConstraints, true, basicConstraints)
@@ -510,7 +510,7 @@ class CertificateTest {
                         subjectKeyPair.public,
                         issuerKeyPair.private,
                         validityEndDate,
-                        issuerCertificate = issuerWithoutSKI
+                        issuerCertificate = issuerWithoutSKI,
                     )
                 }
 
@@ -524,12 +524,12 @@ class CertificateTest {
                     subjectKeyPair.public,
                     subjectKeyPair.private,
                     validityEndDate,
-                    issuerCertificate = issuerCertificate
+                    issuerCertificate = issuerCertificate,
                 )
 
                 val issuerPublicKeyInfo = issuerCertificate.certificateHolder.subjectPublicKeyInfo
                 val aki = AuthorityKeyIdentifier.fromExtensions(
-                    subjectCertificate.certificateHolder.extensions
+                    subjectCertificate.certificateHolder.extensions,
                 )
                 aki.keyIdentifier shouldBe sha256(issuerPublicKeyInfo.encoded)
             }
@@ -541,11 +541,11 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             val ski = SubjectKeyIdentifier.fromExtensions(
-                certificate.certificateHolder.extensions
+                certificate.certificateHolder.extensions,
             )
             val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
             ski.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
@@ -560,7 +560,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             val certificateSerialized = certificate.serialise()
@@ -578,7 +578,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
             val certificateSerialized = certificate.serialise()
 
@@ -606,7 +606,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             val certificateEncoded = certificate.encode()
@@ -624,7 +624,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
             val certificateEncoded = DLTaggedObject(false, 1, certificate.encode())
 
@@ -639,7 +639,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
             val certificateEncoded = DLTaggedObject(true, 1, certificate.encode())
 
@@ -670,7 +670,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             certificate.commonName shouldBe subjectCommonName
@@ -684,7 +684,7 @@ class CertificateTest {
                 subjectKeyPair.public,
                 subjectKeyPair.private,
                 validityEndDate,
-                validityStartDate = startDate
+                validityStartDate = startDate,
             )
 
             certificate.startDate shouldBe startDate.withNano(0)
@@ -696,7 +696,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             certificate.expiryDate shouldBe validityEndDate.withNano(0)
@@ -708,7 +708,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             certificate.subjectPublicKey.encoded shouldBe subjectKeyPair.public.encoded
@@ -720,14 +720,14 @@ class CertificateTest {
             val issuerCertificate = issueStubCertificate(
                 issuerKeyPair.public,
                 issuerKeyPair.private,
-                isCA = true
+                isCA = true,
             )
             val certificate = Certificate.issue(
                 subjectCommonName,
                 subjectKeyPair.public,
                 issuerKeyPair.private,
                 validityEndDate,
-                issuerCertificate
+                issuerCertificate,
             )
 
             certificate.issuerCommonName shouldBe issuerCertificate.commonName
@@ -740,7 +740,7 @@ class CertificateTest {
             subjectCommonName,
             subjectKeyPair.public,
             subjectKeyPair.private,
-            validityEndDate
+            validityEndDate,
         )
 
         @Test
@@ -760,7 +760,7 @@ class CertificateTest {
                 subjectCommonName,
                 anotherKeyPair.public,
                 anotherKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             anotherCertificate shouldNotBe stubCertificate
@@ -790,7 +790,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             stubCertificate.hashCode() shouldBe stubCertificate.certificateHolder.hashCode()
@@ -809,7 +809,7 @@ class CertificateTest {
                     subjectKeyPair.public,
                     subjectKeyPair.private,
                     validityEndDate,
-                    validityStartDate = startDate
+                    validityStartDate = startDate,
                 )
 
                 val exception = assertThrows<CertificateException> { certificate.validate() }
@@ -826,7 +826,7 @@ class CertificateTest {
                     subjectKeyPair.public,
                     subjectKeyPair.private,
                     endDate,
-                    validityStartDate = startDate
+                    validityStartDate = startDate,
                 )
 
                 val exception = assertThrows<CertificateException> { certificate.validate() }
@@ -840,7 +840,7 @@ class CertificateTest {
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
-                    validityEndDate
+                    validityEndDate,
                 )
 
                 certificate.validate()
@@ -859,14 +859,16 @@ class CertificateTest {
                     Date.from(ZonedDateTime.now().toInstant()),
                     Date.from(validityEndDate.plusMonths(1).toInstant()),
                     issuerDistinguishedNameBuilder.build(),
-                    SubjectPublicKeyInfo.getInstance(subjectKeyPair.public.encoded)
+                    SubjectPublicKeyInfo.getInstance(subjectKeyPair.public.encoded),
                 )
                 val signer = JcaContentSignerBuilder("SHA256WITHRSAANDMGF1")
                     .setProvider(BC_PROVIDER)
                     .build(subjectKeyPair.private)
                 val invalidCertificate = Certificate(builder.build(signer))
 
-                val exception = assertThrows<CertificateException> { invalidCertificate.validate() }
+                val exception = assertThrows<CertificateException> {
+                    invalidCertificate.validate()
+                }
 
                 exception.message shouldBe "Subject should have a Common Name"
             }
@@ -877,7 +879,7 @@ class CertificateTest {
                     subjectCommonName,
                     subjectKeyPair.public,
                     subjectKeyPair.private,
-                    validityEndDate
+                    validityEndDate,
                 )
 
                 certificate.validate()
@@ -926,7 +928,7 @@ class CertificateTest {
             subjectKeyPair.private,
             validityEndDate,
             isCA = true,
-            pathLenConstraint = 2
+            pathLenConstraint = 2,
         )
 
         @Test
@@ -942,7 +944,7 @@ class CertificateTest {
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 subjectKeyPair.private,
-                rootCACert
+                rootCACert,
             )
 
             val certPath = endEntityCert.getCertificationPath(emptySet(), setOf(rootCACert))
@@ -971,13 +973,13 @@ class CertificateTest {
                 intermediateCAKeyPair.public,
                 subjectKeyPair.private,
                 rootCACert,
-                isCA = true
+                isCA = true,
             )
             val endEntityKeyPair = generateRSAKeyPair()
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 intermediateCAKeyPair.private,
-                intermediateCACert
+                intermediateCACert,
             )
 
             val certPath =
@@ -996,7 +998,7 @@ class CertificateTest {
                 validityEndDate,
                 rootCACert,
                 true,
-                1
+                1,
             )
             val intermediateCA2KeyPair = generateRSAKeyPair()
             val intermediateCA2Cert = Certificate.issue(
@@ -1005,7 +1007,7 @@ class CertificateTest {
                 intermediateCA1KeyPair.private,
                 validityEndDate,
                 intermediateCA1Cert,
-                true
+                true,
             )
             val endEntityKeyPair = generateRSAKeyPair()
             val endEntityCert = Certificate.issue(
@@ -1013,19 +1015,19 @@ class CertificateTest {
                 endEntityKeyPair.public,
                 intermediateCA2KeyPair.private,
                 validityEndDate,
-                intermediateCA2Cert
+                intermediateCA2Cert,
             )
 
             val certPath = endEntityCert.getCertificationPath(
                 setOf(intermediateCA1Cert, intermediateCA2Cert),
-                setOf(rootCACert)
+                setOf(rootCACert),
             )
 
             listOf(
                 endEntityCert,
                 intermediateCA2Cert,
                 intermediateCA1Cert,
-                rootCACert
+                rootCACert,
             ) shouldBe certPath
         }
 
@@ -1036,13 +1038,13 @@ class CertificateTest {
                 intermediateCAKeyPair.public,
                 subjectKeyPair.private,
                 rootCACert,
-                isCA = true
+                isCA = true,
             )
             val endEntityKeyPair = generateRSAKeyPair()
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 intermediateCAKeyPair.private,
-                intermediateCACert
+                intermediateCACert,
             )
 
             val certPath =
@@ -1057,13 +1059,13 @@ class CertificateTest {
             val intermediateCACert = issueStubCertificate(
                 intermediateCAKeyPair.public,
                 intermediateCAKeyPair.private,
-                isCA = true
+                isCA = true,
             )
             val endEntityKeyPair = generateRSAKeyPair()
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 endEntityKeyPair.private,
-                intermediateCACert
+                intermediateCACert,
             )
 
             val exception = assertThrows<CertificateException> {
@@ -1079,19 +1081,19 @@ class CertificateTest {
             val intermediateCACert = issueStubCertificate(
                 intermediateCAKeyPair.public,
                 intermediateCAKeyPair.private,
-                isCA = true
+                isCA = true,
             )
             val endEntityKeyPair = generateRSAKeyPair()
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 endEntityKeyPair.private,
-                intermediateCACert
+                intermediateCACert,
             )
 
             val exception = assertThrows<CertificateException> {
                 endEntityCert.getCertificationPath(
                     setOf(rootCACert, intermediateCACert),
-                    setOf(rootCACert)
+                    setOf(rootCACert),
                 )
             }
 
@@ -1106,7 +1108,7 @@ class CertificateTest {
             val trustedCA2Cert = issueStubCertificate(
                 trustedCA2KeyPair.public,
                 trustedCA2KeyPair.private,
-                isCA = true
+                isCA = true,
             )
 
             val intermediateCAKeyPair = generateRSAKeyPair()
@@ -1114,18 +1116,18 @@ class CertificateTest {
                 intermediateCAKeyPair.public,
                 subjectKeyPair.private,
                 rootCACert,
-                isCA = true
+                isCA = true,
             )
             val endEntityKeyPair = generateRSAKeyPair()
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 intermediateCAKeyPair.private,
-                intermediateCACert
+                intermediateCACert,
             )
 
             val certPath = endEntityCert.getCertificationPath(
                 setOf(intermediateCACert),
-                setOf(trustedCA2Cert, rootCACert)
+                setOf(trustedCA2Cert, rootCACert),
             )
 
             certPath shouldBe listOf(endEntityCert, intermediateCACert, rootCACert)
@@ -1138,13 +1140,13 @@ class CertificateTest {
                 intermediateCAKeyPair.public,
                 subjectKeyPair.private,
                 rootCACert,
-                isCA = true
+                isCA = true,
             )
             val endEntityKeyPair = generateRSAKeyPair()
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 intermediateCAKeyPair.private,
-                intermediateCACert
+                intermediateCACert,
             )
 
             val certPath =
@@ -1162,7 +1164,7 @@ class CertificateTest {
             val endEntityCert = issueStubCertificate(
                 endEntityKeyPair.public,
                 subjectKeyPair.private,
-                rootCACert
+                rootCACert,
             )
 
             val exception = assertThrows<CertificateException> {
@@ -1184,7 +1186,7 @@ class CertificateTest {
                 subjectKeyPair.public,
                 subjectKeyPair.private,
                 validityEndDate,
-                isCA = true
+                isCA = true,
             )
 
             cert.isCA shouldBe true
@@ -1196,7 +1198,7 @@ class CertificateTest {
                 subjectCommonName,
                 subjectKeyPair.public,
                 subjectKeyPair.private,
-                validityEndDate
+                validityEndDate,
             )
 
             cert.isCA shouldBe false
@@ -1206,7 +1208,7 @@ class CertificateTest {
         fun `False should be returned if BasicConstrains extension is missing`() {
             val cert = issueCertWithoutBasicConstraints(
                 subjectKeyPair.public,
-                subjectKeyPair.private
+                subjectKeyPair.private,
             )
 
             cert.isCA shouldBe false
@@ -1215,7 +1217,7 @@ class CertificateTest {
 
     private fun issueCertWithoutBasicConstraints(
         publicKey: PublicKey,
-        privateKey: PrivateKey
+        privateKey: PrivateKey,
     ): Certificate {
         val issuerCommonName = "The issuer"
         val issuerDistinguishedNameBuilder = X500NameBuilder(BCStyle.INSTANCE)
@@ -1227,7 +1229,7 @@ class CertificateTest {
             Date.from(LocalDateTime.now().toInstant(UTC)),
             Date.from(LocalDateTime.now().plusMonths(1).toInstant(UTC)),
             issuerDistinguishedNameBuilder.build(),
-            SubjectPublicKeyInfo.getInstance(publicKey.encoded)
+            SubjectPublicKeyInfo.getInstance(publicKey.encoded),
         )
         val signer = JcaContentSignerBuilder("SHA256WITHRSAANDMGF1")
             .setProvider(BC_PROVIDER)

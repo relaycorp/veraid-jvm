@@ -1,11 +1,11 @@
 package tech.relaycorp.veraid.dns
 
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.seconds
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import tech.relaycorp.veraid.KeyAlgorithm
 import tech.relaycorp.veraid.OrganisationKeySpec
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.seconds
 
 internal data class VeraRdataFields(
     val orgKeySpec: OrganisationKeySpec,
@@ -30,7 +30,7 @@ internal data class VeraRdataFields(
             if (fieldsOrdered.size < 3) {
                 throw InvalidRdataException(
                     "RDATA should have at least 3 space-separated fields " +
-                        "(got ${fieldsOrdered.size})"
+                        "(got ${fieldsOrdered.size})",
                 )
             }
 
@@ -47,14 +47,15 @@ internal data class VeraRdataFields(
             val ttlOverride = ttlOverrideSeconds.toInt().seconds.coerceAtMost(MAX_TTL)
 
             val serviceOidRaw = fieldsOrdered.getOrNull(3)
-            val serviceOid = if (serviceOidRaw != null)
+            val serviceOid = if (serviceOidRaw != null) {
                 try {
                     ASN1ObjectIdentifier(serviceOidRaw)
                 } catch (exc: IllegalArgumentException) {
                     throw InvalidRdataException("Malformed service OID ($serviceOidRaw)")
                 }
-            else
+            } else {
                 null
+            }
 
             return VeraRdataFields(keySpec, ttlOverride, serviceOid)
         }

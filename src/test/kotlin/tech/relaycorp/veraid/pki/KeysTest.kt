@@ -3,14 +3,14 @@ package tech.relaycorp.veraid.pki
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.security.spec.InvalidKeySpecException
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateKey
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
+import java.security.spec.InvalidKeySpecException
 
 class KeysTest {
     @Nested

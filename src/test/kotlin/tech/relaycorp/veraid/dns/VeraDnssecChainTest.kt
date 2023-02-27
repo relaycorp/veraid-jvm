@@ -9,9 +9,6 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.beInstanceOf
-import java.time.Instant
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Set
@@ -30,15 +27,18 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
 import tech.relaycorp.veraid.KeyAlgorithm
-import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.ORG_KEY_SPEC
+import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.SERVICE_OID
 import tech.relaycorp.veraid.utils.asn1.parseDer
+import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 data class RetrieverCallArgs(
     val domainName: String,
     val recordType: String,
-    val resolverHost: String
+    val resolverHost: String,
 )
 
 class VeraDnssecChainTest {
@@ -347,7 +347,7 @@ class VeraDnssecChainTest {
             fun `Answer should not have more than one rdata string`() = runTest {
                 val record = RECORD.copy(
                     rdata = "one".toByteArray().txtRdataSerialise() + "two".toByteArray()
-                        .txtRdataSerialise()
+                        .txtRdataSerialise(),
                 )
                 val response = record.makeResponseWithRrsig(datePeriod)
                 val chain = VeraDnssecChain(ORG_NAME, listOf(response))
@@ -490,7 +490,7 @@ class VeraDnssecChainTest {
                     RECORD.copy(name = RECORD.name.makeSubdomain("sub")).makeResponse()
                 val chain = VeraDnssecChain(
                     ORG_NAME,
-                    listOf(responseWithRrsig, responseWithoutRrsig)
+                    listOf(responseWithRrsig, responseWithoutRrsig),
                 )
 
                 chain.verify(orgKeySpec, serviceOid, datePeriod)
@@ -527,13 +527,13 @@ class VeraDnssecChainTest {
             fun `TTL override from rdata with concrete service should take precedence`() = runTest {
                 val concreteTtl = 3.seconds
                 val concreteRecord = RECORD.copyWithDifferentRdata(
-                    VERA_RDATA_FIELDS.copy(ttlOverride = concreteTtl, service = serviceOid)
+                    VERA_RDATA_FIELDS.copy(ttlOverride = concreteTtl, service = serviceOid),
                 )
                 val wildcardRecord = RECORD.copyWithDifferentRdata(
                     VERA_RDATA_FIELDS.copy(
                         ttlOverride = concreteTtl.plus(2.seconds),
-                        service = null
-                    )
+                        service = null,
+                    ),
                 )
                 val response = wildcardRecord.makeResponseWithRrsig(datePeriod)
                 // Leave the concrete record to the end, to ensure we don't just pick the first
@@ -570,8 +570,8 @@ class VeraDnssecChainTest {
                 val chainSpy = spy(
                     VeraDnssecChain(
                         ORG_NAME,
-                        listOf(response1WithRrsig, response2WithRrsig)
-                    )
+                        listOf(response1WithRrsig, response2WithRrsig),
+                    ),
                 )
 
                 chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
@@ -586,7 +586,7 @@ class VeraDnssecChainTest {
             val record1 = RECORD.copyWithDifferentRdata(fields)
             val response = record1.makeResponseWithRrsig(datePeriod)
             val record2 = record1.copyWithDifferentRdata(
-                fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds))
+                fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds)),
             )
             response.addRecord(record2, Section.ANSWER)
             val chain = VeraDnssecChain(ORG_NAME, listOf(response))
@@ -604,7 +604,7 @@ class VeraDnssecChainTest {
             val record1 = RECORD.copyWithDifferentRdata(fields)
             val response = record1.makeResponseWithRrsig(datePeriod)
             val record2 = record1.copyWithDifferentRdata(
-                fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds))
+                fields.copy(ttlOverride = fields.ttlOverride.minus(1.seconds)),
             )
             response.addRecord(record2, Section.ANSWER)
             val chain = VeraDnssecChain(ORG_NAME, listOf(response))

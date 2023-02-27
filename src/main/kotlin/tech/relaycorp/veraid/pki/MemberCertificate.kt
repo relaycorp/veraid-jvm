@@ -1,10 +1,10 @@
 package tech.relaycorp.veraid.pki
 
+import org.bouncycastle.cert.X509CertificateHolder
+import tech.relaycorp.veraid.utils.x509.Certificate
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.time.ZonedDateTime
-import org.bouncycastle.cert.X509CertificateHolder
-import tech.relaycorp.veraid.utils.x509.Certificate
 
 public class MemberCertificate internal constructor(certificateHolder: X509CertificateHolder) :
     Certificate(certificateHolder) {
@@ -18,7 +18,7 @@ public class MemberCertificate internal constructor(certificateHolder: X509Certi
             orgCertificate: OrgCertificate,
             orgPrivateKey: PrivateKey,
             expiryDate: ZonedDateTime,
-            startDate: ZonedDateTime = ZonedDateTime.now()
+            startDate: ZonedDateTime = ZonedDateTime.now(),
         ): MemberCertificate {
             if (userName != null) {
                 validateUserName(userName)
@@ -31,14 +31,14 @@ public class MemberCertificate internal constructor(certificateHolder: X509Certi
                     expiryDate,
                     orgCertificate,
                     validityStartDate = startDate,
-                ).certificateHolder
+                ).certificateHolder,
             )
         }
 
         private fun validateUserName(userName: String) {
             if (FORBIDDEN_USER_NAME_CHARS_REGEX.containsMatchIn(userName)) {
                 throw PKIException(
-                    "User name should not contain at signs or whitespace other than simple spaces"
+                    "User name should not contain at signs or whitespace other than simple spaces",
                 )
             }
         }
