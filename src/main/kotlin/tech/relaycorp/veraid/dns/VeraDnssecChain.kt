@@ -13,7 +13,7 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
-import tech.relaycorp.veraid.DatePeriod
+import tech.relaycorp.veraid.InstantPeriod
 import tech.relaycorp.veraid.OrganisationKeySpec
 import tech.relaycorp.veraid.utils.intersect
 import kotlin.time.toJavaDuration
@@ -46,9 +46,9 @@ public class VeraDnssecChain internal constructor(
     internal suspend fun verify(
         orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
-        datePeriod: DatePeriod,
+        instantPeriod: InstantPeriod,
     ) {
-        val verificationPeriod = calculateVerificationPeriod(datePeriod, orgKeySpec, serviceOid)
+        val verificationPeriod = calculateVerificationPeriod(instantPeriod, orgKeySpec, serviceOid)
         val chainValidityPeriod = getChainValidityPeriod()
         val intersectingPeriod =
             verificationPeriod.intersect(chainValidityPeriod) ?: throw InvalidChainException(
@@ -57,7 +57,7 @@ public class VeraDnssecChain internal constructor(
         super.verify(intersectingPeriod.start)
     }
 
-    private fun getChainValidityPeriod(): DatePeriod {
+    private fun getChainValidityPeriod(): InstantPeriod {
         val chainValidityPeriod = responses
             .mapNotNull { it.signatureValidityPeriod }.ifEmpty {
                 throw InvalidChainException("Chain does not contain RRSig records")
@@ -71,15 +71,15 @@ public class VeraDnssecChain internal constructor(
     }
 
     private fun calculateVerificationPeriod(
-        datePeriod: DatePeriod,
+        instantPeriod: InstantPeriod,
         orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
-    ): DatePeriod {
+    ): InstantPeriod {
         val matchingFields = getRdataFields(orgKeySpec, serviceOid)
         val ttlOverride = matchingFields.ttlOverride
-        val truncatedStart = datePeriod.endInclusive.minus(ttlOverride.toJavaDuration())
-        val start = maxOf(datePeriod.start, truncatedStart)
-        return start..datePeriod.endInclusive
+        val truncatedStart = instantPeriod.endInclusive.minus(ttlOverride.toJavaDuration())
+        val start = maxOf(instantPeriod.start, truncatedStart)
+        return start..instantPeriod.endInclusive
     }
 
     private fun getRdataFields(

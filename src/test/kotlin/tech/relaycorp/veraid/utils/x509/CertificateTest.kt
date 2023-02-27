@@ -7,18 +7,6 @@ import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.beInstanceOf
-import java.io.IOException
-import java.math.BigInteger
-import java.security.InvalidAlgorithmParameterException
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.security.cert.CertPathBuilderException
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneOffset.UTC
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
-import java.util.Date
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERBMPString
 import org.bouncycastle.asn1.DERNull
@@ -44,6 +32,18 @@ import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
 import tech.relaycorp.veraid.utils.issueStubCertificate
 import tech.relaycorp.veraid.utils.sha256
+import java.io.IOException
+import java.math.BigInteger
+import java.security.InvalidAlgorithmParameterException
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.cert.CertPathBuilderException
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset.UTC
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.util.Date
 
 class CertificateTest {
     private val subjectCommonName = "The CommonName"

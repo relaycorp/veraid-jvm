@@ -10,7 +10,7 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
-import tech.relaycorp.veraid.DatePeriod
+import tech.relaycorp.veraid.InstantPeriod
 
 internal fun Message.getRrset(question: Record, section: Int): RRset? {
     val sectionRrsets = getSectionRRsets(section)
@@ -25,7 +25,7 @@ internal val Message.dnssecFailureDescription: String?
         return (rrset.first() as TXTRecord).strings.first()
     }
 
-internal val Message.signatureValidityPeriod: DatePeriod?
+internal val Message.signatureValidityPeriod: InstantPeriod?
     get() {
         val question = this.question ?: return null
         val rrset = this.getRrset(question, Section.ANSWER) ?: return null

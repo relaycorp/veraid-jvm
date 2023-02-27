@@ -4,12 +4,12 @@ package tech.relaycorp.veraid.dns
 
 import org.xbill.DNS.RRset
 import org.xbill.DNS.Record
-import tech.relaycorp.veraid.DatePeriod
+import tech.relaycorp.veraid.InstantPeriod
 
 internal val RRset.question: Record
     get() = Record.newRecord(name, type, dClass)
 
-internal val RRset.signatureValidityPeriod: DatePeriod?
+internal val RRset.signatureValidityPeriod: InstantPeriod?
     get() {
         val rrsigs = this.sigs().ifEmpty { return null }
         val start = rrsigs.sortedByDescending { it.timeSigned }.first().timeSigned

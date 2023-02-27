@@ -9,12 +9,12 @@ import org.xbill.DNS.RRSIGRecord
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
+import tech.relaycorp.veraid.InstantPeriod
 import tech.relaycorp.veraid.ORG_KEY_SPEC
 import tech.relaycorp.veraid.SERVICE_OID
 import java.time.Instant
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.days
-import tech.relaycorp.veraid.DatePeriod
 
 /**
  * Max size of TXT rdata fields (size must be representable with a single octet).
@@ -36,7 +36,7 @@ internal fun <RecordType : Record> RecordType.copy(
 
 internal fun Record.makeQuestion() = Record.newRecord(name, type, dClass, ttl)
 
-internal fun Record.makeRrsig(validityPeriod: DatePeriod) = RRSIGRecord(
+internal fun Record.makeRrsig(validityPeriod: InstantPeriod) = RRSIGRecord(
     name,
     dClass,
     ttl,
@@ -60,7 +60,7 @@ internal fun Record.makeResponse(): Message {
     return response
 }
 
-internal fun Record.makeResponseWithRrsig(validityPeriod: DatePeriod): Message {
+internal fun Record.makeResponseWithRrsig(validityPeriod: InstantPeriod): Message {
     val response = makeResponse()
     response.addRecord(makeRrsig(validityPeriod), Section.ANSWER)
     return response

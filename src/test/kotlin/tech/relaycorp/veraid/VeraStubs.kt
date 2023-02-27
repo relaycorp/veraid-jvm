@@ -1,10 +1,10 @@
 package tech.relaycorp.veraid
 
-import java.time.ZonedDateTime
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.OrgCertificate
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
+import java.time.ZonedDateTime
 
 const val ORG_NAME = "example.com"
 val ORG_KEY_PAIR = generateRSAKeyPair()
