@@ -55,7 +55,7 @@ class MemberCertificateTest {
 
             @Test
             fun `should not contain at signs`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
                         "@$MEMBER_NAME",
                         MEMBER_KEY_PAIR.public,
@@ -70,7 +70,7 @@ class MemberCertificateTest {
 
             @Test
             fun `should not contain tabs`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
                         "\t$MEMBER_NAME",
                         MEMBER_KEY_PAIR.public,
@@ -85,7 +85,7 @@ class MemberCertificateTest {
 
             @Test
             fun `should not contain carriage returns`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
                         "\r$MEMBER_NAME",
                         MEMBER_KEY_PAIR.public,
@@ -100,7 +100,7 @@ class MemberCertificateTest {
 
             @Test
             fun `should not contain line feeds`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
                         "\n$MEMBER_NAME",
                         MEMBER_KEY_PAIR.public,

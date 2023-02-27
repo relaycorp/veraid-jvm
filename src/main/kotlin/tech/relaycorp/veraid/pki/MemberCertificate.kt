@@ -37,7 +37,7 @@ public class MemberCertificate internal constructor(certificateHolder: X509Certi
 
         private fun validateUserName(userName: String) {
             if (FORBIDDEN_USER_NAME_CHARS_REGEX.containsMatchIn(userName)) {
-                throw PKIException(
+                throw PkiException(
                     "User name should not contain at signs or whitespace other than simple spaces",
                 )
             }

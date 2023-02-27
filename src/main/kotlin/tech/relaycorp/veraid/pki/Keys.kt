@@ -22,12 +22,12 @@ private const val MIN_RSA_KEY_MODULUS = 2048
  * Generate an RSA key pair.
  *
  * @param modulus The modulus
- * @throws PKIException If `modulus` is less than 2048
+ * @throws PkiException If `modulus` is less than 2048
  */
-@Throws(PKIException::class)
+@Throws(PkiException::class)
 public fun generateRSAKeyPair(modulus: Int = DEFAULT_RSA_KEY_MODULUS): KeyPair {
     if (modulus < MIN_RSA_KEY_MODULUS) {
-        throw PKIException("Modulus should be at least $MIN_RSA_KEY_MODULUS (got $modulus)")
+        throw PkiException("Modulus should be at least $MIN_RSA_KEY_MODULUS (got $modulus)")
     }
     val keyGen = KeyPairGenerator.getInstance("RSA", BC_PROVIDER)
     keyGen.initialize(modulus)
@@ -37,7 +37,7 @@ public fun generateRSAKeyPair(modulus: Int = DEFAULT_RSA_KEY_MODULUS): KeyPair {
 /**
  * Deserialize the RSA key pair from a private key serialization.
  */
-@Throws(PKIException::class)
+@Throws(PkiException::class)
 public fun ByteArray.deserializeRSAKeyPair(): KeyPair {
     val privateKey = this.deserializePrivateKey("RSA") as RSAPrivateCrtKey
     val keyFactory = KeyFactory.getInstance("RSA", BC_PROVIDER)
@@ -52,7 +52,7 @@ private fun ByteArray.deserializePrivateKey(algorithm: String): PrivateKey {
     return try {
         keyFactory.generatePrivate(privateKeySpec)
     } catch (exc: InvalidKeySpecException) {
-        throw PKIException("Value is not a valid $algorithm private key", exc)
+        throw PkiException("Value is not a valid $algorithm private key", exc)
     }
 }
 
@@ -65,6 +65,6 @@ private fun ByteArray.deserializePublicKey(algorithm: String): PublicKey {
     return try {
         factory.generatePublic(spec)
     } catch (exc: InvalidKeySpecException) {
-        throw PKIException("Value is not a valid $algorithm public key", exc)
+        throw PkiException("Value is not a valid $algorithm public key", exc)
     }
 }
