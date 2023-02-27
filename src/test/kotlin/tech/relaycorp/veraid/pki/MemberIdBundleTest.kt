@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.MEMBER_CERT
 import tech.relaycorp.veraid.ORG_CERT
-import tech.relaycorp.veraid.ORG_KEY_PAIR
 import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.dns.RECORD
 import tech.relaycorp.veraid.dns.VeraDnssecChain
@@ -16,7 +15,6 @@ import tech.relaycorp.veraid.dns.makeResponse
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.x509.Certificate
 import java.math.BigInteger
-import java.time.ZonedDateTime
 
 class MemberIdBundleTest {
     private val response = RECORD.makeResponse()
