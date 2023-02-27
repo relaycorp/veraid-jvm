@@ -1,5 +1,22 @@
 package tech.relaycorp.veraid.utils.x509
 
+import org.bouncycastle.asn1.x509.Certificate as BCCertificate
+import java.io.IOException
+import java.security.InvalidAlgorithmParameterException
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.cert.CertPathBuilder
+import java.security.cert.CertPathBuilderException
+import java.security.cert.CertStore
+import java.security.cert.CollectionCertStoreParameters
+import java.security.cert.PKIXBuilderParameters
+import java.security.cert.PKIXCertPathBuilderResult
+import java.security.cert.PKIXParameters
+import java.security.cert.TrustAnchor
+import java.security.cert.X509CertSelector
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.Date
 import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DERBMPString
 import org.bouncycastle.asn1.x500.X500Name
@@ -17,23 +34,6 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
 import tech.relaycorp.veraid.utils.getSHA256Digest
-import java.io.IOException
-import java.security.InvalidAlgorithmParameterException
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.security.cert.CertPathBuilder
-import java.security.cert.CertPathBuilderException
-import java.security.cert.CertStore
-import java.security.cert.CollectionCertStoreParameters
-import java.security.cert.PKIXBuilderParameters
-import java.security.cert.PKIXCertPathBuilderResult
-import java.security.cert.PKIXParameters
-import java.security.cert.TrustAnchor
-import java.security.cert.X509CertSelector
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.Date
-import org.bouncycastle.asn1.x509.Certificate as BCCertificate
 
 /**
  * Certificate.
@@ -63,7 +63,7 @@ public open class Certificate internal constructor(
         ): Certificate {
             val expiryDate = if (issuerCertificate != null) {
                 minOf(
-                    issuerCertificate.expiryDate,
+                    issuerCertificate.validityPeriod.endInclusive,
                     validityEndDate,
                 )
             } else {
@@ -182,17 +182,11 @@ public open class Certificate internal constructor(
     public val issuerCommonName: String
         get() = getCommonName(certificateHolder.issuer)
 
-    /**
-     * The start date of the certificate.
-     */
-    public val startDate: ZonedDateTime
-        get() = dateToZonedDateTime(certificateHolder.notBefore)
-
-    /**
-     * The expiry date of the certificate.
-     */
-    public val expiryDate: ZonedDateTime
-        get() = dateToZonedDateTime(certificateHolder.notAfter)
+    public val validityPeriod: ClosedRange<ZonedDateTime> by lazy {
+        val start = dateToZonedDateTime(certificateHolder.notBefore)
+        val end = dateToZonedDateTime(certificateHolder.notAfter)
+        start..end
+    }
 
     private val basicConstraints: BasicConstraints? by lazy {
         BasicConstraints.fromExtensions(certificateHolder.extensions)
@@ -249,10 +243,10 @@ public open class Certificate internal constructor(
 
     private fun validateValidityPeriod() {
         val now = ZonedDateTime.now()
-        if (now < startDate) {
+        if (now < validityPeriod.start) {
             throw CertificateException("Certificate is not yet valid")
         }
-        if (expiryDate < now) {
+        if (validityPeriod.endInclusive < now) {
             throw CertificateException("Certificate already expired")
         }
     }
