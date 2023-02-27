@@ -1,22 +1,5 @@
 package tech.relaycorp.veraid.utils.x509
 
-import org.bouncycastle.asn1.x509.Certificate as BCCertificate
-import java.io.IOException
-import java.security.InvalidAlgorithmParameterException
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.security.cert.CertPathBuilder
-import java.security.cert.CertPathBuilderException
-import java.security.cert.CertStore
-import java.security.cert.CollectionCertStoreParameters
-import java.security.cert.PKIXBuilderParameters
-import java.security.cert.PKIXCertPathBuilderResult
-import java.security.cert.PKIXParameters
-import java.security.cert.TrustAnchor
-import java.security.cert.X509CertSelector
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.util.Date
 import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DERBMPString
 import org.bouncycastle.asn1.x500.X500Name
@@ -34,6 +17,23 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
 import tech.relaycorp.veraid.utils.getSHA256Digest
+import java.io.IOException
+import java.security.InvalidAlgorithmParameterException
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.cert.CertPathBuilder
+import java.security.cert.CertPathBuilderException
+import java.security.cert.CertStore
+import java.security.cert.CollectionCertStoreParameters
+import java.security.cert.PKIXBuilderParameters
+import java.security.cert.PKIXCertPathBuilderResult
+import java.security.cert.PKIXParameters
+import java.security.cert.TrustAnchor
+import java.security.cert.X509CertSelector
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.Date
+import org.bouncycastle.asn1.x509.Certificate as BCCertificate
 
 /**
  * Certificate.
