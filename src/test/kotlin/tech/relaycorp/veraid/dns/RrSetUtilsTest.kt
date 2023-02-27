@@ -67,7 +67,7 @@ class RrSetUtilsTest {
                 RRSIG.expire,
                 RRSIG.footprint,
                 RRSIG.signer,
-                RRSIG.signature
+                RRSIG.signature,
             )
             val rrset = RRset(RECORD, RRSIG, newerRrsig)
 
@@ -87,7 +87,7 @@ class RrSetUtilsTest {
                 RRSIG.timeSigned,
                 RRSIG.footprint,
                 RRSIG.signer,
-                RRSIG.signature
+                RRSIG.signature,
             )
             val rrset = RRset(RECORD, RRSIG, olderRrsig)
 

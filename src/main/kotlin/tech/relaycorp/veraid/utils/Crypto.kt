@@ -1,7 +1,7 @@
 package tech.relaycorp.veraid.utils
 
-import java.security.MessageDigest
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import java.security.MessageDigest
 
 internal val BC_PROVIDER = BouncyCastleProvider()
 

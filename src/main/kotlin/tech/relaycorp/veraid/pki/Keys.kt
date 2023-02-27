@@ -2,6 +2,7 @@
 
 package tech.relaycorp.veraid.pki
 
+import tech.relaycorp.veraid.utils.BC_PROVIDER
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -13,7 +14,6 @@ import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.RSAPublicKeySpec
 import java.security.spec.X509EncodedKeySpec
-import tech.relaycorp.veraid.utils.BC_PROVIDER
 
 private const val DEFAULT_RSA_KEY_MODULUS = 2048
 private const val MIN_RSA_KEY_MODULUS = 2048

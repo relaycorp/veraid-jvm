@@ -2,7 +2,6 @@
 
 package tech.relaycorp.veraid.dns
 
-import java.time.Instant
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.RRset
@@ -11,6 +10,7 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
+import java.time.Instant
 
 internal fun Message.getRrset(question: Record, section: Int): RRset? {
     val sectionRrsets = getSectionRRsets(section)

@@ -37,7 +37,7 @@ class MessageUtilsTest {
             val message = Message()
             message.addRecord(
                 RECORD.copy(name = RECORD.name.makeSubdomain("sub")),
-                Section.ANSWER
+                Section.ANSWER,
             )
 
             message.getRrset(question, Section.ANSWER) shouldBe null
@@ -52,9 +52,9 @@ class MessageUtilsTest {
                     Type.A,
                     RECORD.dClass,
                     RECORD.ttl,
-                    byteArrayOf(1, 1, 1, 1)
+                    byteArrayOf(1, 1, 1, 1),
                 ),
-                Section.ANSWER
+                Section.ANSWER,
             )
 
             message.getRrset(question, Section.ANSWER) shouldBe null
@@ -65,7 +65,7 @@ class MessageUtilsTest {
             val message = Message()
             message.addRecord(
                 RECORD.copy(dClass = RECORD.dClass + 1),
-                Section.ANSWER
+                Section.ANSWER,
             )
 
             message.getRrset(question, Section.ANSWER) shouldBe null
@@ -199,7 +199,7 @@ class MessageUtilsTest {
                 RRSIG.expire,
                 RRSIG.footprint,
                 RRSIG.signer,
-                RRSIG.signature
+                RRSIG.signature,
             )
             val message = RECORD.makeResponse()
             message.addRecord(RRSIG, Section.ANSWER)
@@ -221,7 +221,7 @@ class MessageUtilsTest {
                 RRSIG.timeSigned,
                 RRSIG.footprint,
                 RRSIG.signer,
-                RRSIG.signature
+                RRSIG.signature,
             )
             val message = RECORD.makeResponse()
             message.addRecord(RRSIG, Section.ANSWER)
@@ -244,7 +244,7 @@ class MessageUtilsTest {
                 RRSIG.timeSigned.plusSeconds(1),
                 RRSIG.footprint,
                 RRSIG.signer,
-                RRSIG.signature
+                RRSIG.signature,
             )
 
             val message = RECORD.makeResponse()
@@ -268,7 +268,7 @@ class MessageUtilsTest {
                 RRSIG.timeSigned,
                 RRSIG.footprint,
                 RRSIG.signer,
-                RRSIG.signature
+                RRSIG.signature,
             )
 
             val message = RECORD.makeResponse()

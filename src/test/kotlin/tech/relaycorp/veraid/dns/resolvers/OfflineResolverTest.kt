@@ -27,7 +27,7 @@ class OfflineResolverTest {
         Type.TXT,
         DClass.IN,
         42,
-        "the rdata".toByteArray().txtRdataSerialise()
+        "the rdata".toByteArray().txtRdataSerialise(),
     )
 
     @Test

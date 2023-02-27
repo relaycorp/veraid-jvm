@@ -3,13 +3,13 @@ package tech.relaycorp.veraid.dns
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.milliseconds
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.KeyAlgorithm
 import tech.relaycorp.veraid.OrganisationKeySpec
 import tech.relaycorp.veraid.SERVICE_OID
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 
 class VeraRdataFieldsTest {
     private val orgKeyAlgorithm = KeyAlgorithm.RSA_2048
@@ -84,7 +84,7 @@ class VeraRdataFieldsTest {
                 val ninetyDays = 90.days
 
                 val fields = VeraRdataFields.parse(
-                    "$orgKeyAlgorithmId $orgKeyId ${ninetyDays.inWholeSeconds}"
+                    "$orgKeyAlgorithmId $orgKeyId ${ninetyDays.inWholeSeconds}",
                 )
 
                 fields.ttlOverride shouldBe ninetyDays
@@ -96,7 +96,7 @@ class VeraRdataFieldsTest {
                 val over90Days = ninetyDays + 1.milliseconds
 
                 val fields = VeraRdataFields.parse(
-                    "$orgKeyAlgorithmId $orgKeyId ${over90Days.inWholeSeconds}"
+                    "$orgKeyAlgorithmId $orgKeyId ${over90Days.inWholeSeconds}",
                 )
 
                 fields.ttlOverride shouldBe ninetyDays
@@ -129,7 +129,7 @@ class VeraRdataFieldsTest {
 
                 val exception = shouldThrow<InvalidRdataException> {
                     VeraRdataFields.parse(
-                        "$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds $malformedServiceOid"
+                        "$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds $malformedServiceOid",
                     )
                 }
 
@@ -139,7 +139,7 @@ class VeraRdataFieldsTest {
             @Test
             fun `Service OID should be present if specified`() {
                 val fields = VeraRdataFields.parse(
-                    "$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds ${service.id}"
+                    "$orgKeyAlgorithmId $orgKeyId $ttlOverrideSeconds ${service.id}",
                 )
 
                 fields.service shouldBe service

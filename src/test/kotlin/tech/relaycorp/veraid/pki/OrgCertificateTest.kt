@@ -3,9 +3,6 @@ package tech.relaycorp.veraid.pki
 import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.date.shouldNotBeBefore
 import io.kotest.matchers.shouldBe
-import java.math.BigInteger
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.junit.jupiter.api.Nested
@@ -13,6 +10,9 @@ import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.ORG_KEY_PAIR
 import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.utils.BC_PROVIDER
+import java.math.BigInteger
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 class OrgCertificateTest {
     @Nested

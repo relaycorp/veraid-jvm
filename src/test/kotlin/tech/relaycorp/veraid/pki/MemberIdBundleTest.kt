@@ -2,9 +2,6 @@ package tech.relaycorp.veraid.pki
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
-import java.math.BigInteger
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1Set
 import org.junit.jupiter.api.Nested
@@ -18,6 +15,9 @@ import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.dns.makeResponse
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.x509.Certificate
+import java.math.BigInteger
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 class MemberIdBundleTest {
     @Nested

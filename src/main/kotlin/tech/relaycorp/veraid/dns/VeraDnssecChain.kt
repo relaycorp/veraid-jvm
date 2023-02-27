@@ -1,7 +1,5 @@
 package tech.relaycorp.veraid.dns
 
-import java.time.Instant
-import kotlin.time.toJavaDuration
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Set
@@ -17,6 +15,8 @@ import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
 import tech.relaycorp.veraid.OrganisationKeySpec
 import tech.relaycorp.veraid.utils.intersect
+import java.time.Instant
+import kotlin.time.toJavaDuration
 
 /**
  * Vera DNSSEC chain.
@@ -52,7 +52,7 @@ public class VeraDnssecChain internal constructor(
         val chainValidityPeriod = getChainValidityPeriod()
         val intersectingPeriod =
             verificationPeriod.intersect(chainValidityPeriod) ?: throw InvalidChainException(
-                "Chain validity period does not overlap with required period"
+                "Chain validity period does not overlap with required period",
             )
         super.verify(intersectingPeriod.start)
     }
@@ -64,7 +64,7 @@ public class VeraDnssecChain internal constructor(
             }
             .reduce { acc, period ->
                 acc.intersect(period) ?: throw InvalidChainException(
-                    "Chain contains RRSigs whose validity periods do not overlap"
+                    "Chain contains RRSigs whose validity periods do not overlap",
                 )
             }
         return chainValidityPeriod
@@ -73,7 +73,7 @@ public class VeraDnssecChain internal constructor(
     private fun calculateVerificationPeriod(
         datePeriod: ClosedRange<Instant>,
         orgKeySpec: OrganisationKeySpec,
-        serviceOid: ASN1ObjectIdentifier
+        serviceOid: ASN1ObjectIdentifier,
     ): ClosedRange<Instant> {
         val matchingFields = getRdataFields(orgKeySpec, serviceOid)
         val ttlOverride = matchingFields.ttlOverride
@@ -84,12 +84,12 @@ public class VeraDnssecChain internal constructor(
 
     private fun getRdataFields(
         orgKeySpec: OrganisationKeySpec,
-        serviceOid: ASN1ObjectIdentifier
+        serviceOid: ASN1ObjectIdentifier,
     ): VeraRdataFields {
         val answers = getVeraTxtAnswers()
         val fieldSet = answers.map {
             val rdata = it.strings.singleOrNull() ?: throw InvalidChainException(
-                "Vera TXT answer rdata must contain one string (got ${it.strings.size})"
+                "Vera TXT answer rdata must contain one string (got ${it.strings.size})",
             )
             try {
                 VeraRdataFields.parse(rdata)
@@ -109,7 +109,7 @@ public class VeraDnssecChain internal constructor(
         val wildcardFields = matchingSet.filter { it.service == null }
         if (1 < wildcardFields.size) {
             throw InvalidChainException(
-                "Found multiple Vera records for the same key and no service"
+                "Found multiple Vera records for the same key and no service",
             )
         }
         return concreteFields.singleOrNull() ?: wildcardFields.single()
@@ -131,7 +131,9 @@ public class VeraDnssecChain internal constructor(
         val veraTxtResponse = veraTxtResponses.single()
         val rrset = veraTxtResponse.getRrset(veraRecordQuery, Section.ANSWER)
             ?: throw InvalidChainException("Vera TXT response does not contain an answer")
-        @Suppress("UNCHECKED_CAST") return rrset.rrs() as List<TXTRecord>
+
+        @Suppress("UNCHECKED_CAST")
+        return rrset.rrs() as List<TXTRecord>
     }
 
     public companion object {
@@ -151,7 +153,7 @@ public class VeraDnssecChain internal constructor(
         @Throws(DnsException::class)
         public suspend fun retrieve(
             organisationName: String,
-            resolverHost: String = CLOUDFLARE_RESOLVER
+            resolverHost: String = CLOUDFLARE_RESOLVER,
         ): VeraDnssecChain {
             val organisationNameNormalised = organisationName.trimEnd('.')
             val domainName = "_vera.$organisationNameNormalised."
@@ -164,7 +166,7 @@ public class VeraDnssecChain internal constructor(
             val responses = set.map {
                 if (it !is DEROctetString) {
                     throw InvalidChainException(
-                        "Chain SET contains non-OCTET STRING item ($it)"
+                        "Chain SET contains non-OCTET STRING item ($it)",
                     )
                 }
                 try {
