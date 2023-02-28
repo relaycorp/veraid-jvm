@@ -9,18 +9,19 @@ import java.time.ZonedDateTime
 const val ORG_NAME = "example.com"
 val ORG_KEY_PAIR = generateRSAKeyPair()
 internal val ORG_KEY_SPEC = OrganisationKeySpec(KeyAlgorithm.RSA_2048, "the-key-id")
+private val now = ZonedDateTime.now()
 internal val ORG_CERT =
-    OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, ZonedDateTime.now().plusSeconds(60))
+    OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, now.plusSeconds(60), now)
 
-const val MEMBER_NAME = "alice"
+const val USER_NAME = "alice"
 val MEMBER_KEY_PAIR = generateRSAKeyPair()
 internal val MEMBER_CERT = MemberCertificate.issue(
-    MEMBER_NAME,
+    USER_NAME,
     MEMBER_KEY_PAIR.public,
     ORG_CERT,
     ORG_KEY_PAIR.private,
     ORG_CERT.validityPeriod.endInclusive,
-    ORG_CERT.validityPeriod.start,
+    now,
 )
 
 val SERVICE_OID = ASN1ObjectIdentifier("1.2.3.4.5")

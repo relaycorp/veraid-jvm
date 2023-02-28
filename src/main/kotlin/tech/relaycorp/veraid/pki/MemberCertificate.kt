@@ -8,9 +8,17 @@ import java.time.ZonedDateTime
 
 public class MemberCertificate internal constructor(certificateHolder: X509CertificateHolder) :
     Certificate(certificateHolder) {
+    internal val userName: String? by lazy {
+        if (commonName == BOT_NAME) {
+            null
+        } else {
+            commonName
+        }
+    }
+
     public companion object {
         private val FORBIDDEN_USER_NAME_CHARS_REGEX = "[@\t\r\n]".toRegex()
-        private const val BOT_USER_NAME = "@"
+        private const val BOT_NAME = "@"
 
         public fun issue(
             userName: String?,
@@ -25,7 +33,7 @@ public class MemberCertificate internal constructor(certificateHolder: X509Certi
             }
             return MemberCertificate(
                 issue(
-                    userName ?: BOT_USER_NAME,
+                    userName ?: BOT_NAME,
                     memberPublicKey,
                     orgPrivateKey,
                     expiryDate,
@@ -35,7 +43,7 @@ public class MemberCertificate internal constructor(certificateHolder: X509Certi
             )
         }
 
-        private fun validateUserName(userName: String) {
+        internal fun validateUserName(userName: String) {
             if (FORBIDDEN_USER_NAME_CHARS_REGEX.containsMatchIn(userName)) {
                 throw PkiException(
                     "User name should not contain at signs or whitespace other than simple spaces",

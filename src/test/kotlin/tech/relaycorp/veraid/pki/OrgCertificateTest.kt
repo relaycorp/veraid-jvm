@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.ORG_KEY_PAIR
 import tech.relaycorp.veraid.ORG_NAME
+import tech.relaycorp.veraid.dns.DOMAIN_NAME
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import java.math.BigInteger
 import java.time.ZonedDateTime
@@ -22,6 +23,14 @@ class OrgCertificateTest {
         @Test
         fun `Name should be used as Common Name`() {
             val cert = OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, expiryDate)
+
+            cert.commonName shouldBe ORG_NAME
+            cert.issuerCommonName shouldBe ORG_NAME
+        }
+
+        @Test
+        fun `Name should have any trailing dot removed`() {
+            val cert = OrgCertificate.selfIssue(DOMAIN_NAME, ORG_KEY_PAIR, expiryDate)
 
             cert.commonName shouldBe ORG_NAME
             cert.issuerCommonName shouldBe ORG_NAME

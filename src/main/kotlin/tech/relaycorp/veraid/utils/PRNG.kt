@@ -1,3 +1,5 @@
+@file:JvmName("PRNG")
+
 package tech.relaycorp.veraid.utils
 
 import java.math.BigInteger
