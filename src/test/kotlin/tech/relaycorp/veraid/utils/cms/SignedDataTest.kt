@@ -1,5 +1,10 @@
 package tech.relaycorp.veraid.utils.cms
 
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.beInstanceOf
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DEROctetString
@@ -18,10 +23,6 @@ import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -80,7 +81,7 @@ internal class SignedDataTest {
                 SignedData.deserialize(invalidCMSSignedData)
             }
 
-            assertEquals("Value cannot be empty", exception.message)
+            exception.message shouldBe "Value cannot be empty"
         }
 
         @Test
@@ -91,7 +92,7 @@ internal class SignedDataTest {
                 SignedData.deserialize(invalidCMSSignedData)
             }
 
-            assertEquals("Value is not DER-encoded", exception.message)
+            exception.message shouldBe "Value is not DER-encoded"
         }
 
         @Test
@@ -102,10 +103,7 @@ internal class SignedDataTest {
                 SignedData.deserialize(invalidCMSSignedData)
             }
 
-            assertEquals(
-                "SignedData value is not wrapped in ContentInfo",
-                exception.message,
-            )
+            exception.message shouldBe "SignedData value is not wrapped in ContentInfo"
         }
 
         @Test
@@ -117,10 +115,7 @@ internal class SignedDataTest {
                 SignedData.deserialize(invalidCMSSignedData.encoded)
             }
 
-            assertEquals(
-                "ContentInfo wraps invalid SignedData value",
-                exception.message,
-            )
+            exception.message shouldBe "ContentInfo wraps invalid SignedData value"
         }
 
         @Test
@@ -134,10 +129,7 @@ internal class SignedDataTest {
 
             val signedDataDeserialized = SignedData.deserialize(signedDataSerialized)
 
-            assertEquals(
-                signedData.bcSignedData.encoded.asList(),
-                signedDataDeserialized.bcSignedData.encoded.asList(),
-            )
+            signedDataDeserialized.bcSignedData.encoded shouldBe signedData.bcSignedData.encoded
         }
     }
 
@@ -151,7 +143,7 @@ internal class SignedDataTest {
                 stubCertificate,
             )
 
-            assertEquals(1, signedData.bcSignedData.version)
+            signedData.bcSignedData.version shouldBe 1
         }
 
         @Nested
@@ -164,8 +156,7 @@ internal class SignedDataTest {
                     stubCertificate,
                 )
 
-                assertNotNull(signedData.plaintext)
-                assertEquals(stubPlaintext.asList(), signedData.plaintext!!.asList())
+                signedData.plaintext shouldBe stubPlaintext
             }
 
             @Test
@@ -177,7 +168,7 @@ internal class SignedDataTest {
                     encapsulatePlaintext = false,
                 )
 
-                assertNull(signedData.plaintext)
+                signedData.plaintext shouldBe null
             }
         }
 
@@ -191,7 +182,7 @@ internal class SignedDataTest {
                     stubCertificate,
                 )
 
-                assertEquals(1, signedData.bcSignedData.signerInfos.size())
+                signedData.bcSignedData.signerInfos shouldHaveSize 1
             }
 
             @Test
@@ -203,7 +194,7 @@ internal class SignedDataTest {
                 )
 
                 val signerInfo = signedData.bcSignedData.signerInfos.first()
-                assertEquals(1, signerInfo.version)
+                signerInfo.version shouldBe 1
             }
 
             @Test
@@ -215,11 +206,8 @@ internal class SignedDataTest {
                 )
 
                 val signerInfo = signedData.bcSignedData.signerInfos.first()
-                assertEquals(stubCertificate.certificateHolder.issuer, signerInfo.sid.issuer)
-                assertEquals(
-                    stubCertificate.certificateHolder.serialNumber,
-                    signerInfo.sid.serialNumber,
-                )
+                signerInfo.sid.issuer shouldBe stubCertificate.certificateHolder.issuer
+                signerInfo.sid.serialNumber shouldBe stubCertificate.certificateHolder.serialNumber
             }
 
             @Test
@@ -231,7 +219,7 @@ internal class SignedDataTest {
                 )
 
                 val signerInfo = signedData.bcSignedData.signerInfos.first()
-                assertEquals(PKCSObjectIdentifiers.id_RSASSA_PSS.id, signerInfo.encryptionAlgOID)
+                signerInfo.encryptionAlgOID shouldBe PKCSObjectIdentifiers.id_RSASSA_PSS.id
             }
 
             @Nested
@@ -261,10 +249,10 @@ internal class SignedDataTest {
 
                     val contentTypeAttrs =
                         signerInfo.signedAttributes.getAll(CMSAttributes.contentType)
-                    assertEquals(1, contentTypeAttrs.size())
+                    contentTypeAttrs.size() shouldBe 1
                     val contentTypeAttr = contentTypeAttrs.get(0) as Attribute
-                    assertEquals(1, contentTypeAttr.attributeValues.size)
-                    assertEquals(CMSObjectIdentifiers.data, contentTypeAttr.attributeValues[0])
+                    contentTypeAttr.attributeValues.size shouldBe 1
+                    contentTypeAttr.attributeValues[0] shouldBe CMSObjectIdentifiers.data
                 }
 
                 @Test
@@ -283,14 +271,11 @@ internal class SignedDataTest {
                                 cmsDigestAttributeOid,
                             ),
                         )
-                    assertEquals(1, digestAttrs.size())
+                    digestAttrs.size() shouldBe 1
                     val digestAttr = digestAttrs.get(0) as Attribute
-                    assertEquals(1, digestAttr.attributeValues.size)
+                    digestAttr.attributeValues.size shouldBe 1
                     val digest = MessageDigest.getInstance("SHA-256").digest(stubPlaintext)
-                    assertEquals(
-                        digest.asList(),
-                        (digestAttr.attributeValues[0] as DEROctetString).octets.asList(),
-                    )
+                    (digestAttr.attributeValues[0] as DEROctetString).octets shouldBe digest
                 }
             }
         }
@@ -305,8 +290,8 @@ internal class SignedDataTest {
                     stubCertificate,
                 )
 
-                assertNull(signedData.signerCertificate)
-                assertEquals(0, signedData.certificates.size)
+                signedData.signerCertificate shouldBe null
+                signedData.certificates.size shouldBe 0
             }
 
             @Test
@@ -318,8 +303,8 @@ internal class SignedDataTest {
                     setOf(stubCertificate, anotherStubCertificate),
                 )
 
-                assertEquals(2, signedData.certificates.size)
-                assertTrue(signedData.certificates.contains(anotherStubCertificate))
+                signedData.certificates.size shouldBe 2
+                signedData.certificates shouldContain anotherStubCertificate
             }
         }
 
@@ -355,17 +340,12 @@ internal class SignedDataTest {
             ) {
                 val expectedHashingAlgoOID = HASHING_ALGORITHM_OIDS[expectedHashingAlgorithm]
 
-                assertEquals(1, signedData.bcSignedData.digestAlgorithmIDs.size)
-                assertEquals(
-                    expectedHashingAlgoOID,
-                    signedData.bcSignedData.digestAlgorithmIDs.first().algorithm,
-                )
+                signedData.bcSignedData.digestAlgorithmIDs.size shouldBe 1
+                signedData.bcSignedData.digestAlgorithmIDs.first().algorithm shouldBe
+                    expectedHashingAlgoOID
 
                 val signerInfo = signedData.bcSignedData.signerInfos.first()
-                assertEquals(
-                    expectedHashingAlgoOID,
-                    signerInfo.digestAlgorithmID.algorithm,
-                )
+                signerInfo.digestAlgorithmID.algorithm shouldBe expectedHashingAlgoOID
             }
         }
     }
@@ -401,8 +381,8 @@ internal class SignedDataTest {
                     invalidSignedData.verify()
                 }
 
-            assertEquals("Could not verify signature", exception.message)
-            assertTrue(exception.cause is CMSException)
+            exception.message shouldBe "Could not verify signature"
+            exception.cause should beInstanceOf<CMSException>()
         }
 
         @Test
@@ -438,8 +418,8 @@ internal class SignedDataTest {
                     )
                 }
 
-            assertEquals("Could not verify signature", exception.message)
-            assertTrue(exception.cause is CMSException)
+            exception.message shouldBe "Could not verify signature"
+            exception.cause should beInstanceOf<CMSException>()
         }
 
         @Test
@@ -458,8 +438,8 @@ internal class SignedDataTest {
                 signedData.verify()
             }
 
-            assertEquals("Invalid signature", exception.message)
-            assertNull(exception.cause)
+            exception.message shouldBe "Invalid signature"
+            exception.cause shouldBe null
         }
 
         @Test
@@ -475,7 +455,7 @@ internal class SignedDataTest {
             val exception =
                 org.junit.jupiter.api.assertThrows<SignedDataException> { signedData.verify() }
 
-            assertEquals("Plaintext should be encapsulated or explicitly set", exception.message)
+            exception.message shouldBe "Plaintext should be encapsulated or explicitly set"
         }
 
         @Test
@@ -491,10 +471,8 @@ internal class SignedDataTest {
                 signedData.verify(stubPlaintext)
             }
 
-            assertEquals(
-                "No specific plaintext should be expected because one is already encapsulated",
-                exception.message,
-            )
+            exception.message shouldBe
+                "No specific plaintext should be expected because one is already encapsulated"
         }
 
         @Test
@@ -533,7 +511,7 @@ internal class SignedDataTest {
             val exception =
                 org.junit.jupiter.api.assertThrows<SignedDataException> { signedData.verify() }
 
-            assertEquals("Signer certificate should be encapsulated", exception.message)
+            exception.message shouldBe "Signer certificate should be encapsulated"
         }
 
         @Test
@@ -573,7 +551,7 @@ internal class SignedDataTest {
             val bcSignedData = signedDataGenerator.generate(plaintextCms, false)
             val signedData = SignedData.deserialize(bcSignedData.encoded)
 
-            assertNull(signedData.plaintext)
+            signedData.plaintext shouldBe null
         }
 
         @Test
@@ -584,8 +562,7 @@ internal class SignedDataTest {
                 stubCertificate,
             )
 
-            assertTrue(cmsSignedData.plaintext is ByteArray)
-            assertEquals(stubPlaintext.asList(), cmsSignedData.plaintext!!.asList())
+            cmsSignedData.plaintext shouldBe stubPlaintext
         }
     }
 
@@ -603,10 +580,7 @@ internal class SignedDataTest {
                     signedData.signerCertificate
                 }
 
-            assertEquals(
-                "SignedData should contain exactly one SignerInfo (got 0)",
-                exception.message,
-            )
+            exception.message shouldBe "SignedData should contain exactly one SignerInfo (got 0)"
         }
 
         @Test
@@ -639,10 +613,7 @@ internal class SignedDataTest {
                     signedData.signerCertificate
                 }
 
-            assertEquals(
-                "SignedData should contain exactly one SignerInfo (got 2)",
-                exception.message,
-            )
+            exception.message shouldBe "SignedData should contain exactly one SignerInfo (got 2)"
         }
 
         @Test
@@ -653,7 +624,7 @@ internal class SignedDataTest {
                 stubCertificate,
             )
 
-            assertNull(cmsSignedData.signerCertificate)
+            cmsSignedData.signerCertificate shouldBe null
         }
 
         @Test
@@ -665,7 +636,7 @@ internal class SignedDataTest {
                 setOf(stubCertificate),
             )
 
-            assertEquals(stubCertificate, cmsSignedData.signerCertificate)
+            cmsSignedData.signerCertificate shouldBe stubCertificate
         }
     }
 
@@ -679,7 +650,7 @@ internal class SignedDataTest {
                 stubCertificate,
             )
 
-            assertEquals(0, cmsSignedData.certificates.size)
+            cmsSignedData.certificates.size shouldBe 0
         }
 
         @Test
@@ -691,7 +662,7 @@ internal class SignedDataTest {
                 encapsulatedCertificates = setOf(stubCertificate),
             )
 
-            assertEquals(1, cmsSignedData.certificates.size)
+            cmsSignedData.certificates.size shouldBe 1
             assert(cmsSignedData.certificates.contains(stubCertificate))
         }
 
@@ -704,7 +675,7 @@ internal class SignedDataTest {
                 encapsulatedCertificates = setOf(stubCertificate, anotherStubCertificate),
             )
 
-            assertEquals(2, cmsSignedData.certificates.size)
+            cmsSignedData.certificates.size shouldBe 2
             assert(cmsSignedData.certificates.contains(stubCertificate))
             assert(cmsSignedData.certificates.contains(anotherStubCertificate))
         }
