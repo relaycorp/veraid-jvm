@@ -1,6 +1,9 @@
 package tech.relaycorp.veraid.utils.cms
 
+import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1InputStream
+import org.bouncycastle.asn1.cms.Attribute
+import org.bouncycastle.asn1.cms.AttributeTable
 import org.bouncycastle.asn1.cms.ContentInfo
 import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.jcajce.JcaCertStore
@@ -10,6 +13,8 @@ import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.CMSTypedData
+import org.bouncycastle.cms.DefaultSignedAttributeTableGenerator
+import org.bouncycastle.cms.SignerInfoGenerator
 import org.bouncycastle.cms.SignerInformation
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoVerifierBuilder
@@ -30,11 +35,17 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
      */
     val plaintext: ByteArray? by lazy { bcSignedData.signedContent?.content as ByteArray? }
 
+    private val signerInfo: SignerInformation? by lazy {
+        bcSignedData.signerInfos.singleOrNull()
+    }
+
     /**
      * The signer's certificate, if it was encapsulated.
      */
     val signerCertificate: Certificate? by lazy {
-        val signerInfo = getSignerInfo(bcSignedData)
+        val signerInfo = this.signerInfo ?: throw SignedDataException(
+            "SignedData should contain exactly one SignerInfo",
+        )
 
         // We shouldn't have to force this type cast but this is the only way I could get the code to work and, based on
         // what I found online, that's what others have had to do as well
@@ -51,6 +62,8 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
             null
         }
     }
+
+    val signedAttrs: AttributeTable? = signerInfo?.signedAttributes
 
     /**
      * Set of encapsulated certificates.
@@ -84,7 +97,7 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
             CMSProcessableByteArray(signedPlaintext),
             bcSignedData.toASN1Structure(),
         )
-        val signerInfo = getSignerInfo(signedData)
+        val signerInfo = signedData.signerInfos.single()
         val verifierBuilder = JcaSimpleSignerInfoVerifierBuilder().setProvider(BC_PROVIDER)
         val verifier = verifierBuilder.build(signerCertificate!!.certificateHolder)
         val isValid = try {
@@ -115,11 +128,13 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
             encapsulatedCertificates: Set<Certificate> = setOf(),
             hashingAlgorithm: Hash? = null,
             encapsulatePlaintext: Boolean = true,
+            extraSignedAttrs: List<Attribute> = emptyList(),
         ): SignedData {
-            val contentSigner = makeContentSigner(signerPrivateKey, hashingAlgorithm)
-            val signerInfoGenerator = makeSignerInfoGeneratorBuilder().build(
-                contentSigner,
-                signerCertificate.certificateHolder,
+            val signerInfoGenerator = makeSignerInfoGenerator(
+                signerPrivateKey,
+                hashingAlgorithm,
+                extraSignedAttrs,
+                signerCertificate,
             )
             val signedDataGenerator = CMSSignedDataGenerator()
             signedDataGenerator.addSignerInfoGenerator(signerInfoGenerator)
@@ -141,9 +156,30 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
             )
         }
 
-        private fun makeSignerInfoGeneratorBuilder() = JcaSignerInfoGeneratorBuilder(
-            JcaDigestCalculatorProviderBuilder().build(),
-        )
+        private fun makeSignerInfoGenerator(
+            signerPrivateKey: PrivateKey,
+            hashingAlgorithm: Hash?,
+            extraSignedAttrs: List<Attribute>,
+            signerCertificate: Certificate,
+        ): SignerInfoGenerator? {
+            val contentSigner = makeContentSigner(signerPrivateKey, hashingAlgorithm)
+            val signerInfoGeneratorBuilder = JcaSignerInfoGeneratorBuilder(
+                JcaDigestCalculatorProviderBuilder().build(),
+            )
+
+            val signedAttrs = ASN1EncodableVector()
+            signedAttrs.addAll(extraSignedAttrs.toTypedArray())
+            signerInfoGeneratorBuilder.setSignedAttributeGenerator(
+                DefaultSignedAttributeTableGenerator(
+                    AttributeTable(signedAttrs),
+                ),
+            )
+
+            return signerInfoGeneratorBuilder.build(
+                contentSigner,
+                signerCertificate.certificateHolder,
+            )
+        }
 
         private fun makeContentSigner(
             signerPrivateKey: PrivateKey,
@@ -177,16 +213,6 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
                 throw SignedDataException("ContentInfo wraps invalid SignedData value")
             }
             return SignedData(bcSignedData)
-        }
-
-        private fun getSignerInfo(bcSignedData: CMSSignedData): SignerInformation {
-            val signersCount = bcSignedData.signerInfos.size()
-            if (signersCount != 1) {
-                throw SignedDataException(
-                    "SignedData should contain exactly one SignerInfo (got $signersCount)",
-                )
-            }
-            return bcSignedData.signerInfos.first()
         }
     }
 }

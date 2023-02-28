@@ -6,10 +6,14 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.beInstanceOf
+import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.asn1.DERNull
 import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.Attribute
 import org.bouncycastle.asn1.cms.CMSAttributes
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers
@@ -53,8 +57,6 @@ internal class SignedDataTest {
             stubKeyPair.private,
             ZonedDateTime.now().plusDays(1),
         )
-
-        const val cmsDigestAttributeOid = "1.2.840.113549.1.9.4"
     }
 
     @Nested
@@ -234,9 +236,7 @@ internal class SignedDataTest {
                         stubCertificate,
                     )
 
-                    val signerInfo = signedData.bcSignedData.signerInfos.first()
-
-                    signerInfo.signedAttributes.size() shouldBeGreaterThan 0
+                    signedData.signedAttrs!!.size() shouldBeGreaterThan 0
                 }
 
                 @Test
@@ -247,10 +247,8 @@ internal class SignedDataTest {
                         stubCertificate,
                     )
 
-                    val signerInfo = signedData.bcSignedData.signerInfos.first()
-
                     val contentTypeAttrs =
-                        signerInfo.signedAttributes.getAll(CMSAttributes.contentType)
+                        signedData.signedAttrs!!.getAll(CMSAttributes.contentType)
                     contentTypeAttrs.size() shouldBe 1
                     val contentTypeAttr = contentTypeAttrs.get(0) as Attribute
                     contentTypeAttr.attributeValues.size shouldBe 1
@@ -265,19 +263,31 @@ internal class SignedDataTest {
                         stubCertificate,
                     )
 
-                    val signerInfo = signedData.bcSignedData.signerInfos.first()
-
-                    val digestAttrs =
-                        signerInfo.signedAttributes.getAll(
-                            ASN1ObjectIdentifier(
-                                cmsDigestAttributeOid,
-                            ),
-                        )
+                    val digestAttrs = signedData.signedAttrs!!.getAll(
+                        PKCSObjectIdentifiers.pkcs_9_at_messageDigest,
+                    )
                     digestAttrs.size() shouldBe 1
                     val digestAttr = digestAttrs.get(0) as Attribute
                     digestAttr.attributeValues.size shouldBe 1
                     val digest = MessageDigest.getInstance("SHA-256").digest(stubPlaintext)
                     (digestAttr.attributeValues[0] as DEROctetString).octets shouldBe digest
+                }
+
+                @Test
+                fun `Extra attributes should be honoured`() {
+                    val attrOid = ASN1ObjectIdentifier("1.2.3.4.5")
+                    val attrValueVector = ASN1EncodableVector(1)
+                    attrValueVector.add(DERNull.INSTANCE)
+                    val attrValue = DERSet(attrValueVector)
+                    val attr = Attribute(attrOid, attrValue)
+                    val signedData = SignedData.sign(
+                        stubPlaintext,
+                        stubKeyPair.private,
+                        stubCertificate,
+                        extraSignedAttrs = listOf(attr),
+                    )
+
+                    signedData.signedAttrs?.get(attrOid) shouldBe attr
                 }
             }
         }
@@ -568,48 +578,24 @@ internal class SignedDataTest {
     inner class SignerCertificate {
         @Test
         fun `An empty SignerInfo collection should be refused`() {
-            val signedDataGenerator = CMSSignedDataGenerator()
-            val plaintextCms: CMSTypedData = CMSProcessableByteArray(stubPlaintext)
-            val bcSignedData = signedDataGenerator.generate(plaintextCms, true)
-            val signedData = SignedData(bcSignedData)
+            val signedData = generateSignedDataWithoutSigners()
 
             val exception = shouldThrow<SignedDataException> {
                 signedData.signerCertificate
             }
 
-            exception.message shouldBe "SignedData should contain exactly one SignerInfo (got 0)"
+            exception.message shouldBe "SignedData should contain exactly one SignerInfo"
         }
 
         @Test
         fun `A SignerInfo collection with more than one item should be refused`() {
-            val signedDataGenerator = CMSSignedDataGenerator()
-
-            val signerBuilder =
-                JcaContentSignerBuilder("SHA256WITHRSAANDMGF1").setProvider(BC_PROVIDER)
-            val contentSigner: ContentSigner = signerBuilder.build(stubKeyPair.private)
-            val signerInfoGenerator = JcaSignerInfoGeneratorBuilder(
-                JcaDigestCalculatorProviderBuilder()
-                    .build(),
-            ).build(contentSigner, stubCertificate.certificateHolder)
-            // Add the same SignerInfo twice
-            signedDataGenerator.addSignerInfoGenerator(
-                signerInfoGenerator,
-            )
-            signedDataGenerator.addSignerInfoGenerator(
-                signerInfoGenerator,
-            )
-
-            val bcSignedData = signedDataGenerator.generate(
-                CMSProcessableByteArray(stubPlaintext),
-                true,
-            )
-            val signedData = SignedData(bcSignedData)
+            val signedData = generateSignedDataWithMultipleSigners()
 
             val exception = shouldThrow<SignedDataException> {
                 signedData.signerCertificate
             }
 
-            exception.message shouldBe "SignedData should contain exactly one SignerInfo (got 2)"
+            exception.message shouldBe "SignedData should contain exactly one SignerInfo"
         }
 
         @Test
@@ -633,6 +619,37 @@ internal class SignedDataTest {
             )
 
             cmsSignedData.signerCertificate shouldBe stubCertificate
+        }
+    }
+
+    @Nested
+    inner class SignedAttrs {
+        @Test
+        fun `An empty SignerInfo collection should result in null`() {
+            val signedData = generateSignedDataWithoutSigners()
+
+            signedData.signedAttrs shouldBe null
+        }
+
+        @Test
+        fun `Multiple SignerInfos should result in null`() {
+            val signedData = generateSignedDataWithMultipleSigners()
+
+            signedData.signedAttrs shouldBe null
+        }
+
+        @Test
+        fun `Signed attributes should be output`() {
+            val signedData = SignedData.sign(
+                stubPlaintext,
+                stubKeyPair.private,
+                stubCertificate,
+                setOf(stubCertificate),
+            )
+
+            signedData.signedAttrs shouldNotBe null
+            signedData.signedAttrs!!.size() shouldBeGreaterThan 0
+            signedData.signedAttrs.getAll(CMSAttributes.contentType).size() shouldBe 1
         }
     }
 
@@ -673,5 +690,37 @@ internal class SignedDataTest {
             cmsSignedData.certificates shouldContain stubCertificate
             cmsSignedData.certificates shouldContain anotherStubCertificate
         }
+    }
+
+    private fun generateSignedDataWithoutSigners(): SignedData {
+        val signedDataGenerator = CMSSignedDataGenerator()
+        val plaintextCms: CMSTypedData = CMSProcessableByteArray(stubPlaintext)
+        val bcSignedData = signedDataGenerator.generate(plaintextCms, true)
+        return SignedData(bcSignedData)
+    }
+
+    private fun generateSignedDataWithMultipleSigners(): SignedData {
+        val signedDataGenerator = CMSSignedDataGenerator()
+
+        val signerBuilder =
+            JcaContentSignerBuilder("SHA256WITHRSAANDMGF1").setProvider(BC_PROVIDER)
+        val contentSigner: ContentSigner = signerBuilder.build(stubKeyPair.private)
+        val signerInfoGenerator = JcaSignerInfoGeneratorBuilder(
+            JcaDigestCalculatorProviderBuilder()
+                .build(),
+        ).build(contentSigner, stubCertificate.certificateHolder)
+        // Add the same SignerInfo twice
+        signedDataGenerator.addSignerInfoGenerator(
+            signerInfoGenerator,
+        )
+        signedDataGenerator.addSignerInfoGenerator(
+            signerInfoGenerator,
+        )
+
+        val bcSignedData = signedDataGenerator.generate(
+            CMSProcessableByteArray(stubPlaintext),
+            true,
+        )
+        return SignedData(bcSignedData)
     }
 }
