@@ -2,6 +2,7 @@ package tech.relaycorp.veraid.utils.cms
 
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
@@ -234,7 +235,7 @@ internal class SignedDataTest {
 
                     val signerInfo = signedData.bcSignedData.signerInfos.first()
 
-                    assert(0 < signerInfo.signedAttributes.size())
+                    signerInfo.signedAttributes.size() shouldBeGreaterThan 0
                 }
 
                 @Test
@@ -662,8 +663,7 @@ internal class SignedDataTest {
                 encapsulatedCertificates = setOf(stubCertificate),
             )
 
-            cmsSignedData.certificates.size shouldBe 1
-            assert(cmsSignedData.certificates.contains(stubCertificate))
+            cmsSignedData.certificates shouldContain stubCertificate
         }
 
         @Test
@@ -675,9 +675,8 @@ internal class SignedDataTest {
                 encapsulatedCertificates = setOf(stubCertificate, anotherStubCertificate),
             )
 
-            cmsSignedData.certificates.size shouldBe 2
-            assert(cmsSignedData.certificates.contains(stubCertificate))
-            assert(cmsSignedData.certificates.contains(anotherStubCertificate))
+            cmsSignedData.certificates shouldContain stubCertificate
+            cmsSignedData.certificates shouldContain anotherStubCertificate
         }
     }
 }
