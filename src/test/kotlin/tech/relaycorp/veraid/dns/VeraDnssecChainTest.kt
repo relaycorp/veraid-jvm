@@ -31,7 +31,7 @@ import tech.relaycorp.veraid.ORG_KEY_SPEC
 import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.SERVICE_OID
 import tech.relaycorp.veraid.utils.asn1.parseDer
-import java.time.Instant
+import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
@@ -42,6 +42,23 @@ data class RetrieverCallArgs(
 )
 
 class VeraDnssecChainTest {
+    @Nested
+    inner class Constructor {
+        @Test
+        fun `Organisation name should be stored`() {
+            val chain = VeraDnssecChain(ORG_NAME, emptyList())
+
+            chain.orgName shouldBe ORG_NAME
+        }
+
+        @Test
+        fun `Vera TXT subdomain should be stored`() {
+            val chain = VeraDnssecChain(ORG_NAME, emptyList())
+
+            chain.domainName shouldBe "_veraid.$DOMAIN_NAME"
+        }
+    }
+
     @Nested
     inner class Retrieve {
         private val originalChainRetriever = VeraDnssecChain.dnssecChainRetriever
@@ -63,7 +80,7 @@ class VeraDnssecChainTest {
 
             VeraDnssecChain.retrieve(ORG_NAME)
 
-            retrieverCallArgs?.domainName shouldBe "_vera.$DOMAIN_NAME"
+            retrieverCallArgs?.domainName shouldBe "_veraid.$DOMAIN_NAME"
         }
 
         @Test
@@ -72,7 +89,7 @@ class VeraDnssecChainTest {
 
             VeraDnssecChain.retrieve(DOMAIN_NAME)
 
-            retrieverCallArgs?.domainName shouldBe "_vera.$DOMAIN_NAME"
+            retrieverCallArgs?.domainName shouldBe "_veraid.$DOMAIN_NAME"
         }
 
         @Test
@@ -116,12 +133,12 @@ class VeraDnssecChainTest {
         }
 
         @Test
-        fun `Domain name should be stored in chain`() = runTest {
+        fun `Org name should be stored in chain`() = runTest {
             VeraDnssecChain.dnssecChainRetriever = makeRetriever()
 
             val chain = VeraDnssecChain.retrieve(ORG_NAME)
 
-            chain.domainName shouldBe "_vera.$ORG_NAME."
+            chain.orgName shouldBe ORG_NAME
         }
 
         private fun makeRetriever(responses: List<Message> = emptyList()): ChainRetriever =
@@ -225,14 +242,14 @@ class VeraDnssecChainTest {
         }
 
         @Test
-        fun `Organisation name should be stored`() {
+        fun `Org name should be stored`() {
             val response1 = Message()
             val chain = VeraDnssecChain(ORG_NAME, listOf(response1))
             val encoding = parseDer(chain.serialise()) as ASN1Set
 
             val chainDecoded = VeraDnssecChain.decode(ORG_NAME, encoding)
 
-            chainDecoded.domainName shouldBe "_vera.$ORG_NAME."
+            chainDecoded.orgName shouldBe ORG_NAME
         }
     }
 
@@ -242,7 +259,7 @@ class VeraDnssecChainTest {
         private val orgKeySpec = ORG_KEY_SPEC
         private val serviceOid = SERVICE_OID
 
-        private val now = Instant.now()
+        private val now = ZonedDateTime.now()
         private val datePeriod = now..now.plusSeconds(10)
 
         private val originalValidatingInitialiser = DnssecChain.offlineResolverInitialiser
@@ -506,7 +523,9 @@ class VeraDnssecChainTest {
 
                 chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
 
-                verify(chainSpy).verify(datePeriod.endInclusive.minus(ttl.toJavaDuration()))
+                val expectedInstant =
+                    datePeriod.endInclusive.toInstant().minus(ttl.toJavaDuration())
+                verify(chainSpy).verify(expectedInstant)
             }
 
             @Test
@@ -520,7 +539,7 @@ class VeraDnssecChainTest {
 
                 chainSpy.verify(orgKeySpec, serviceOid, start..datePeriod.endInclusive)
 
-                verify(chainSpy).verify(start)
+                verify(chainSpy).verify(start.toInstant())
             }
 
             @Test
@@ -542,7 +561,9 @@ class VeraDnssecChainTest {
 
                 chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
 
-                verify(chainSpy).verify(datePeriod.endInclusive.minus(concreteTtl.toJavaDuration()))
+                val expectedInstant =
+                    datePeriod.endInclusive.toInstant().minus(concreteTtl.toJavaDuration())
+                verify(chainSpy).verify(expectedInstant)
             }
 
             @Test
@@ -576,7 +597,7 @@ class VeraDnssecChainTest {
 
                 chainSpy.verify(orgKeySpec, serviceOid, datePeriod)
 
-                verify(chainSpy).verify(narrowPeriod.start)
+                verify(chainSpy).verify(narrowPeriod.start.toInstant())
             }
         }
 

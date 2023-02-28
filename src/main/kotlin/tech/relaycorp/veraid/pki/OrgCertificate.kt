@@ -15,7 +15,7 @@ public class OrgCertificate internal constructor(certificateHolder: X509Certific
             startDate: ZonedDateTime = ZonedDateTime.now(),
         ): OrgCertificate = OrgCertificate(
             issue(
-                orgName,
+                orgName.trimEnd('.'),
                 orgKeyPair.public,
                 orgKeyPair.private,
                 expiryDate,

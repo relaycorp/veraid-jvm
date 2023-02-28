@@ -15,8 +15,9 @@ import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import tech.relaycorp.veraid.utils.BC_PROVIDER
+import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
-import tech.relaycorp.veraid.utils.getSHA256Digest
+import tech.relaycorp.veraid.utils.hash
 import java.io.IOException
 import java.security.InvalidAlgorithmParameterException
 import java.security.PrivateKey
@@ -63,7 +64,7 @@ public open class Certificate internal constructor(
         ): Certificate {
             val expiryDate = if (issuerCertificate != null) {
                 minOf(
-                    issuerCertificate.expiryDate,
+                    issuerCertificate.validityPeriod.endInclusive,
                     validityEndDate,
                 )
             } else {
@@ -96,7 +97,7 @@ public open class Certificate internal constructor(
             val basicConstraints = BasicConstraintsExtension(isCA, pathLenConstraint)
             builder.addExtension(Extension.basicConstraints, true, basicConstraints)
 
-            val subjectPublicKeyDigest = getSHA256Digest(subjectPublicKeyInfo.encoded)
+            val subjectPublicKeyDigest = subjectPublicKeyInfo.encoded.hash(Hash.SHA_256)
             val subjectSKI = SubjectKeyIdentifier(subjectPublicKeyDigest)
             builder.addExtension(Extension.subjectKeyIdentifier, false, subjectSKI)
 
@@ -182,17 +183,11 @@ public open class Certificate internal constructor(
     public val issuerCommonName: String
         get() = getCommonName(certificateHolder.issuer)
 
-    /**
-     * The start date of the certificate.
-     */
-    public val startDate: ZonedDateTime
-        get() = dateToZonedDateTime(certificateHolder.notBefore)
-
-    /**
-     * The expiry date of the certificate.
-     */
-    public val expiryDate: ZonedDateTime
-        get() = dateToZonedDateTime(certificateHolder.notAfter)
+    public val validityPeriod: ClosedRange<ZonedDateTime> by lazy {
+        val start = dateToZonedDateTime(certificateHolder.notBefore)
+        val end = dateToZonedDateTime(certificateHolder.notAfter)
+        start..end
+    }
 
     private val basicConstraints: BasicConstraints? by lazy {
         BasicConstraints.fromExtensions(certificateHolder.extensions)
@@ -249,10 +244,10 @@ public open class Certificate internal constructor(
 
     private fun validateValidityPeriod() {
         val now = ZonedDateTime.now()
-        if (now < startDate) {
+        if (now < validityPeriod.start) {
             throw CertificateException("Certificate is not yet valid")
         }
-        if (expiryDate < now) {
+        if (validityPeriod.endInclusive < now) {
             throw CertificateException("Certificate already expired")
         }
     }

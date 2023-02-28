@@ -9,8 +9,11 @@ import org.xbill.DNS.RRSIGRecord
 import org.xbill.DNS.Record
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
+import tech.relaycorp.veraid.DatePeriod
+import tech.relaycorp.veraid.InstantPeriod
 import tech.relaycorp.veraid.ORG_KEY_SPEC
 import tech.relaycorp.veraid.SERVICE_OID
+import tech.relaycorp.veraid.toInstantPeriod
 import java.time.Instant
 import kotlin.math.pow
 import kotlin.time.Duration.Companion.days
@@ -35,7 +38,7 @@ internal fun <RecordType : Record> RecordType.copy(
 
 internal fun Record.makeQuestion() = Record.newRecord(name, type, dClass, ttl)
 
-internal fun Record.makeRrsig(validityPeriod: ClosedRange<Instant>) = RRSIGRecord(
+internal fun Record.makeRrsig(validityPeriod: InstantPeriod) = RRSIGRecord(
     name,
     dClass,
     ttl,
@@ -59,9 +62,13 @@ internal fun Record.makeResponse(): Message {
     return response
 }
 
-internal fun Record.makeResponseWithRrsig(validityPeriod: ClosedRange<Instant>): Message {
+internal fun Record.makeResponseWithRrsig(period: DatePeriod): Message =
+    makeResponseWithRrsig(period.toInstantPeriod())
+
+@JvmName("makeResponseWithRrsigInstant")
+internal fun Record.makeResponseWithRrsig(period: InstantPeriod): Message {
     val response = makeResponse()
-    response.addRecord(makeRrsig(validityPeriod), Section.ANSWER)
+    response.addRecord(makeRrsig(period), Section.ANSWER)
     return response
 }
 
@@ -80,7 +87,7 @@ internal fun ByteArray.txtRdataSerialise(): ByteArray {
 internal val VERA_RDATA_FIELDS =
     VeraRdataFields(ORG_KEY_SPEC, 2.days, SERVICE_OID)
 val RECORD = TXTRecord(
-    Name.fromString("_vera.$DOMAIN_NAME"),
+    Name.fromString("_veraid.$DOMAIN_NAME"),
     DClass.IN,
     42,
     VERA_RDATA_FIELDS.toString(),

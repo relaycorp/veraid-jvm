@@ -8,19 +8,43 @@ import io.kotest.matchers.shouldBe
 import org.bouncycastle.asn1.x509.BasicConstraints
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import tech.relaycorp.veraid.MEMBER_CERT
 import tech.relaycorp.veraid.MEMBER_KEY_PAIR
-import tech.relaycorp.veraid.MEMBER_NAME
+import tech.relaycorp.veraid.ORG_CERT
 import tech.relaycorp.veraid.ORG_KEY_PAIR
-import tech.relaycorp.veraid.ORG_NAME
+import tech.relaycorp.veraid.USER_NAME
 import java.math.BigInteger
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 class MemberCertificateTest {
     @Nested
+    inner class UserName {
+        @Test
+        fun `Name should be output if member is a user`() {
+            val memberCertificate = MemberCertificate(MEMBER_CERT.certificateHolder)
+
+            memberCertificate.userName shouldBe USER_NAME
+        }
+
+        @Test
+        fun `Name should be null if member is a bot`() {
+            val cert = MemberCertificate.issue(
+                null,
+                MEMBER_KEY_PAIR.public,
+                ORG_CERT,
+                ORG_KEY_PAIR.private,
+                ORG_CERT.validityPeriod.endInclusive,
+            )
+
+            cert.userName shouldBe null
+        }
+    }
+
+    @Nested
     inner class Issue {
-        private val expiryDate = ZonedDateTime.now().plusMinutes(60).truncatedTo(ChronoUnit.SECONDS)
-        private val orgCertificate = OrgCertificate.selfIssue(ORG_NAME, ORG_KEY_PAIR, expiryDate)
+        private val orgCertificate = OrgCertificate(ORG_CERT.certificateHolder)
+        private val expiryDate = ORG_CERT.validityPeriod.endInclusive
 
         @Nested
         inner class MemberName {
@@ -43,21 +67,21 @@ class MemberCertificateTest {
             @Test
             fun `should be the specified name if set`() {
                 val cert = MemberCertificate.issue(
-                    MEMBER_NAME,
+                    USER_NAME,
                     MEMBER_KEY_PAIR.public,
                     orgCertificate,
                     ORG_KEY_PAIR.private,
                     expiryDate,
                 )
 
-                cert.commonName shouldBe MEMBER_NAME
+                cert.commonName shouldBe USER_NAME
             }
 
             @Test
             fun `should not contain at signs`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
-                        "@$MEMBER_NAME",
+                        "@$USER_NAME",
                         MEMBER_KEY_PAIR.public,
                         orgCertificate,
                         ORG_KEY_PAIR.private,
@@ -70,9 +94,9 @@ class MemberCertificateTest {
 
             @Test
             fun `should not contain tabs`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
-                        "\t$MEMBER_NAME",
+                        "\t$USER_NAME",
                         MEMBER_KEY_PAIR.public,
                         orgCertificate,
                         ORG_KEY_PAIR.private,
@@ -85,9 +109,9 @@ class MemberCertificateTest {
 
             @Test
             fun `should not contain carriage returns`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
-                        "\r$MEMBER_NAME",
+                        "\r$USER_NAME",
                         MEMBER_KEY_PAIR.public,
                         orgCertificate,
                         ORG_KEY_PAIR.private,
@@ -100,9 +124,9 @@ class MemberCertificateTest {
 
             @Test
             fun `should not contain line feeds`() {
-                val exception = shouldThrow<PKIException> {
+                val exception = shouldThrow<PkiException> {
                     MemberCertificate.issue(
-                        "\n$MEMBER_NAME",
+                        "\n$USER_NAME",
                         MEMBER_KEY_PAIR.public,
                         orgCertificate,
                         ORG_KEY_PAIR.private,
@@ -117,7 +141,7 @@ class MemberCertificateTest {
         @Test
         fun `Member public key should be honoured`() {
             val cert = MemberCertificate.issue(
-                MEMBER_NAME,
+                USER_NAME,
                 MEMBER_KEY_PAIR.public,
                 orgCertificate,
                 ORG_KEY_PAIR.private,
@@ -130,7 +154,7 @@ class MemberCertificateTest {
         @Test
         fun `Certificate should be issued by organisation`() {
             val cert = MemberCertificate.issue(
-                MEMBER_NAME,
+                USER_NAME,
                 MEMBER_KEY_PAIR.public,
                 orgCertificate,
                 ORG_KEY_PAIR.private,
@@ -143,14 +167,14 @@ class MemberCertificateTest {
         @Test
         fun `Expiry date should match specified one`() {
             val cert = MemberCertificate.issue(
-                MEMBER_NAME,
+                USER_NAME,
                 MEMBER_KEY_PAIR.public,
                 orgCertificate,
                 ORG_KEY_PAIR.private,
                 expiryDate,
             )
 
-            cert.expiryDate shouldBe expiryDate
+            cert.validityPeriod.endInclusive shouldBe expiryDate
         }
 
         @Nested
@@ -160,7 +184,7 @@ class MemberCertificateTest {
                 val beforeIssuance = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS)
 
                 val cert = MemberCertificate.issue(
-                    MEMBER_NAME,
+                    USER_NAME,
                     MEMBER_KEY_PAIR.public,
                     orgCertificate,
                     ORG_KEY_PAIR.private,
@@ -168,8 +192,8 @@ class MemberCertificateTest {
                 )
 
                 val afterIssuance = ZonedDateTime.now()
-                cert.startDate shouldNotBeBefore beforeIssuance
-                cert.startDate shouldBeBefore afterIssuance
+                cert.validityPeriod.start shouldNotBeBefore beforeIssuance
+                cert.validityPeriod.start shouldBeBefore afterIssuance
             }
 
             @Test
@@ -177,7 +201,7 @@ class MemberCertificateTest {
                 val startDate = expiryDate.minusSeconds(2)
 
                 val cert = MemberCertificate.issue(
-                    MEMBER_NAME,
+                    USER_NAME,
                     MEMBER_KEY_PAIR.public,
                     orgCertificate,
                     ORG_KEY_PAIR.private,
@@ -185,7 +209,7 @@ class MemberCertificateTest {
                     startDate,
                 )
 
-                cert.startDate shouldBe startDate
+                cert.validityPeriod.start shouldBe startDate
             }
         }
 
@@ -194,7 +218,7 @@ class MemberCertificateTest {
             @Test
             fun `Subject should not be a CA`() {
                 val cert = MemberCertificate.issue(
-                    MEMBER_NAME,
+                    USER_NAME,
                     MEMBER_KEY_PAIR.public,
                     orgCertificate,
                     ORG_KEY_PAIR.private,
@@ -207,7 +231,7 @@ class MemberCertificateTest {
             @Test
             fun `Path length should be zero`() {
                 val cert = MemberCertificate.issue(
-                    MEMBER_NAME,
+                    USER_NAME,
                     MEMBER_KEY_PAIR.public,
                     orgCertificate,
                     ORG_KEY_PAIR.private,

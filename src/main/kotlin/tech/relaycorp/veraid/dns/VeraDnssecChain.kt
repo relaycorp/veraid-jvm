@@ -13,20 +13,22 @@ import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import org.xbill.DNS.Type
 import org.xbill.DNS.WireParseException
+import tech.relaycorp.veraid.DatePeriod
+import tech.relaycorp.veraid.InstantPeriod
 import tech.relaycorp.veraid.OrganisationKeySpec
+import tech.relaycorp.veraid.toInstantPeriod
 import tech.relaycorp.veraid.utils.intersect
-import java.time.Instant
 import kotlin.time.toJavaDuration
 
 /**
  * Vera DNSSEC chain.
  *
- * It contains the DNSSEC chain for the Vera TXT RRSet (e.g., `_vera.example.com./TXT`).
+ * It contains the DNSSEC chain for the Vera TXT RRSet (e.g., `_veraid.example.com./TXT`).
  */
 public class VeraDnssecChain internal constructor(
-    organisationName: String,
+    internal val orgName: String,
     responses: List<Message>,
-) : DnssecChain("_vera.$organisationName.", VERA_RECORD_TYPE, responses) {
+) : DnssecChain("_veraid.$orgName.", VERA_RECORD_TYPE, responses) {
     internal fun encode(): ASN1Set {
         val responsesWrapped = responses.map { DEROctetString(it.toWire()) }
         val vector = ASN1EncodableVector(responsesWrapped.size)
@@ -42,13 +44,14 @@ public class VeraDnssecChain internal constructor(
     /**
      * Verify the chain
      */
-    @Throws(DnsException::class)
+    @Throws(DnsException::class, InvalidChainException::class)
     internal suspend fun verify(
         orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
-        datePeriod: ClosedRange<Instant>,
+        period: DatePeriod,
     ) {
-        val verificationPeriod = calculateVerificationPeriod(datePeriod, orgKeySpec, serviceOid)
+        val verificationPeriod =
+            calculateVerificationPeriod(period.toInstantPeriod(), orgKeySpec, serviceOid)
         val chainValidityPeriod = getChainValidityPeriod()
         val intersectingPeriod =
             verificationPeriod.intersect(chainValidityPeriod) ?: throw InvalidChainException(
@@ -57,7 +60,7 @@ public class VeraDnssecChain internal constructor(
         super.verify(intersectingPeriod.start)
     }
 
-    private fun getChainValidityPeriod(): ClosedRange<Instant> {
+    private fun getChainValidityPeriod(): InstantPeriod {
         val chainValidityPeriod = responses
             .mapNotNull { it.signatureValidityPeriod }.ifEmpty {
                 throw InvalidChainException("Chain does not contain RRSig records")
@@ -71,15 +74,15 @@ public class VeraDnssecChain internal constructor(
     }
 
     private fun calculateVerificationPeriod(
-        datePeriod: ClosedRange<Instant>,
+        period: InstantPeriod,
         orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
-    ): ClosedRange<Instant> {
+    ): InstantPeriod {
         val matchingFields = getRdataFields(orgKeySpec, serviceOid)
         val ttlOverride = matchingFields.ttlOverride
-        val truncatedStart = datePeriod.endInclusive.minus(ttlOverride.toJavaDuration())
-        val start = maxOf(datePeriod.start, truncatedStart)
-        return start..datePeriod.endInclusive
+        val truncatedStart = period.endInclusive.minus(ttlOverride.toJavaDuration())
+        val start = maxOf(period.start, truncatedStart)
+        return start..period.endInclusive
     }
 
     private fun getRdataFields(
@@ -156,7 +159,7 @@ public class VeraDnssecChain internal constructor(
             resolverHost: String = CLOUDFLARE_RESOLVER,
         ): VeraDnssecChain {
             val organisationNameNormalised = organisationName.trimEnd('.')
-            val domainName = "_vera.$organisationNameNormalised."
+            val domainName = "_veraid.$organisationNameNormalised."
             val dnssecChain = dnssecChainRetriever(domainName, VERA_RECORD_TYPE, resolverHost)
             return VeraDnssecChain(organisationName, dnssecChain.responses)
         }

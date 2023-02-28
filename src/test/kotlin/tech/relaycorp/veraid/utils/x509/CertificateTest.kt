@@ -29,9 +29,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.BC_PROVIDER
+import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
+import tech.relaycorp.veraid.utils.hash
 import tech.relaycorp.veraid.utils.issueStubCertificate
-import tech.relaycorp.veraid.utils.sha256
 import java.io.IOException
 import java.math.BigInteger
 import java.security.InvalidAlgorithmParameterException
@@ -183,7 +184,8 @@ class CertificateTest {
                     issuerCertificate,
                 )
 
-                subjectCertificate.expiryDate shouldBe issuerCertificate.expiryDate
+                subjectCertificate.validityPeriod.endInclusive shouldBe
+                    issuerCertificate.validityPeriod.endInclusive
             }
 
             @Test
@@ -195,7 +197,7 @@ class CertificateTest {
                     validityEndDate,
                     isCA = true,
                 )
-                val validityStartDate = issuerCertificate.expiryDate.plusSeconds(1)
+                val validityStartDate = issuerCertificate.validityPeriod.endInclusive.plusSeconds(1)
 
                 val exception = assertThrows<CertificateException> {
                     Certificate.issue(
@@ -481,7 +483,7 @@ class CertificateTest {
                     certificate.certificateHolder.extensions,
                 )
                 val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
-                aki.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
+                aki.keyIdentifier shouldBe subjectPublicKeyInfo.encoded.hash(Hash.SHA_256)
             }
 
             @Test
@@ -531,7 +533,7 @@ class CertificateTest {
                 val aki = AuthorityKeyIdentifier.fromExtensions(
                     subjectCertificate.certificateHolder.extensions,
                 )
-                aki.keyIdentifier shouldBe sha256(issuerPublicKeyInfo.encoded)
+                aki.keyIdentifier shouldBe issuerPublicKeyInfo.encoded.hash(Hash.SHA_256)
             }
         }
 
@@ -548,7 +550,7 @@ class CertificateTest {
                 certificate.certificateHolder.extensions,
             )
             val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
-            ski.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
+            ski.keyIdentifier shouldBe subjectPublicKeyInfo.encoded.hash(Hash.SHA_256)
         }
     }
 
@@ -677,7 +679,7 @@ class CertificateTest {
         }
 
         @Test
-        fun startDate() {
+        fun validityPeriod() {
             val startDate = ZonedDateTime.now()
             val certificate = Certificate.issue(
                 subjectCommonName,
@@ -687,19 +689,8 @@ class CertificateTest {
                 validityStartDate = startDate,
             )
 
-            certificate.startDate shouldBe startDate.withNano(0)
-        }
-
-        @Test
-        fun expiryDate() {
-            val certificate = Certificate.issue(
-                subjectCommonName,
-                subjectKeyPair.public,
-                subjectKeyPair.private,
-                validityEndDate,
-            )
-
-            certificate.expiryDate shouldBe validityEndDate.withNano(0)
+            certificate.validityPeriod.start shouldBe startDate.withNano(0)
+            certificate.validityPeriod.endInclusive shouldBe validityEndDate.withNano(0)
         }
 
         @Test
