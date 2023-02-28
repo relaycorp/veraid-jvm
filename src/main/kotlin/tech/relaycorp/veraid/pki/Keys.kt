@@ -2,7 +2,11 @@
 
 package tech.relaycorp.veraid.pki
 
+import tech.relaycorp.veraid.KeyAlgorithm
+import tech.relaycorp.veraid.OrganisationKeySpec
 import tech.relaycorp.veraid.utils.BC_PROVIDER
+import tech.relaycorp.veraid.utils.Hash
+import tech.relaycorp.veraid.utils.hash
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -14,9 +18,31 @@ import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.RSAPublicKeySpec
 import java.security.spec.X509EncodedKeySpec
+import java.util.Base64
 
-private const val DEFAULT_RSA_KEY_MODULUS = 2048
-private const val MIN_RSA_KEY_MODULUS = 2048
+public enum class RsaModulus(internal val modulus: Int) {
+    RSA_2048(2048),
+    RSA_3072(3072),
+    RSA_4096(4096),
+    ;
+
+    internal companion object {
+        private val valueByModulus = RsaModulus.values().associateBy(RsaModulus::modulus)
+        operator fun get(modulus: Int): RsaModulus? = valueByModulus[modulus]
+    }
+}
+
+private val rsaModulusKeyAlgorithmMap: Map<RsaModulus, KeyAlgorithm> = mapOf(
+    RsaModulus.RSA_2048 to KeyAlgorithm.RSA_2048,
+    RsaModulus.RSA_3072 to KeyAlgorithm.RSA_3072,
+    RsaModulus.RSA_4096 to KeyAlgorithm.RSA_4096,
+)
+
+private val rsaModulusHashMap: Map<RsaModulus, Hash> = mapOf(
+    RsaModulus.RSA_2048 to Hash.SHA_256,
+    RsaModulus.RSA_3072 to Hash.SHA_384,
+    RsaModulus.RSA_4096 to Hash.SHA_512,
+)
 
 /**
  * Generate an RSA key pair.
@@ -25,14 +51,27 @@ private const val MIN_RSA_KEY_MODULUS = 2048
  * @throws PkiException If `modulus` is less than 2048
  */
 @Throws(PkiException::class)
-public fun generateRSAKeyPair(modulus: Int = DEFAULT_RSA_KEY_MODULUS): KeyPair {
-    if (modulus < MIN_RSA_KEY_MODULUS) {
-        throw PkiException("Modulus should be at least $MIN_RSA_KEY_MODULUS (got $modulus)")
-    }
+public fun generateRSAKeyPair(modulus: RsaModulus = RsaModulus.RSA_2048): KeyPair {
     val keyGen = KeyPairGenerator.getInstance("RSA", BC_PROVIDER)
-    keyGen.initialize(modulus)
+    keyGen.initialize(modulus.modulus)
     return keyGen.generateKeyPair()
 }
+
+internal val PublicKey.orgKeySpec: OrganisationKeySpec
+    get() {
+        if (this !is RSAPublicKey) {
+            throw PkiException("Key type (${this.algorithm}) is unsupported")
+        }
+        val modulusRaw = this.modulus.bitLength()
+        val modulusSanitised =
+            RsaModulus[modulusRaw] ?: throw PkiException("RSA modulus $modulusRaw is unsupported")
+
+        val keyAlgorithm = rsaModulusKeyAlgorithmMap[modulusSanitised]!!
+        val hash = rsaModulusHashMap[modulusSanitised]!!
+        val digest = this.encoded.hash(hash)
+        val digestHex = Base64.getEncoder().encodeToString(digest)
+        return OrganisationKeySpec(keyAlgorithm, digestHex)
+    }
 
 /**
  * Deserialize the RSA key pair from a private key serialization.

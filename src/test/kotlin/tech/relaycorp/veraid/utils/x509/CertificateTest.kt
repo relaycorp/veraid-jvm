@@ -29,9 +29,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.BC_PROVIDER
+import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
+import tech.relaycorp.veraid.utils.hash
 import tech.relaycorp.veraid.utils.issueStubCertificate
-import tech.relaycorp.veraid.utils.sha256
 import java.io.IOException
 import java.math.BigInteger
 import java.security.InvalidAlgorithmParameterException
@@ -482,7 +483,7 @@ class CertificateTest {
                     certificate.certificateHolder.extensions,
                 )
                 val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
-                aki.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
+                aki.keyIdentifier shouldBe subjectPublicKeyInfo.encoded.hash(Hash.SHA_256)
             }
 
             @Test
@@ -532,7 +533,7 @@ class CertificateTest {
                 val aki = AuthorityKeyIdentifier.fromExtensions(
                     subjectCertificate.certificateHolder.extensions,
                 )
-                aki.keyIdentifier shouldBe sha256(issuerPublicKeyInfo.encoded)
+                aki.keyIdentifier shouldBe issuerPublicKeyInfo.encoded.hash(Hash.SHA_256)
             }
         }
 
@@ -549,7 +550,7 @@ class CertificateTest {
                 certificate.certificateHolder.extensions,
             )
             val subjectPublicKeyInfo = certificate.certificateHolder.subjectPublicKeyInfo
-            ski.keyIdentifier shouldBe sha256(subjectPublicKeyInfo.encoded)
+            ski.keyIdentifier shouldBe subjectPublicKeyInfo.encoded.hash(Hash.SHA_256)
         }
     }
 

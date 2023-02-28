@@ -15,8 +15,9 @@ import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import tech.relaycorp.veraid.utils.BC_PROVIDER
+import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
-import tech.relaycorp.veraid.utils.getSHA256Digest
+import tech.relaycorp.veraid.utils.hash
 import java.io.IOException
 import java.security.InvalidAlgorithmParameterException
 import java.security.PrivateKey
@@ -96,7 +97,7 @@ public open class Certificate internal constructor(
             val basicConstraints = BasicConstraintsExtension(isCA, pathLenConstraint)
             builder.addExtension(Extension.basicConstraints, true, basicConstraints)
 
-            val subjectPublicKeyDigest = getSHA256Digest(subjectPublicKeyInfo.encoded)
+            val subjectPublicKeyDigest = subjectPublicKeyInfo.encoded.hash(Hash.SHA_256)
             val subjectSKI = SubjectKeyIdentifier(subjectPublicKeyDigest)
             builder.addExtension(Extension.subjectKeyIdentifier, false, subjectSKI)
 
