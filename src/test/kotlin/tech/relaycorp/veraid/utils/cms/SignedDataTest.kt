@@ -1,5 +1,6 @@
 package tech.relaycorp.veraid.utils.cms
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -78,7 +79,7 @@ internal class SignedDataTest {
         fun `Empty serialization should be refused`() {
             val invalidCMSSignedData = byteArrayOf()
 
-            val exception = org.junit.jupiter.api.assertThrows<SignedDataException> {
+            val exception = shouldThrow<SignedDataException> {
                 SignedData.deserialize(invalidCMSSignedData)
             }
 
@@ -89,7 +90,7 @@ internal class SignedDataTest {
         fun `Invalid DER values should be refused`() {
             val invalidCMSSignedData = "Not really DER-encoded".toByteArray()
 
-            val exception = org.junit.jupiter.api.assertThrows<SignedDataException> {
+            val exception = shouldThrow<SignedDataException> {
                 SignedData.deserialize(invalidCMSSignedData)
             }
 
@@ -100,7 +101,7 @@ internal class SignedDataTest {
         fun `ContentInfo wrapper should be required`() {
             val invalidCMSSignedData = ASN1Integer(10).encoded
 
-            val exception = org.junit.jupiter.api.assertThrows<SignedDataException> {
+            val exception = shouldThrow<SignedDataException> {
                 SignedData.deserialize(invalidCMSSignedData)
             }
 
@@ -112,7 +113,7 @@ internal class SignedDataTest {
             val signedDataOid = ASN1ObjectIdentifier("1.2.840.113549.1.7.2")
             val invalidCMSSignedData = ContentInfo(signedDataOid, ASN1Integer(10))
 
-            val exception = org.junit.jupiter.api.assertThrows<SignedDataException> {
+            val exception = shouldThrow<SignedDataException> {
                 SignedData.deserialize(invalidCMSSignedData.encoded)
             }
 
@@ -377,10 +378,9 @@ internal class SignedDataTest {
             )
             val invalidSignedData = SignedData.deserialize(invalidBCSignedData.encoded)
 
-            val exception =
-                org.junit.jupiter.api.assertThrows<SignedDataException> {
-                    invalidSignedData.verify()
-                }
+            val exception = shouldThrow<SignedDataException> {
+                invalidSignedData.verify()
+            }
 
             exception.message shouldBe "Could not verify signature"
             exception.cause should beInstanceOf<CMSException>()
@@ -412,12 +412,11 @@ internal class SignedDataTest {
             )
             val invalidSignedData = SignedData.deserialize(invalidBCSignedData.encoded)
 
-            val exception =
-                org.junit.jupiter.api.assertThrows<SignedDataException> {
-                    invalidSignedData.verify(
-                        stubPlaintext,
-                    )
-                }
+            val exception = shouldThrow<SignedDataException> {
+                invalidSignedData.verify(
+                    stubPlaintext,
+                )
+            }
 
             exception.message shouldBe "Could not verify signature"
             exception.cause should beInstanceOf<CMSException>()
@@ -435,7 +434,7 @@ internal class SignedDataTest {
                 setOf(stubCertificate),
             )
 
-            val exception = org.junit.jupiter.api.assertThrows<SignedDataException> {
+            val exception = shouldThrow<SignedDataException> {
                 signedData.verify()
             }
 
@@ -453,8 +452,7 @@ internal class SignedDataTest {
                 encapsulatePlaintext = false,
             )
 
-            val exception =
-                org.junit.jupiter.api.assertThrows<SignedDataException> { signedData.verify() }
+            val exception = shouldThrow<SignedDataException> { signedData.verify() }
 
             exception.message shouldBe "Plaintext should be encapsulated or explicitly set"
         }
@@ -468,7 +466,7 @@ internal class SignedDataTest {
                 setOf(stubCertificate),
             )
 
-            val exception = org.junit.jupiter.api.assertThrows<SignedDataException> {
+            val exception = shouldThrow<SignedDataException> {
                 signedData.verify(stubPlaintext)
             }
 
@@ -509,8 +507,7 @@ internal class SignedDataTest {
                 stubCertificate,
             )
 
-            val exception =
-                org.junit.jupiter.api.assertThrows<SignedDataException> { signedData.verify() }
+            val exception = shouldThrow<SignedDataException> { signedData.verify() }
 
             exception.message shouldBe "Signer certificate should be encapsulated"
         }
@@ -576,10 +573,9 @@ internal class SignedDataTest {
             val bcSignedData = signedDataGenerator.generate(plaintextCms, true)
             val signedData = SignedData(bcSignedData)
 
-            val exception =
-                org.junit.jupiter.api.assertThrows<SignedDataException> {
-                    signedData.signerCertificate
-                }
+            val exception = shouldThrow<SignedDataException> {
+                signedData.signerCertificate
+            }
 
             exception.message shouldBe "SignedData should contain exactly one SignerInfo (got 0)"
         }
@@ -609,10 +605,9 @@ internal class SignedDataTest {
             )
             val signedData = SignedData(bcSignedData)
 
-            val exception =
-                org.junit.jupiter.api.assertThrows<SignedDataException> {
-                    signedData.signerCertificate
-                }
+            val exception = shouldThrow<SignedDataException> {
+                signedData.signerCertificate
+            }
 
             exception.message shouldBe "SignedData should contain exactly one SignerInfo (got 2)"
         }
