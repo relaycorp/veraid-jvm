@@ -1,12 +1,12 @@
 package tech.relaycorp.veraid.dns.resolvers
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Flags
 import org.xbill.DNS.Message
@@ -34,7 +34,7 @@ class OfflineResolverTest {
     fun `setPort should not be implemented`() {
         val resolver = OfflineResolver(emptyList())
 
-        assertThrows<NotImplementedError> {
+        shouldThrow<NotImplementedError> {
             resolver.setPort(53)
         }
     }
@@ -43,7 +43,7 @@ class OfflineResolverTest {
     fun `setTCP should not be implemented`() {
         val resolver = OfflineResolver(emptyList())
 
-        assertThrows<NotImplementedError> {
+        shouldThrow<NotImplementedError> {
             resolver.setTCP(true)
         }
     }
@@ -66,7 +66,7 @@ class OfflineResolverTest {
     fun `setTSIGKey should not be implemented`() {
         val resolver = OfflineResolver(emptyList())
 
-        assertThrows<NotImplementedError> {
+        shouldThrow<NotImplementedError> {
             resolver.setTSIGKey(null)
         }
     }
@@ -75,8 +75,8 @@ class OfflineResolverTest {
     fun `setTimeout should not be implemented`() {
         val resolver = OfflineResolver(emptyList())
 
-        assertThrows<NotImplementedError> {
-            resolver.timeout = null
+        shouldThrow<NotImplementedError> {
+            resolver.setTimeout(null)
         }
     }
 

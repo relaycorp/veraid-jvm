@@ -1,5 +1,6 @@
 package tech.relaycorp.veraid.utils.x509
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.date.shouldNotBeBefore
@@ -26,7 +27,6 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
@@ -155,7 +155,7 @@ class CertificateTest {
             fun `End date should be later than the start date`() {
                 val validityStartDate = ZonedDateTime.now().plusMonths(1)
 
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -199,7 +199,7 @@ class CertificateTest {
                 )
                 val validityStartDate = issuerCertificate.validityPeriod.endInclusive.plusSeconds(1)
 
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -294,7 +294,7 @@ class CertificateTest {
                     issuerKeyPair.private,
                 )
 
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -317,7 +317,7 @@ class CertificateTest {
                     validityEndDate,
                     isCA = false,
                 )
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -382,7 +382,7 @@ class CertificateTest {
 
             @Test
             fun `CA flag should be enabled if pathLenConstraint is greater than 0`() {
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -430,7 +430,7 @@ class CertificateTest {
 
             @Test
             fun `pathLenConstraint should not be greater than 2`() {
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -445,7 +445,7 @@ class CertificateTest {
 
             @Test
             fun `pathLenConstraint should not be negative`() {
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -506,7 +506,7 @@ class CertificateTest {
                     .build(issuerKeyPair.private)
                 val issuerWithoutSKI = Certificate(builder.build(signer))
 
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     Certificate.issue(
                         subjectCommonName,
                         subjectKeyPair.public,
@@ -591,7 +591,7 @@ class CertificateTest {
 
         @Test
         fun `Invalid certificates should result in errors`() {
-            val exception = assertThrows<CertificateException> {
+            val exception = shouldThrow<CertificateException> {
                 Certificate.deserialise("Not a certificate".toByteArray())
             }
 
@@ -645,7 +645,7 @@ class CertificateTest {
             )
             val certificateEncoded = DLTaggedObject(true, 1, certificate.encode())
 
-            val exception = assertThrows<CertificateException> {
+            val exception = shouldThrow<CertificateException> {
                 Certificate.decode(certificateEncoded)
             }
 
@@ -655,7 +655,7 @@ class CertificateTest {
 
         @Test
         fun `Invalid certificates should result in errors`() {
-            val exception = assertThrows<CertificateException> {
+            val exception = shouldThrow<CertificateException> {
                 Certificate.decode(DLTaggedObject(false, 0, DERNull.INSTANCE))
             }
 
@@ -803,7 +803,7 @@ class CertificateTest {
                     validityStartDate = startDate,
                 )
 
-                val exception = assertThrows<CertificateException> { certificate.validate() }
+                val exception = shouldThrow<CertificateException> { certificate.validate() }
 
                 exception.message shouldBe "Certificate is not yet valid"
             }
@@ -820,7 +820,7 @@ class CertificateTest {
                     validityStartDate = startDate,
                 )
 
-                val exception = assertThrows<CertificateException> { certificate.validate() }
+                val exception = shouldThrow<CertificateException> { certificate.validate() }
 
                 exception.message shouldBe "Certificate already expired"
             }
@@ -857,7 +857,7 @@ class CertificateTest {
                     .build(subjectKeyPair.private)
                 val invalidCertificate = Certificate(builder.build(signer))
 
-                val exception = assertThrows<CertificateException> {
+                val exception = shouldThrow<CertificateException> {
                     invalidCertificate.validate()
                 }
 
@@ -949,7 +949,7 @@ class CertificateTest {
             val endEntityCert =
                 issueStubCertificate(endEntityKeyPair.public, endEntityKeyPair.private)
 
-            val exception = assertThrows<CertificateException> {
+            val exception = shouldThrow<CertificateException> {
                 endEntityCert.getCertificationPath(emptySet(), setOf(rootCACert))
             }
 
@@ -1059,7 +1059,7 @@ class CertificateTest {
                 intermediateCACert,
             )
 
-            val exception = assertThrows<CertificateException> {
+            val exception = shouldThrow<CertificateException> {
                 endEntityCert.getCertificationPath(setOf(intermediateCACert), setOf(rootCACert))
             }
 
@@ -1081,7 +1081,7 @@ class CertificateTest {
                 intermediateCACert,
             )
 
-            val exception = assertThrows<CertificateException> {
+            val exception = shouldThrow<CertificateException> {
                 endEntityCert.getCertificationPath(
                     setOf(rootCACert, intermediateCACert),
                     setOf(rootCACert),
@@ -1158,7 +1158,7 @@ class CertificateTest {
                 rootCACert,
             )
 
-            val exception = assertThrows<CertificateException> {
+            val exception = shouldThrow<CertificateException> {
                 endEntityCert.getCertificationPath(emptySet(), emptySet())
             }
 
