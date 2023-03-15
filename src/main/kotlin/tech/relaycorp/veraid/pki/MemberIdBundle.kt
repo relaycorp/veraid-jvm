@@ -11,9 +11,9 @@ import tech.relaycorp.veraid.utils.intersect
 import tech.relaycorp.veraid.utils.x509.CertificateException
 
 public class MemberIdBundle(
-    private val dnssecChain: VeraDnssecChain,
-    private val orgCertificate: OrgCertificate,
-    private val memberCertificate: MemberCertificate,
+    internal val dnssecChain: VeraDnssecChain,
+    internal val orgCertificate: OrgCertificate,
+    internal val memberCertificate: MemberCertificate,
 ) {
     public fun serialise(): ByteArray = ASN1Utils.serializeSequence(
         listOf(

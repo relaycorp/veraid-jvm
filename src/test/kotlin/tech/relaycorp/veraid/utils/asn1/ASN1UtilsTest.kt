@@ -17,10 +17,19 @@ import org.bouncycastle.asn1.DERVisibleString
 import org.bouncycastle.asn1.DLSequenceParser
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.util.Date
 
 internal class ASN1UtilsTest {
     val visibleString = DERVisibleString("foo")
     val octetString = DEROctetString("bar".toByteArray())
+
+    private val dateUtc: ZonedDateTime =
+        ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).withZoneSameInstant(ZoneOffset.UTC)
+    private val nonUtcTimezone = ZoneId.of("America/Caracas")
 
     @Nested
     inner class MakeSequence {
@@ -160,6 +169,43 @@ internal class ASN1UtilsTest {
             item1Serialization shouldBe visibleString.octets
             val item2Serialization = ASN1Utils.getOctetString(sequence[1]).octets
             item2Serialization shouldBe octetString.octets
+        }
+    }
+
+    @Nested
+    inner class ToGeneralizedTime {
+        @Test
+        fun `Timezone should be UTC`() {
+            val nonUtcDate = dateUtc.withZoneSameInstant(nonUtcTimezone)
+
+            val dateEncoded = nonUtcDate.toGeneralizedTime()
+
+            dateEncoded.date shouldBe Date.from(dateUtc.toInstant())
+        }
+    }
+
+    @Nested
+    inner class ToZonedDateTime {
+        @Test
+        fun `Timezone should be UTC`() {
+            val nonUtcDate = dateUtc.withZoneSameInstant(nonUtcTimezone)
+            val dateEncoded = DERTaggedObject(false, 0, nonUtcDate.toGeneralizedTime())
+
+            val dateDeserialized = dateEncoded.toZonedDateTime()
+
+            dateDeserialized shouldBe dateUtc
+        }
+
+        @Test
+        fun `Non-GeneralizedTime value should be refused`() {
+            val dateEncoded = DERTaggedObject(false, 0, DERNull.INSTANCE)
+
+            val exception = shouldThrow<ASN1Exception> {
+                dateEncoded.toZonedDateTime()
+            }
+
+            exception.message shouldBe "Value is not a GeneralizedTime"
+            exception.cause should beInstanceOf<IllegalStateException>()
         }
     }
 
