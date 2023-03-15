@@ -17,6 +17,11 @@ import org.bouncycastle.asn1.DERVisibleString
 import org.bouncycastle.asn1.DLSequenceParser
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import java.util.Date
 
 internal class ASN1UtilsTest {
     val visibleString = DERVisibleString("foo")
@@ -160,6 +165,22 @@ internal class ASN1UtilsTest {
             item1Serialization shouldBe visibleString.octets
             val item2Serialization = ASN1Utils.getOctetString(sequence[1]).octets
             item2Serialization shouldBe octetString.octets
+        }
+    }
+
+    @Nested
+    inner class DerEncodeUTCDate {
+        private val dateUtc: ZonedDateTime =
+            ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).withZoneSameInstant(ZoneOffset.UTC)
+
+        @Test
+        fun `Timezone should be UTC`() {
+            val nonUtcTimezone = ZoneId.of("America/Caracas")
+
+            val dateEncoded =
+                ASN1Utils.derEncodeUTCDate(dateUtc.withZoneSameInstant(nonUtcTimezone))
+
+            dateEncoded.date shouldBe Date.from(dateUtc.toInstant())
         }
     }
 
