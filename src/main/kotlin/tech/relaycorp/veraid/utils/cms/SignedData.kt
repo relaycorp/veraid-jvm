@@ -1,7 +1,6 @@
 package tech.relaycorp.veraid.utils.cms
 
 import org.bouncycastle.asn1.ASN1EncodableVector
-import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.cms.Attribute
 import org.bouncycastle.asn1.cms.AttributeTable
 import org.bouncycastle.asn1.cms.ContentInfo
@@ -26,7 +25,6 @@ import org.bouncycastle.util.Selector
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.x509.Certificate
-import java.io.IOException
 import java.security.PrivateKey
 
 internal class SignedData(val bcSignedData: CMSSignedData) {
@@ -72,7 +70,7 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
         (bcSignedData.certificates as CollectionStore).map { Certificate(it) }.toSet()
     }
 
-    fun serialize(): ByteArray = bcSignedData.encoded
+    fun encode(): ContentInfo = bcSignedData.toASN1Structure()
 
     /**
      * Verify signature.
@@ -192,21 +190,7 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
         }
 
         @JvmStatic
-        fun deserialize(serialization: ByteArray): SignedData {
-            if (serialization.isEmpty()) {
-                throw SignedDataException("Value cannot be empty")
-            }
-            val asn1Stream = ASN1InputStream(serialization)
-            val asn1Sequence = try {
-                asn1Stream.readObject()
-            } catch (_: IOException) {
-                throw SignedDataException("Value is not DER-encoded")
-            }
-            val contentInfo = try {
-                ContentInfo.getInstance(asn1Sequence)
-            } catch (_: IllegalArgumentException) {
-                throw SignedDataException("SignedData value is not wrapped in ContentInfo")
-            }
+        fun decode(contentInfo: ContentInfo): SignedData {
             val bcSignedData = try {
                 CMSSignedData(contentInfo)
             } catch (_: CMSException) {

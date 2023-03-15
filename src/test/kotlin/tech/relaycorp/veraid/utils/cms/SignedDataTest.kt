@@ -36,7 +36,6 @@ import org.junit.jupiter.params.provider.EnumSource
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
-import tech.relaycorp.veraid.utils.asn1.parseDer
 import tech.relaycorp.veraid.utils.x509.Certificate
 import java.security.MessageDigest
 import java.time.ZonedDateTime
@@ -60,63 +59,28 @@ internal class SignedDataTest {
     }
 
     @Nested
-    inner class Serialize {
+    inner class Encode {
         private val signedData =
             SignedData.sign(stubPlaintext, stubKeyPair.private, stubCertificate)
 
         @Test
-        fun `Serialization should be DER-encoded`() {
-            parseDer(signedData.serialize())
-        }
-
-        @Test
         fun `SignedData value should be wrapped in a ContentInfo value`() {
-            ContentInfo.getInstance(parseDer(signedData.serialize()))
+            val encoding = signedData.encode()
+
+            val contentInfo = ContentInfo.getInstance(encoding)
+            CMSSignedData(contentInfo).encoded shouldBe signedData.bcSignedData.encoded
         }
     }
 
     @Nested
-    inner class Deserialize {
-        @Test
-        fun `Empty serialization should be refused`() {
-            val invalidCMSSignedData = byteArrayOf()
-
-            val exception = shouldThrow<SignedDataException> {
-                SignedData.deserialize(invalidCMSSignedData)
-            }
-
-            exception.message shouldBe "Value cannot be empty"
-        }
-
-        @Test
-        fun `Invalid DER values should be refused`() {
-            val invalidCMSSignedData = "Not really DER-encoded".toByteArray()
-
-            val exception = shouldThrow<SignedDataException> {
-                SignedData.deserialize(invalidCMSSignedData)
-            }
-
-            exception.message shouldBe "Value is not DER-encoded"
-        }
-
-        @Test
-        fun `ContentInfo wrapper should be required`() {
-            val invalidCMSSignedData = ASN1Integer(10).encoded
-
-            val exception = shouldThrow<SignedDataException> {
-                SignedData.deserialize(invalidCMSSignedData)
-            }
-
-            exception.message shouldBe "SignedData value is not wrapped in ContentInfo"
-        }
-
+    inner class Decode {
         @Test
         fun `ContentInfo wrapper should contain a valid SignedData value`() {
             val signedDataOid = ASN1ObjectIdentifier("1.2.840.113549.1.7.2")
             val invalidCMSSignedData = ContentInfo(signedDataOid, ASN1Integer(10))
 
             val exception = shouldThrow<SignedDataException> {
-                SignedData.deserialize(invalidCMSSignedData.encoded)
+                SignedData.decode(invalidCMSSignedData)
             }
 
             exception.message shouldBe "ContentInfo wraps invalid SignedData value"
@@ -129,9 +93,9 @@ internal class SignedDataTest {
                 stubKeyPair.private,
                 stubCertificate,
             )
-            val signedDataSerialized = signedData.serialize()
+            val signedDataSerialized = signedData.encode()
 
-            val signedDataDeserialized = SignedData.deserialize(signedDataSerialized)
+            val signedDataDeserialized = SignedData.decode(signedDataSerialized)
 
             signedDataDeserialized.bcSignedData.encoded shouldBe signedData.bcSignedData.encoded
         }
@@ -386,7 +350,7 @@ internal class SignedDataTest {
                 signedData1.bcSignedData,
                 signedData2.bcSignedData.signerInfos,
             )
-            val invalidSignedData = SignedData.deserialize(invalidBCSignedData.encoded)
+            val invalidSignedData = SignedData.decode(invalidBCSignedData.toASN1Structure())
 
             val exception = shouldThrow<SignedDataException> {
                 invalidSignedData.verify()
@@ -420,7 +384,7 @@ internal class SignedDataTest {
                 signedData1.bcSignedData,
                 signedData2.bcSignedData.signerInfos,
             )
-            val invalidSignedData = SignedData.deserialize(invalidBCSignedData.encoded)
+            val invalidSignedData = SignedData.decode(invalidBCSignedData.toASN1Structure())
 
             val exception = shouldThrow<SignedDataException> {
                 invalidSignedData.verify(
@@ -557,7 +521,7 @@ internal class SignedDataTest {
 
             val plaintextCms: CMSTypedData = CMSProcessableByteArray(stubPlaintext)
             val bcSignedData = signedDataGenerator.generate(plaintextCms, false)
-            val signedData = SignedData.deserialize(bcSignedData.encoded)
+            val signedData = SignedData.decode(bcSignedData.toASN1Structure())
 
             signedData.plaintext shouldBe null
         }

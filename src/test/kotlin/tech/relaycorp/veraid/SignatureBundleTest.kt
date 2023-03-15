@@ -3,8 +3,11 @@ package tech.relaycorp.veraid
 import io.kotest.matchers.date.shouldBeAfter
 import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.shouldBe
+import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1Sequence
-import org.junit.jupiter.api.Disabled
+import org.bouncycastle.asn1.ASN1TaggedObject
+import org.bouncycastle.asn1.DERSet
+import org.bouncycastle.asn1.cms.ContentInfo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.dns.RECORD
@@ -18,13 +21,14 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 class SignatureBundleTest {
+    private val response = RECORD.makeResponse()
+    private val veraDnssecChain = VeraDnssecChain(ORG_NAME, listOf(response))
+
+    private val plaintext = "the plaintext".toByteArray()
+
     @Nested
     inner class Generate {
-        private val response = RECORD.makeResponse()
-        private val veraDnssecChain = VeraDnssecChain(ORG_NAME, listOf(response))
         private val memberIdBundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
-
-        private val plaintext = "the plaintext".toByteArray()
 
         private val signatureExpiry =
             MEMBER_CERT.validityPeriod.endInclusive.withZoneSameInstant(ZoneOffset.UTC)
@@ -196,9 +200,54 @@ class SignatureBundleTest {
 
     @Nested
     inner class Serialise {
+        private val signedData = SignedData.sign(plaintext, MEMBER_KEY_PAIR.private, MEMBER_CERT)
+
         @Test
-        @Disabled
         fun `Version should be 0`() {
+            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+
+            val serialisation = bundle.serialise()
+
+            val sequence = ASN1Sequence.getInstance(serialisation)
+            val versionRaw = sequence.getObjectAt(0)
+            ASN1Integer.getInstance(versionRaw as ASN1TaggedObject, false) shouldBe ASN1Integer(0)
+        }
+
+        @Test
+        fun `DNSSEC chain should be attached`() {
+            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+
+            val serialisation = bundle.serialise()
+
+            val sequence = ASN1Sequence.getInstance(serialisation)
+            val chainRaw = sequence.getObjectAt(1)
+            val chainSet = DERSet.getInstance(chainRaw as ASN1TaggedObject, false)
+            chainSet.encoded shouldBe veraDnssecChain.encode().encoded
+        }
+
+        @Test
+        fun `Organisation certificate should be attached`() {
+            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+
+            val serialisation = bundle.serialise()
+
+            val sequence = ASN1Sequence.getInstance(serialisation)
+            val orgCertRaw = sequence.getObjectAt(2)
+            val orgCertSequence = ASN1Sequence.getInstance(orgCertRaw as ASN1TaggedObject, false)
+            orgCertSequence.encoded shouldBe ORG_CERT.certificateHolder.encoded
+        }
+
+        @Test
+        fun `SignedData should be attached`() {
+            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+
+            val serialisation = bundle.serialise()
+
+            val sequence = ASN1Sequence.getInstance(serialisation)
+            val signedDataRaw = sequence.getObjectAt(3)
+            val signedDataSequence =
+                ContentInfo.getInstance(signedDataRaw as ASN1TaggedObject, false)
+            signedDataSequence shouldBe signedData.encode()
         }
     }
 }
