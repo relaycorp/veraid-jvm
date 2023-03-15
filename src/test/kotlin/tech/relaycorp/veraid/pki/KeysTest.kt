@@ -8,7 +8,6 @@ import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateKey
 import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import tech.relaycorp.veraid.KeyAlgorithm
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
@@ -56,7 +55,7 @@ class KeysTest {
         @Test
         fun `Deserialize invalid key`() {
             val exception =
-                assertThrows<PkiException> { "s".toByteArray().deserializeRSAKeyPair() }
+                shouldThrow<PkiException> { "s".toByteArray().deserializeRSAKeyPair() }
 
             exception.message shouldBe "Value is not a valid RSA private key"
             exception.cause should beInstanceOf<InvalidKeySpecException>()
@@ -90,7 +89,7 @@ class KeysTest {
         @Test
         fun `Deserialize invalid key`() {
             val exception =
-                assertThrows<PkiException> { "s".toByteArray().deserializeRSAPublicKey() }
+                shouldThrow<PkiException> { "s".toByteArray().deserializeRSAPublicKey() }
 
             exception.message shouldBe "Value is not a valid RSA public key"
             exception.cause should beInstanceOf<InvalidKeySpecException>()
