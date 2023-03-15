@@ -1,6 +1,8 @@
 package tech.relaycorp.veraid
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
+import org.bouncycastle.asn1.DERSet
+import org.bouncycastle.asn1.cms.Attribute
 import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.pki.MemberIdBundle
 import tech.relaycorp.veraid.pki.OrgCertificate
@@ -8,12 +10,13 @@ import tech.relaycorp.veraid.utils.cms.SignedData
 import java.security.PrivateKey
 import java.time.ZonedDateTime
 
-public class SignatureBundle private constructor(
+public class SignatureBundle internal constructor(
     internal val chain: VeraDnssecChain,
     internal val orgCertificate: OrgCertificate,
     internal val signedData: SignedData,
-    internal val metadata: SignatureMetadata,
 ) {
+    public fun serialise(): ByteArray = TODO()
+
     public companion object {
         public fun generate(
             plaintext: ByteArray,
@@ -27,18 +30,22 @@ public class SignatureBundle private constructor(
                 ASN1ObjectIdentifier(serviceOid),
                 startDate..expiryDate,
             )
+            val metadataAttribute = Attribute(
+                VeraOids.SIGNATURE_METADATA_ATTR,
+                DERSet(metadata.encode()),
+            )
             val signedData = SignedData.sign(
                 plaintext,
                 signingKey,
                 memberIdBundle.memberCertificate,
                 setOf(memberIdBundle.memberCertificate, memberIdBundle.orgCertificate),
                 encapsulatePlaintext = false,
+                extraSignedAttrs = listOf(metadataAttribute),
             )
             return SignatureBundle(
                 memberIdBundle.dnssecChain,
                 memberIdBundle.orgCertificate,
                 signedData,
-                metadata,
             )
         }
     }

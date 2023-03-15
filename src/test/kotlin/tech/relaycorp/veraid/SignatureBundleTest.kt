@@ -3,6 +3,7 @@ package tech.relaycorp.veraid
 import io.kotest.matchers.date.shouldBeAfter
 import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.shouldBe
+import org.bouncycastle.asn1.ASN1Sequence
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -10,7 +11,9 @@ import tech.relaycorp.veraid.dns.RECORD
 import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.dns.makeResponse
 import tech.relaycorp.veraid.pki.MemberIdBundle
+import tech.relaycorp.veraid.utils.cms.SignedData
 import tech.relaycorp.veraid.utils.x509.Certificate
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -23,7 +26,8 @@ class SignatureBundleTest {
 
         private val plaintext = "the plaintext".toByteArray()
 
-        private val signatureExpiry = MEMBER_CERT.validityPeriod.endInclusive
+        private val signatureExpiry =
+            MEMBER_CERT.validityPeriod.endInclusive.withZoneSameInstant(ZoneOffset.UTC)
 
         @Test
         fun `DNSSEC chain should be attached`() {
@@ -97,7 +101,22 @@ class SignatureBundleTest {
         }
 
         @Nested
-        inner class SignatureMetadata {
+        inner class SignatureMetadataAttribute {
+            @Test
+            fun `Metadata attribute should be present`() {
+                val signatureBundle = SignatureBundle.generate(
+                    plaintext,
+                    SERVICE_OID.id,
+                    memberIdBundle,
+                    MEMBER_KEY_PAIR.private,
+                    signatureExpiry,
+                )
+
+                val signedAttrs = signatureBundle.signedData.signedAttrs
+                val attribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+                attribute?.attrValues?.size() shouldBe 1
+            }
+
             @Test
             fun `Service OID should be attached`() {
                 val signatureBundle = SignatureBundle.generate(
@@ -108,7 +127,8 @@ class SignatureBundleTest {
                     signatureExpiry,
                 )
 
-                signatureBundle.metadata.service shouldBe SERVICE_OID
+                val metadata = signatureBundle.signedData.metadata
+                metadata.service shouldBe SERVICE_OID
             }
 
             @Test
@@ -121,12 +141,14 @@ class SignatureBundleTest {
                     signatureExpiry,
                 )
 
-                signatureBundle.metadata.validityPeriod.endInclusive shouldBe signatureExpiry
+                val metadata = signatureBundle.signedData.metadata
+                metadata.validityPeriod.endInclusive shouldBe signatureExpiry
             }
 
             @Test
             fun `Start date should default to the current time`() {
-                val beforeGeneration = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS)
+                val beforeGeneration = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
+                    .truncatedTo(ChronoUnit.SECONDS)
 
                 val signatureBundle = SignatureBundle.generate(
                     plaintext,
@@ -137,13 +159,16 @@ class SignatureBundleTest {
                 )
 
                 val afterGeneration = ZonedDateTime.now()
-                signatureBundle.metadata.validityPeriod.start shouldBeBefore afterGeneration
-                signatureBundle.metadata.validityPeriod.start shouldBeAfter beforeGeneration
+                val metadata = signatureBundle.signedData.metadata
+                metadata.validityPeriod.start shouldBeBefore afterGeneration
+                metadata.validityPeriod.start shouldBeAfter beforeGeneration.minusSeconds(1)
             }
 
             @Test
             fun `Any explicit start date should be honoured`() {
-                val signatureStart = MEMBER_CERT.validityPeriod.start.plusSeconds(2)
+                val signatureStart =
+                    MEMBER_CERT.validityPeriod.start.withZoneSameInstant(ZoneOffset.UTC)
+                        .plusSeconds(2)
 
                 val signatureBundle = SignatureBundle.generate(
                     plaintext,
@@ -154,8 +179,18 @@ class SignatureBundleTest {
                     signatureStart,
                 )
 
-                signatureBundle.metadata.validityPeriod.start shouldBe signatureStart
+                val metadata = signatureBundle.signedData.metadata
+                metadata.validityPeriod.start shouldBe signatureStart
             }
+
+            private val SignedData.metadata: SignatureMetadata
+                get() {
+                    val signedAttrs = this.signedAttrs
+                    val metadataAttribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+                    return SignatureMetadata.decode(
+                        metadataAttribute!!.attrValues!!.getObjectAt(0) as ASN1Sequence,
+                    )
+                }
         }
     }
 
