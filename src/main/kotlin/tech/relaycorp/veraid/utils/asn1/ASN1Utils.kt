@@ -13,6 +13,7 @@ import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.DERTaggedObject
 import java.io.IOException
+import java.lang.IllegalStateException
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.Date
@@ -69,11 +70,6 @@ internal object ASN1Utils {
     fun deserializeHeterogeneousSequence(serialization: ByteArray): Array<ASN1TaggedObject> =
         deserializeHomogeneousSequence(serialization)
 
-    fun derEncodeUTCDate(date: ZonedDateTime): DERGeneralizedTime {
-        val dateUTC = date.withZoneSameInstant(ZoneOffset.UTC)
-        return DERGeneralizedTime(Date.from(dateUTC.toInstant()))
-    }
-
     @Throws(ASN1Exception::class)
     fun getOID(oidSerialized: ASN1TaggedObject): ASN1ObjectIdentifier {
         return try {
@@ -88,4 +84,18 @@ internal object ASN1Utils {
 
     fun getOctetString(octetString: ASN1TaggedObject): ASN1OctetString =
         DEROctetString.getInstance(octetString, false)
+}
+
+internal fun ZonedDateTime.toGeneralizedTime(): DERGeneralizedTime {
+    val dateUTC = withZoneSameInstant(ZoneOffset.UTC)
+    return DERGeneralizedTime(Date.from(dateUTC.toInstant()))
+}
+
+internal fun ASN1TaggedObject.toZonedDateTime(): ZonedDateTime {
+    val generalizedTime = try {
+        DERGeneralizedTime.getInstance(this, false)
+    } catch (exc: IllegalStateException) {
+        throw ASN1Exception("Value is not a GeneralizedTime", exc)
+    }
+    return generalizedTime.date.toInstant().atZone(ZoneOffset.UTC)
 }

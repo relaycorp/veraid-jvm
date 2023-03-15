@@ -1,16 +1,72 @@
 package tech.relaycorp.veraid
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.asn1.DERSet
-import org.bouncycastle.asn1.cms.Attribute
+import org.bouncycastle.asn1.ASN1Sequence
+import org.bouncycastle.asn1.ASN1TaggedObject
+import org.bouncycastle.asn1.DERSequence
+import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
+import tech.relaycorp.veraid.utils.asn1.toZonedDateTime
 
 internal class SignatureMetadata(
-    private val service: ASN1ObjectIdentifier,
-    private val validityPeriod: DatePeriod,
+    val service: ASN1ObjectIdentifier,
+    val validityPeriod: DatePeriod,
 ) {
-    fun encode() = Attribute(
-        VeraOids.SIGNATURE_METADATA_ATTR,
-        DERSet(ASN1Utils.makeSequence(listOf(service, validityPeriod.encode()), false)),
-    )
+    fun encode() = ASN1Utils.makeSequence(listOf(service, validityPeriod.encode()), false)
+
+    companion object {
+        @Throws(SignatureException::class)
+        fun decode(attributeValue: ASN1Sequence): SignatureMetadata {
+            if (attributeValue.size() < 2) {
+                throw SignatureException(
+                    "Metadata SEQUENCE should have at least 2 items " +
+                        "(got ${attributeValue.size()})",
+                )
+            }
+
+            val serviceRaw = attributeValue.getObjectAt(0)
+            val service = try {
+                ASN1Utils.getOID(serviceRaw as ASN1TaggedObject)
+            } catch (exc: ASN1Exception) {
+                throw SignatureException("Service in metadata isn't an OID", exc)
+            }
+
+            val validityPeriodRaw = attributeValue.getObjectAt(1)
+            val validityPeriod = try {
+                DERSequence.getInstance(validityPeriodRaw as ASN1TaggedObject, false)
+            } catch (exc: IllegalStateException) {
+                throw SignatureException("Validity period in metadata isn't a SEQUENCE", exc)
+            }
+
+            if (validityPeriod.size() < 2) {
+                throw SignatureException(
+                    "Validity period in metadata should have at least 2 items " +
+                        "(got ${validityPeriod.size()})",
+                )
+            }
+
+            val startDate = try {
+                val startDateRaw = validityPeriod.getObjectAt(0)
+                (startDateRaw as ASN1TaggedObject).toZonedDateTime()
+            } catch (exc: ASN1Exception) {
+                throw SignatureException("Start date in metadata is invalid", exc)
+            }
+
+            val endDate = try {
+                val endDateRaw = validityPeriod.getObjectAt(1)
+                (endDateRaw as ASN1TaggedObject).toZonedDateTime()
+            } catch (exc: ASN1Exception) {
+                throw SignatureException("End date in metadata is invalid", exc)
+            }
+
+            if (endDate < startDate) {
+                throw SignatureException(
+                    "End date in metadata is before start date " +
+                        "(start=$startDate, end=$endDate)",
+                )
+            }
+
+            return SignatureMetadata(service, startDate..endDate)
+        }
+    }
 }

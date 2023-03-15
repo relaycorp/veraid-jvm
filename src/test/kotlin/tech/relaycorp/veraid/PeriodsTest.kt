@@ -5,7 +5,7 @@ import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DERGeneralizedTime
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import tech.relaycorp.veraid.utils.asn1.ASN1Utils
+import tech.relaycorp.veraid.utils.asn1.toGeneralizedTime
 import java.time.ZonedDateTime
 
 class PeriodsTest {
@@ -34,7 +34,7 @@ class PeriodsTest {
 
             val date =
                 DERGeneralizedTime.getInstance(encoding.getObjectAt(0) as ASN1TaggedObject?, false)
-            date shouldBe ASN1Utils.derEncodeUTCDate(startDate)
+            date shouldBe startDate.toGeneralizedTime()
         }
 
         @Test
@@ -43,7 +43,7 @@ class PeriodsTest {
 
             val date =
                 DERGeneralizedTime.getInstance(encoding.getObjectAt(1) as ASN1TaggedObject?, false)
-            date shouldBe ASN1Utils.derEncodeUTCDate(endDate)
+            date shouldBe endDate.toGeneralizedTime()
         }
     }
 }

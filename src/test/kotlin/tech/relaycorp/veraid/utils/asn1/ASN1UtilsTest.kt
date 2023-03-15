@@ -27,6 +27,10 @@ internal class ASN1UtilsTest {
     val visibleString = DERVisibleString("foo")
     val octetString = DEROctetString("bar".toByteArray())
 
+    private val dateUtc: ZonedDateTime =
+        ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).withZoneSameInstant(ZoneOffset.UTC)
+    private val nonUtcTimezone = ZoneId.of("America/Caracas")
+
     @Nested
     inner class MakeSequence {
         @Test
@@ -169,18 +173,39 @@ internal class ASN1UtilsTest {
     }
 
     @Nested
-    inner class DerEncodeUTCDate {
-        private val dateUtc: ZonedDateTime =
-            ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).withZoneSameInstant(ZoneOffset.UTC)
-
+    inner class ToGeneralizedTime {
         @Test
         fun `Timezone should be UTC`() {
-            val nonUtcTimezone = ZoneId.of("America/Caracas")
+            val nonUtcDate = dateUtc.withZoneSameInstant(nonUtcTimezone)
 
-            val dateEncoded =
-                ASN1Utils.derEncodeUTCDate(dateUtc.withZoneSameInstant(nonUtcTimezone))
+            val dateEncoded = nonUtcDate.toGeneralizedTime()
 
             dateEncoded.date shouldBe Date.from(dateUtc.toInstant())
+        }
+    }
+
+    @Nested
+    inner class ToZonedDateTime {
+        @Test
+        fun `Timezone should be UTC`() {
+            val nonUtcDate = dateUtc.withZoneSameInstant(nonUtcTimezone)
+            val dateEncoded = DERTaggedObject(false, 0, nonUtcDate.toGeneralizedTime())
+
+            val dateDeserialized = dateEncoded.toZonedDateTime()
+
+            dateDeserialized shouldBe dateUtc
+        }
+
+        @Test
+        fun `Non-GeneralizedTime value should be refused`() {
+            val dateEncoded = DERTaggedObject(false, 0, DERNull.INSTANCE)
+
+            val exception = shouldThrow<ASN1Exception> {
+                dateEncoded.toZonedDateTime()
+            }
+
+            exception.message shouldBe "Value is not a GeneralizedTime"
+            exception.cause should beInstanceOf<IllegalStateException>()
         }
     }
 
