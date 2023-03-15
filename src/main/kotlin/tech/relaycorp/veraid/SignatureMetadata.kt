@@ -12,6 +12,15 @@ internal class SignatureMetadata(
     val service: ASN1ObjectIdentifier,
     val validityPeriod: DatePeriod,
 ) {
+    init {
+        if (validityPeriod.endInclusive < validityPeriod.start) {
+            throw SignatureException(
+                "End date should not be before start date " +
+                    "(start=${validityPeriod.start}, end=${validityPeriod.endInclusive})",
+            )
+        }
+    }
+
     fun encode() = ASN1Utils.makeSequence(listOf(service, validityPeriod.encode()), false)
 
     companion object {
@@ -57,13 +66,6 @@ internal class SignatureMetadata(
                 (endDateRaw as ASN1TaggedObject).toZonedDateTime()
             } catch (exc: ASN1Exception) {
                 throw SignatureException("End date in metadata is invalid", exc)
-            }
-
-            if (endDate < startDate) {
-                throw SignatureException(
-                    "End date in metadata is before start date " +
-                        "(start=$startDate, end=$endDate)",
-                )
             }
 
             return SignatureMetadata(service, startDate..endDate)

@@ -27,6 +27,21 @@ class SignatureMetadataTest {
     private val metadata = SignatureMetadata(SERVICE_OID, validityPeriod)
 
     @Nested
+    inner class Constructor {
+        @Test
+        fun `End date should not be before start date`() {
+            val invalidPeriod = validityPeriod.endInclusive..validityPeriod.start
+
+            val exception = shouldThrow<SignatureException> {
+                SignatureMetadata(SERVICE_OID, invalidPeriod)
+            }
+
+            exception.message shouldBe "End date should not be before start date " +
+                "(start=${validityPeriod.endInclusive}, end=${validityPeriod.start})"
+        }
+    }
+
+    @Nested
     inner class Encode {
         @Test
         fun `Attribute value should be be implicitly-tagged SEQUENCE`() {
@@ -190,26 +205,6 @@ class SignatureMetadataTest {
 
                 exception.message shouldBe "End date in metadata is invalid"
                 exception.cause should beInstanceOf<ASN1Exception>()
-            }
-
-            @Test
-            fun `End date should not be before start date`() {
-                val invalidPeriod = ASN1Utils.makeSequence(
-                    listOf(
-                        validityPeriod.endInclusive.toGeneralizedTime(),
-                        validityPeriod.start.toGeneralizedTime(),
-                    ),
-                    false,
-                )
-                val attributeValue =
-                    ASN1Utils.makeSequence(listOf(SERVICE_OID, invalidPeriod), false)
-
-                val exception = shouldThrow<SignatureException> {
-                    SignatureMetadata.decode(attributeValue)
-                }
-
-                exception.message shouldBe "End date in metadata is before start date " +
-                    "(start=${validityPeriod.endInclusive}, end=${validityPeriod.start})"
             }
         }
 
