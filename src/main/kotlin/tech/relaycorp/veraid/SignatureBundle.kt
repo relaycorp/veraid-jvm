@@ -6,6 +6,7 @@ import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.Attribute
 import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.VeraDnssecChain
+import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.MemberIdBundle
 import tech.relaycorp.veraid.pki.OrgCertificate
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
@@ -17,15 +18,14 @@ import java.security.PrivateKey
 import java.time.ZonedDateTime
 
 public class SignatureBundle internal constructor(
-    internal val chain: VeraDnssecChain,
-    internal val orgCertificate: OrgCertificate,
+    internal val memberIdBundle: MemberIdBundle,
     internal val signedData: SignedData,
 ) {
     public fun serialise(): ByteArray = ASN1Utils.serializeSequence(
         listOf(
             ASN1Integer(0),
-            chain.encode(),
-            orgCertificate.encode(),
+            memberIdBundle.dnssecChain.encode(),
+            memberIdBundle.orgCertificate.encode(),
             signedData.encode(),
         ),
         false,
@@ -56,11 +56,7 @@ public class SignatureBundle internal constructor(
                 encapsulatePlaintext = false,
                 extraSignedAttrs = listOf(metadataAttribute),
             )
-            return SignatureBundle(
-                memberIdBundle.dnssecChain,
-                memberIdBundle.orgCertificate,
-                signedData,
-            )
+            return SignatureBundle(memberIdBundle, signedData)
         }
 
         @Throws(SignatureException::class)
@@ -93,7 +89,15 @@ public class SignatureBundle internal constructor(
                 throw SignatureException("SignedData is malformed", exc)
             }
 
-            return SignatureBundle(veraDnssecChain, orgCertificate, signedData)
+            val signerCertificate = signedData.signerCertificate
+                ?: throw SignatureException("SignedData should have signer certificate attached")
+
+            val memberIdBundle = MemberIdBundle(
+                veraDnssecChain,
+                orgCertificate,
+                MemberCertificate(signerCertificate.certificateHolder),
+            )
+            return SignatureBundle(memberIdBundle, signedData)
         }
     }
 }

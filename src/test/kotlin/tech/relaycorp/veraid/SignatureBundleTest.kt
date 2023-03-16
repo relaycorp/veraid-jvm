@@ -33,13 +33,12 @@ import java.time.temporal.ChronoUnit
 class SignatureBundleTest {
     private val response = RECORD.makeResponse()
     private val veraDnssecChain = VeraDnssecChain(ORG_NAME, listOf(response))
+    private val memberIdBundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
 
     private val plaintext = "the plaintext".toByteArray()
 
     @Nested
     inner class Generate {
-        private val memberIdBundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
-
         private val signatureExpiry =
             MEMBER_CERT.validityPeriod.endInclusive.withZoneSameInstant(ZoneOffset.UTC)
 
@@ -53,7 +52,7 @@ class SignatureBundleTest {
                 MEMBER_CERT.validityPeriod.endInclusive,
             )
 
-            signatureBundle.chain shouldBe veraDnssecChain
+            signatureBundle.memberIdBundle.dnssecChain shouldBe veraDnssecChain
         }
 
         @Test
@@ -66,7 +65,7 @@ class SignatureBundleTest {
                 signatureExpiry,
             )
 
-            signatureBundle.orgCertificate shouldBe ORG_CERT
+            signatureBundle.memberIdBundle.orgCertificate shouldBe ORG_CERT
         }
 
         @Nested
@@ -214,7 +213,7 @@ class SignatureBundleTest {
 
         @Test
         fun `Version should be 0`() {
-            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+            val bundle = SignatureBundle(memberIdBundle, signedData)
 
             val serialisation = bundle.serialise()
 
@@ -225,7 +224,7 @@ class SignatureBundleTest {
 
         @Test
         fun `DNSSEC chain should be attached`() {
-            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+            val bundle = SignatureBundle(memberIdBundle, signedData)
 
             val serialisation = bundle.serialise()
 
@@ -237,7 +236,7 @@ class SignatureBundleTest {
 
         @Test
         fun `Organisation certificate should be attached`() {
-            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+            val bundle = SignatureBundle(memberIdBundle, signedData)
 
             val serialisation = bundle.serialise()
 
@@ -249,7 +248,7 @@ class SignatureBundleTest {
 
         @Test
         fun `SignedData should be attached`() {
-            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+            val bundle = SignatureBundle(memberIdBundle, signedData)
 
             val serialisation = bundle.serialise()
 
@@ -264,7 +263,12 @@ class SignatureBundleTest {
     @Nested
     inner class Deserialise {
         private val bundleVersion = ASN1Integer(0)
-        private val signedData = SignedData.sign(plaintext, MEMBER_KEY_PAIR.private, MEMBER_CERT)
+        private val signedData = SignedData.sign(
+            plaintext,
+            MEMBER_KEY_PAIR.private,
+            MEMBER_CERT,
+            encapsulatedCertificates = setOf(MEMBER_CERT),
+        )
 
         @Test
         fun `Serialisation should be a SEQUENCE`() {
@@ -357,8 +361,32 @@ class SignatureBundleTest {
         }
 
         @Test
+        fun `SignedData should have signer certificate attached`() {
+            val incompleteSignedData = SignedData.sign(
+                plaintext,
+                MEMBER_KEY_PAIR.private,
+                MEMBER_CERT,
+            )
+            val invalidBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    bundleVersion,
+                    veraDnssecChain.encode(),
+                    ORG_CERT.encode(),
+                    incompleteSignedData.encode(),
+                ),
+                false,
+            )
+
+            val exception = assertThrows<SignatureException> {
+                SignatureBundle.deserialise(invalidBundle)
+            }
+
+            exception.message shouldBe "SignedData should have signer certificate attached"
+        }
+
+        @Test
         fun `Bundle should be returned if serialisation is well-formed`() {
-            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+            val bundle = SignatureBundle(memberIdBundle, signedData)
             val serialisation = bundle.serialise()
 
             val deserialisedBundle = SignatureBundle.deserialise(serialisation)
@@ -380,7 +408,7 @@ class SignatureBundleTest {
 
             val deserialisedBundle = SignatureBundle.deserialise(bundle)
 
-            deserialisedBundle.chain.orgName shouldBe ORG_CERT.commonName
+            deserialisedBundle.memberIdBundle.dnssecChain.orgName shouldBe ORG_CERT.commonName
         }
     }
 }
