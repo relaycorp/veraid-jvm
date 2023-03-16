@@ -1,7 +1,6 @@
 package tech.relaycorp.veraid
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
-import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DERSequence
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
@@ -25,7 +24,13 @@ internal class SignatureMetadata(
 
     companion object {
         @Throws(SignatureException::class)
-        fun decode(attributeValue: ASN1Sequence): SignatureMetadata {
+        fun decode(attributeValueTagged: ASN1TaggedObject): SignatureMetadata {
+            val attributeValue = try {
+                DERSequence.getInstance(attributeValueTagged, false)
+            } catch (exc: IllegalStateException) {
+                throw SignatureException("Metadata isn't an implicitly-tagged SEQUENCE", exc)
+            }
+
             if (attributeValue.size() < 2) {
                 throw SignatureException(
                     "Metadata SEQUENCE should have at least 2 items " +
