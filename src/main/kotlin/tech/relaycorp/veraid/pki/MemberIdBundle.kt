@@ -58,7 +58,7 @@ public class MemberIdBundle(
         } catch (exc: DnsException) {
             throw PkiException("DNS/DNSSEC resolution failed", exc)
         } catch (exc: InvalidChainException) {
-            throw PkiException("Vera DNSSEC chain verification failed", exc)
+            throw PkiException("VeraId DNSSEC chain verification failed", exc)
         }
 
         return Member(orgCertificate.commonName, userName)

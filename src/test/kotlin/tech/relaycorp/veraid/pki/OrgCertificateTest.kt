@@ -7,10 +7,12 @@ import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import tech.relaycorp.veraid.ORG_CERT
 import tech.relaycorp.veraid.ORG_KEY_PAIR
 import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.dns.DOMAIN_NAME
 import tech.relaycorp.veraid.utils.BC_PROVIDER
+import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
 import java.math.BigInteger
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -100,6 +102,19 @@ class OrgCertificateTest {
                     BasicConstraints.fromExtensions(cert.certificateHolder.extensions)
                 basicConstraints.pathLenConstraint shouldBe BigInteger.ZERO
             }
+        }
+    }
+
+    @Nested
+    inner class Decode {
+        @Test
+        fun `Certificate should be returned`() {
+            val orgCertificate = OrgCertificate(ORG_CERT.certificateHolder)
+            val encoding = orgCertificate.encode().toDlTaggedObject(false)
+
+            val decoded = OrgCertificate.decode(encoding)
+
+            decoded shouldBe orgCertificate
         }
     }
 }

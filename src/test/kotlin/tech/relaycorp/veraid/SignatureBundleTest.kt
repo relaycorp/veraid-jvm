@@ -2,20 +2,30 @@ package tech.relaycorp.veraid
 
 import io.kotest.matchers.date.shouldBeAfter
 import io.kotest.matchers.date.shouldBeBefore
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.beInstanceOf
+import io.kotest.matchers.types.instanceOf
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1TaggedObject
+import org.bouncycastle.asn1.DERNull
 import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.ContentInfo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.RECORD
 import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.dns.makeResponse
 import tech.relaycorp.veraid.pki.MemberIdBundle
+import tech.relaycorp.veraid.utils.asn1.ASN1Exception
+import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.cms.SignedData
+import tech.relaycorp.veraid.utils.cms.SignedDataException
 import tech.relaycorp.veraid.utils.x509.Certificate
+import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -248,6 +258,129 @@ class SignatureBundleTest {
             val signedDataSequence =
                 ContentInfo.getInstance(signedDataRaw as ASN1TaggedObject, false)
             signedDataSequence shouldBe signedData.encode()
+        }
+    }
+
+    @Nested
+    inner class Deserialise {
+        private val bundleVersion = ASN1Integer(0)
+        private val signedData = SignedData.sign(plaintext, MEMBER_KEY_PAIR.private, MEMBER_CERT)
+
+        @Test
+        fun `Serialisation should be a SEQUENCE`() {
+            val malformedBundle = DERNull.INSTANCE.encoded
+
+            val exception = assertThrows<SignatureException> {
+                SignatureBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "Signature bundle should be a SEQUENCE"
+            exception.cause should beInstanceOf<ASN1Exception>()
+        }
+
+        @Test
+        fun `SEQUENCE should have at least 4 items`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    bundleVersion,
+                    veraDnssecChain.encode(),
+                    ORG_CERT.encode(),
+                ),
+                false,
+            )
+
+            val exception = assertThrows<SignatureException> {
+                SignatureBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "Signature bundle should have at least 4 items"
+        }
+
+        @Test
+        fun `Malformed DNSSEC chain should be refused`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    bundleVersion,
+                    DERNull.INSTANCE, // Malformed
+                    ORG_CERT.encode(),
+                    signedData.encode(),
+                ),
+                false,
+            )
+
+            val exception = assertThrows<SignatureException> {
+                SignatureBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "VeraId DNSSEC chain is malformed"
+            exception.cause shouldBe instanceOf<InvalidChainException>()
+        }
+
+        @Test
+        fun `Malformed organisation certificate should be refused`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    bundleVersion,
+                    veraDnssecChain.encode(),
+                    DERNull.INSTANCE, // Malformed
+                    signedData.encode(),
+                ),
+                false,
+            )
+
+            val exception = assertThrows<SignatureException> {
+                SignatureBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "Organisation certificate is malformed"
+            exception.cause shouldBe instanceOf<CertificateException>()
+        }
+
+        @Test
+        fun `Malformed SignedData should be refused`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    bundleVersion,
+                    veraDnssecChain.encode(),
+                    ORG_CERT.encode(),
+                    DERNull.INSTANCE, // Malformed
+                ),
+                false,
+            )
+
+            val exception = assertThrows<SignatureException> {
+                SignatureBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "SignedData is malformed"
+            exception.cause shouldBe instanceOf<SignedDataException>()
+        }
+
+        @Test
+        fun `Bundle should be returned if serialisation is well-formed`() {
+            val bundle = SignatureBundle(veraDnssecChain, ORG_CERT, signedData)
+            val serialisation = bundle.serialise()
+
+            val deserialisedBundle = SignatureBundle.deserialise(serialisation)
+
+            deserialisedBundle.serialise() shouldBe bundle.serialise()
+        }
+
+        @Test
+        fun `DNSSEC chain should take organisation name from organisation certificate`() {
+            val bundle = ASN1Utils.serializeSequence(
+                listOf(
+                    bundleVersion,
+                    veraDnssecChain.encode(),
+                    ORG_CERT.encode(),
+                    signedData.encode(),
+                ),
+                false,
+            )
+
+            val deserialisedBundle = SignatureBundle.deserialise(bundle)
+
+            deserialisedBundle.chain.orgName shouldBe ORG_CERT.commonName
         }
     }
 }

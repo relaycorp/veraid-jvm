@@ -11,7 +11,6 @@ import io.kotest.matchers.types.beInstanceOf
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERBMPString
 import org.bouncycastle.asn1.DERNull
-import org.bouncycastle.asn1.DLTaggedObject
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
 import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x500.X500NameBuilder
@@ -30,6 +29,7 @@ import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
+import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
 import tech.relaycorp.veraid.utils.hash
 import tech.relaycorp.veraid.utils.issueStubCertificate
@@ -628,7 +628,7 @@ class CertificateTest {
                 subjectKeyPair.private,
                 validityEndDate,
             )
-            val certificateEncoded = DLTaggedObject(false, 1, certificate.encode())
+            val certificateEncoded = certificate.encode().toDlTaggedObject(false)
 
             val certificateDeserialized = Certificate.decode(certificateEncoded)
 
@@ -643,7 +643,7 @@ class CertificateTest {
                 subjectKeyPair.private,
                 validityEndDate,
             )
-            val certificateEncoded = DLTaggedObject(true, 1, certificate.encode())
+            val certificateEncoded = certificate.encode().toDlTaggedObject(true)
 
             val exception = shouldThrow<CertificateException> {
                 Certificate.decode(certificateEncoded)
@@ -655,8 +655,10 @@ class CertificateTest {
 
         @Test
         fun `Invalid certificates should result in errors`() {
+            val malformedCertificate = DERNull.INSTANCE.toDlTaggedObject(false)
+
             val exception = shouldThrow<CertificateException> {
-                Certificate.decode(DLTaggedObject(false, 0, DERNull.INSTANCE))
+                Certificate.decode(malformedCertificate)
             }
 
             exception.message shouldBe "ASN.1 value is not an X.509 v3 certificate"

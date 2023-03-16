@@ -257,7 +257,7 @@ class MemberIdBundleTest {
             }
 
             @Test
-            fun `Vera DNSSEC chain verification errors should be propagated`() = runTest {
+            fun `VeraId DNSSEC chain verification errors should be propagated`() = runTest {
                 val originalException = InvalidChainException("Oh-oh")
                 val bundle = MemberIdBundle(mockChain(originalException), ORG_CERT, MEMBER_CERT)
 
@@ -265,7 +265,7 @@ class MemberIdBundleTest {
                     bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
                 }
 
-                exception.message shouldBe "Vera DNSSEC chain verification failed"
+                exception.message shouldBe "VeraId DNSSEC chain verification failed"
                 exception.cause shouldBe originalException
             }
         }
