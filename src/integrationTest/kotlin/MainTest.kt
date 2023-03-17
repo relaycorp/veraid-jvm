@@ -35,7 +35,7 @@ class MainTest {
 
     @BeforeAll
     fun retrieveVeraDnssecChain() = runBlocking {
-        veraDnssecChain = VeraDnssecChain.retrieve(TestStubs.ORG_NAME)
+        veraDnssecChain = retrieveVeraidDnssecChain(TestStubs.ORG_NAME, 3)
     }
 
     @Test
