@@ -15,6 +15,7 @@ import io.kotest.matchers.types.beInstanceOf
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1Set
+import org.bouncycastle.asn1.DERNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.MEMBER_CERT
@@ -29,6 +30,7 @@ import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.RECORD
 import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.dns.makeResponse
+import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.x509.Certificate
 import tech.relaycorp.veraid.utils.x509.CertificateException
@@ -79,6 +81,110 @@ class MemberIdBundleTest {
 
             Certificate.decode(sequence[3]).certificateHolder shouldBe
                 MEMBER_CERT.certificateHolder
+        }
+    }
+
+    @Nested
+    inner class Deserialise {
+        @Test
+        fun `Serialisation should be a SEQUENCE`() {
+            val malformedBundle = DERNull.INSTANCE
+
+            val exception = shouldThrow<PkiException> {
+                MemberIdBundle.deserialise(malformedBundle.encoded)
+            }
+
+            exception.message shouldBe "Member Id Bundle should be a SEQUENCE"
+            exception.cause should beInstanceOf<ASN1Exception>()
+        }
+
+        @Test
+        fun `SEQUENCE should have at least 4 items`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    ASN1Integer(0),
+                    veraDnssecChain.encode(),
+                    ORG_CERT.encode(),
+                ),
+                false,
+            )
+
+            val exception = shouldThrow<PkiException> {
+                MemberIdBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "Member Id Bundle should have at least 4 items"
+        }
+
+        @Test
+        fun `Malformed DNSSEC chain should be refused`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    ASN1Integer(0),
+                    DERNull.INSTANCE,
+                    ORG_CERT.encode(),
+                    MEMBER_CERT.encode(),
+                ),
+                false,
+            )
+
+            val exception = shouldThrow<PkiException> {
+                MemberIdBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "DNSSEC chain is malformed"
+            exception.cause should beInstanceOf<InvalidChainException>()
+        }
+
+        @Test
+        fun `Malformed organisation certificate should be refused`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    ASN1Integer(0),
+                    veraDnssecChain.encode(),
+                    DERNull.INSTANCE,
+                    MEMBER_CERT.encode(),
+                ),
+                false,
+            )
+
+            val exception = shouldThrow<PkiException> {
+                MemberIdBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "Organisation certificate is malformed"
+            exception.cause should beInstanceOf<CertificateException>()
+        }
+
+        @Test
+        fun `Malformed member certificate should be refused`() {
+            val malformedBundle = ASN1Utils.serializeSequence(
+                listOf(
+                    ASN1Integer(0),
+                    veraDnssecChain.encode(),
+                    ORG_CERT.encode(),
+                    DERNull.INSTANCE,
+                ),
+                false,
+            )
+
+            val exception = shouldThrow<PkiException> {
+                MemberIdBundle.deserialise(malformedBundle)
+            }
+
+            exception.message shouldBe "Member certificate is malformed"
+        }
+
+        @Test
+        fun `Valid Member Id Bundle should be returned`() {
+            val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
+            val serialisation = bundle.serialise()
+
+            val deserialisedBundle = MemberIdBundle.deserialise(serialisation)
+
+            deserialisedBundle.dnssecChain.serialise() shouldBe veraDnssecChain.serialise()
+            deserialisedBundle.orgCertificate shouldBe ORG_CERT
+            deserialisedBundle.memberCertificate shouldBe MEMBER_CERT
         }
     }
 
