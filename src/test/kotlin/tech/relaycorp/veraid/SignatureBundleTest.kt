@@ -29,18 +29,20 @@ import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
 
 class SignatureBundleTest {
     private val response = RECORD.makeResponse()
     private val veraDnssecChain = VeraDnssecChain(ORG_NAME, listOf(response))
     private val memberIdBundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
+    private val validityPeriod = MEMBER_CERT.validityPeriod
 
     private val plaintext = "the plaintext".toByteArray()
 
     @Nested
     inner class Generate {
         private val signatureExpiry =
-            MEMBER_CERT.validityPeriod.endInclusive.withZoneSameInstant(ZoneOffset.UTC)
+            validityPeriod.endInclusive.withZoneSameInstant(ZoneOffset.UTC)
 
         @Test
         fun `DNSSEC chain should be attached`() {
@@ -49,7 +51,7 @@ class SignatureBundleTest {
                 SERVICE_OID.id,
                 memberIdBundle,
                 MEMBER_KEY_PAIR.private,
-                MEMBER_CERT.validityPeriod.endInclusive,
+                validityPeriod.endInclusive,
             )
 
             signatureBundle.memberIdBundle.dnssecChain shouldBe veraDnssecChain
@@ -180,7 +182,7 @@ class SignatureBundleTest {
             @Test
             fun `Any explicit start date should be honoured`() {
                 val signatureStart =
-                    MEMBER_CERT.validityPeriod.start.withZoneSameInstant(ZoneOffset.UTC)
+                    validityPeriod.start.withZoneSameInstant(ZoneOffset.UTC)
                         .plusSeconds(2)
 
                 val signatureBundle = SignatureBundle.generate(
@@ -201,7 +203,7 @@ class SignatureBundleTest {
                     val signedAttrs = this.signedAttrs
                     val metadataAttribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
                     return SignatureMetadata.decode(
-                        metadataAttribute!!.attrValues!!.getObjectAt(0) as ASN1Sequence,
+                        metadataAttribute!!.attrValues!!.getObjectAt(0).toDlTaggedObject(false),
                     )
                 }
         }
