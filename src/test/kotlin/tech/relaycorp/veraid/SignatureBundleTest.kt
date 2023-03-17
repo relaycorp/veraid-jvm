@@ -6,10 +6,9 @@ import com.nhaarman.mockitokotlin2.doNothing
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import io.kotest.matchers.comparables.shouldNotBeGreaterThan
-import io.kotest.matchers.comparables.shouldNotBeLessThan
 import io.kotest.matchers.date.shouldBeAfter
 import io.kotest.matchers.date.shouldBeBefore
+import io.kotest.matchers.date.within
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
@@ -43,6 +42,8 @@ import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 class SignatureBundleTest {
     private val response = RECORD.makeResponse()
@@ -489,13 +490,11 @@ class SignatureBundleTest {
 
                 bundle.verify(plaintext, SERVICE_OID.id)
 
-                val afterVerification = ZonedDateTime.now()
                 argumentCaptor<DatePeriod>().apply {
                     verify(memberIdBundleMock).verify(any(), capture())
 
                     firstValue.start shouldBe firstValue.endInclusive
-                    firstValue.start shouldNotBeGreaterThan afterVerification
-                    firstValue.start shouldNotBeLessThan beforeVerification
+                    firstValue.start shouldBe within(3.seconds.toJavaDuration(), beforeVerification)
                 }
             }
 
