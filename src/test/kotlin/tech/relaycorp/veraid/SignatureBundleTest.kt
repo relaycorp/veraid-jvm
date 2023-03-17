@@ -429,6 +429,11 @@ class SignatureBundleTest {
 
     @Nested
     inner class Verify {
+        @Test
+        fun breakIt() {
+            2 shouldBe 1
+        }
+
         private val validBundle = SignatureBundle.generate(
             plaintext,
             SERVICE_OID.id,
