@@ -435,6 +435,7 @@ class SignatureBundleTest {
             memberIdBundle,
             MEMBER_KEY_PAIR.private,
             validityPeriod.endInclusive,
+            validityPeriod.start,
         )
 
         @Test
