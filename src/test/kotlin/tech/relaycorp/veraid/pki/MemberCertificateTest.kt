@@ -13,6 +13,7 @@ import tech.relaycorp.veraid.MEMBER_KEY_PAIR
 import tech.relaycorp.veraid.ORG_CERT
 import tech.relaycorp.veraid.ORG_KEY_PAIR
 import tech.relaycorp.veraid.USER_NAME
+import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
 import java.math.BigInteger
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -242,6 +243,19 @@ class MemberCertificateTest {
                     BasicConstraints.fromExtensions(cert.certificateHolder.extensions)
                 basicConstraints.pathLenConstraint shouldBe BigInteger.ZERO
             }
+        }
+    }
+
+    @Nested
+    inner class Decode {
+        @Test
+        fun `Certificate should be returned`() {
+            val memberCertificate = MemberCertificate(MEMBER_CERT.certificateHolder)
+            val encoding = memberCertificate.encode().toDlTaggedObject(false)
+
+            val decoded = MemberCertificate.decode(encoding)
+
+            decoded shouldBe memberCertificate
         }
     }
 }

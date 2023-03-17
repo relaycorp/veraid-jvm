@@ -6,6 +6,7 @@ import tech.relaycorp.veraid.DatePeriod
 import tech.relaycorp.veraid.dns.DnsException
 import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.VeraDnssecChain
+import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.intersect
 import tech.relaycorp.veraid.utils.x509.CertificateException
@@ -62,5 +63,40 @@ public class MemberIdBundle(
         }
 
         return Member(orgCertificate.commonName, userName)
+    }
+
+    public companion object {
+        @Throws(PkiException::class)
+        public fun deserialise(serialisation: ByteArray): MemberIdBundle {
+            val sequence = try {
+                ASN1Utils.deserializeHeterogeneousSequence(serialisation)
+            } catch (exc: ASN1Exception) {
+                throw PkiException("Member Id Bundle should be a SEQUENCE", exc)
+            }
+
+            if (sequence.size < 4) {
+                throw PkiException("Member Id Bundle should have at least 4 items")
+            }
+
+            val orgCertificate = try {
+                OrgCertificate.decode(sequence[2])
+            } catch (exc: CertificateException) {
+                throw PkiException("Organisation certificate is malformed", exc)
+            }
+
+            val veraDnssecChain = try {
+                VeraDnssecChain.decode(orgCertificate.commonName, sequence[1])
+            } catch (exc: InvalidChainException) {
+                throw PkiException("DNSSEC chain is malformed", exc)
+            }
+
+            val memberCertificate = try {
+                MemberCertificate.decode(sequence[3])
+            } catch (exc: CertificateException) {
+                throw PkiException("Member certificate is malformed", exc)
+            }
+
+            return MemberIdBundle(veraDnssecChain, orgCertificate, memberCertificate)
+        }
     }
 }

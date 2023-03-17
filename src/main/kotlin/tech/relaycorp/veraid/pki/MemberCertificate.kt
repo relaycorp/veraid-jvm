@@ -1,5 +1,6 @@
 package tech.relaycorp.veraid.pki
 
+import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.cert.X509CertificateHolder
 import tech.relaycorp.veraid.utils.x509.Certificate
 import java.security.PrivateKey
@@ -42,6 +43,9 @@ public class MemberCertificate internal constructor(certificateHolder: X509Certi
                 ).certificateHolder,
             )
         }
+
+        internal fun decode(encoding: ASN1TaggedObject): MemberCertificate =
+            MemberCertificate(Certificate.decode(encoding).certificateHolder)
 
         internal fun validateUserName(userName: String) {
             if (FORBIDDEN_USER_NAME_CHARS_REGEX.containsMatchIn(userName)) {
