@@ -22,7 +22,7 @@ plugins {
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
-apply from: 'jacoco.gradle'
+apply from: 'unitTest.gradle'
 apply from: 'release.gradle'
 
 group = "tech.relaycorp"
