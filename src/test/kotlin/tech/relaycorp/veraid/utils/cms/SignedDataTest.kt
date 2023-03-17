@@ -25,23 +25,21 @@ import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.CMSTypedData
-import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
-import org.bouncycastle.operator.ContentSigner
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
-import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
-import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
+import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
+import tech.relaycorp.veraid.utils.generateWithDetachedPlaintext
+import tech.relaycorp.veraid.utils.makeSignerInfoGenerator
 import tech.relaycorp.veraid.utils.x509.Certificate
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
 internal class SignedDataTest {
-    companion object {
+    private companion object {
         val stubPlaintext = "The plaintext".toByteArray()
         val stubKeyPair = generateRSAKeyPair()
         val stubCertificate = Certificate.issue(
@@ -75,12 +73,42 @@ internal class SignedDataTest {
     @Nested
     inner class Decode {
         @Test
-        fun `ContentInfo wrapper should contain a valid SignedData value`() {
-            val signedDataOid = ASN1ObjectIdentifier("1.2.840.113549.1.7.2")
-            val invalidCMSSignedData = ContentInfo(signedDataOid, ASN1Integer(10))
+        fun `Encoding should be a ContentInfo`() {
+            val malformedEncoding = DERNull.INSTANCE.toDlTaggedObject(false)
 
             val exception = shouldThrow<SignedDataException> {
-                SignedData.decode(invalidCMSSignedData)
+                SignedData.decode(malformedEncoding)
+            }
+
+            exception.message shouldBe "Encoding is not an implicitly-tagged ContentInfo"
+            exception.cause should beInstanceOf<IllegalStateException>()
+        }
+
+        @Test
+        fun `Encoding should be implicitly-tagged`() {
+            val signedData = SignedData.sign(
+                stubPlaintext,
+                stubKeyPair.private,
+                stubCertificate,
+            )
+            val malformedEncoding = signedData.encode().toDlTaggedObject(true)
+
+            val exception = shouldThrow<SignedDataException> {
+                SignedData.decode(malformedEncoding)
+            }
+
+            exception.message shouldBe "Encoding is not an implicitly-tagged ContentInfo"
+            exception.cause should beInstanceOf<IllegalStateException>()
+        }
+
+        @Test
+        fun `ContentInfo wrapper should contain a valid SignedData value`() {
+            val signedDataOid = ASN1ObjectIdentifier("1.2.840.113549.1.7.2")
+            val malformedSignedData =
+                ContentInfo(signedDataOid, ASN1Integer(10)).toDlTaggedObject(false)
+
+            val exception = shouldThrow<SignedDataException> {
+                SignedData.decode(malformedSignedData)
             }
 
             exception.message shouldBe "ContentInfo wraps invalid SignedData value"
@@ -93,11 +121,11 @@ internal class SignedDataTest {
                 stubKeyPair.private,
                 stubCertificate,
             )
-            val signedDataSerialized = signedData.encode()
+            val signedDataEncoded = signedData.encode().toDlTaggedObject(false)
 
-            val signedDataDeserialized = SignedData.decode(signedDataSerialized)
+            val signedDataDecoded = SignedData.decode(signedDataEncoded)
 
-            signedDataDeserialized.bcSignedData.encoded shouldBe signedData.bcSignedData.encoded
+            signedDataDecoded.bcSignedData.encoded shouldBe signedData.bcSignedData.encoded
         }
     }
 
@@ -350,7 +378,8 @@ internal class SignedDataTest {
                 signedData1.bcSignedData,
                 signedData2.bcSignedData.signerInfos,
             )
-            val invalidSignedData = SignedData.decode(invalidBCSignedData.toASN1Structure())
+            val invalidSignedData =
+                SignedData.decode(invalidBCSignedData.toASN1Structure().toDlTaggedObject(false))
 
             val exception = shouldThrow<SignedDataException> {
                 invalidSignedData.verify()
@@ -384,7 +413,8 @@ internal class SignedDataTest {
                 signedData1.bcSignedData,
                 signedData2.bcSignedData.signerInfos,
             )
-            val invalidSignedData = SignedData.decode(invalidBCSignedData.toASN1Structure())
+            val invalidSignedData =
+                SignedData.decode(invalidBCSignedData.toASN1Structure().toDlTaggedObject(false))
 
             val exception = shouldThrow<SignedDataException> {
                 invalidSignedData.verify(
@@ -504,14 +534,8 @@ internal class SignedDataTest {
         @Test
         fun `Plaintext should be null if not encapsulated`() {
             val signedDataGenerator = CMSSignedDataGenerator()
-
-            val signerBuilder =
-                JcaContentSignerBuilder("SHA256WITHRSAANDMGF1").setProvider(BC_PROVIDER)
-            val contentSigner: ContentSigner = signerBuilder.build(stubKeyPair.private)
-            val signerInfoGenerator = JcaSignerInfoGeneratorBuilder(
-                JcaDigestCalculatorProviderBuilder()
-                    .build(),
-            ).build(contentSigner, stubCertificate.certificateHolder)
+            val signerInfoGenerator =
+                stubKeyPair.private.makeSignerInfoGenerator(stubCertificate.certificateHolder)
             signedDataGenerator.addSignerInfoGenerator(
                 signerInfoGenerator,
             )
@@ -521,7 +545,8 @@ internal class SignedDataTest {
 
             val plaintextCms: CMSTypedData = CMSProcessableByteArray(stubPlaintext)
             val bcSignedData = signedDataGenerator.generate(plaintextCms, false)
-            val signedData = SignedData.decode(bcSignedData.toASN1Structure())
+            val signedData =
+                SignedData.decode(bcSignedData.toASN1Structure().toDlTaggedObject(false))
 
             signedData.plaintext shouldBe null
         }
@@ -658,21 +683,15 @@ internal class SignedDataTest {
 
     private fun generateSignedDataWithoutSigners(): SignedData {
         val signedDataGenerator = CMSSignedDataGenerator()
-        val plaintextCms: CMSTypedData = CMSProcessableByteArray(stubPlaintext)
-        val bcSignedData = signedDataGenerator.generate(plaintextCms, true)
+        val bcSignedData = signedDataGenerator.generateWithDetachedPlaintext(stubPlaintext)
         return SignedData(bcSignedData)
     }
 
     private fun generateSignedDataWithMultipleSigners(): SignedData {
         val signedDataGenerator = CMSSignedDataGenerator()
 
-        val signerBuilder =
-            JcaContentSignerBuilder("SHA256WITHRSAANDMGF1").setProvider(BC_PROVIDER)
-        val contentSigner: ContentSigner = signerBuilder.build(stubKeyPair.private)
-        val signerInfoGenerator = JcaSignerInfoGeneratorBuilder(
-            JcaDigestCalculatorProviderBuilder()
-                .build(),
-        ).build(contentSigner, stubCertificate.certificateHolder)
+        val signerInfoGenerator =
+            stubKeyPair.private.makeSignerInfoGenerator(stubCertificate.certificateHolder)
         // Add the same SignerInfo twice
         signedDataGenerator.addSignerInfoGenerator(
             signerInfoGenerator,
@@ -681,10 +700,7 @@ internal class SignedDataTest {
             signerInfoGenerator,
         )
 
-        val bcSignedData = signedDataGenerator.generate(
-            CMSProcessableByteArray(stubPlaintext),
-            true,
-        )
+        val bcSignedData = signedDataGenerator.generateWithDetachedPlaintext(stubPlaintext)
         return SignedData(bcSignedData)
     }
 }

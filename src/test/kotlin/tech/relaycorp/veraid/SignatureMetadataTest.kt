@@ -44,7 +44,7 @@ class SignatureMetadataTest {
     @Nested
     inner class Encode {
         @Test
-        fun `Attribute value should be be implicitly-tagged SEQUENCE`() {
+        fun `SEQUENCE should have implicitly-tagged items`() {
             val attributeValue = metadata.encode()
 
             shouldNotThrowAny {
@@ -110,6 +110,18 @@ class SignatureMetadataTest {
 
     @Nested
     inner class Decode {
+        @Test
+        fun `Encoding should be a SEQUENCE`() {
+            val malformedAttributeValue = DERNull.INSTANCE
+
+            val exception = shouldThrow<SignatureException> {
+                SignatureMetadata.decode(malformedAttributeValue)
+            }
+
+            exception.message shouldBe "Encoding isn't a SEQUENCE"
+            exception.cause should beInstanceOf<IllegalArgumentException>()
+        }
+
         @Test
         fun `Metadata should have at least 2 items`() {
             val attributeValue = ASN1Utils.makeSequence(listOf(SERVICE_OID), false)

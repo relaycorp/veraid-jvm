@@ -3,6 +3,7 @@ package tech.relaycorp.veraid.dns
 import org.bouncycastle.asn1.ASN1EncodableVector
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Set
+import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.DERSet
 import org.xbill.DNS.DClass
@@ -18,10 +19,11 @@ import tech.relaycorp.veraid.InstantPeriod
 import tech.relaycorp.veraid.OrganisationKeySpec
 import tech.relaycorp.veraid.toInstantPeriod
 import tech.relaycorp.veraid.utils.intersect
+import java.lang.IllegalStateException
 import kotlin.time.toJavaDuration
 
 /**
- * Vera DNSSEC chain.
+ * VeraId DNSSEC chain.
  *
  * It contains the DNSSEC chain for the Vera TXT RRSet (e.g., `_veraid.example.com./TXT`).
  */
@@ -146,7 +148,7 @@ public class VeraDnssecChain internal constructor(
         internal var dnssecChainRetriever: ChainRetriever = DnssecChain.Companion::retrieve
 
         /**
-         * Retrieve Vera DNSSEC chain for [organisationName].
+         * Retrieve VeraId DNSSEC chain for [organisationName].
          *
          * @param organisationName The domain name of the organisation
          * @param resolverHost The IPv4 address for the DNSSEC-aware, recursive resolver
@@ -164,12 +166,25 @@ public class VeraDnssecChain internal constructor(
             return VeraDnssecChain(organisationName, dnssecChain.responses)
         }
 
-        @Throws(DnsException::class)
+        @Throws(InvalidChainException::class)
+        internal fun decode(
+            organisationName: String,
+            setTagged: ASN1TaggedObject,
+        ): VeraDnssecChain {
+            val set = try {
+                ASN1Set.getInstance(setTagged, false)
+            } catch (exc: IllegalStateException) {
+                throw InvalidChainException("Chain is not an implicitly-tagged SET", exc)
+            }
+            return decode(organisationName, set)
+        }
+
+        @Throws(InvalidChainException::class)
         internal fun decode(organisationName: String, set: ASN1Set): VeraDnssecChain {
             val responses = set.map {
                 if (it !is DEROctetString) {
                     throw InvalidChainException(
-                        "Chain SET contains non-OCTET STRING item ($it)",
+                        "Chain SET contains non-OCTET STRING item (${it::class.simpleName})",
                     )
                 }
                 try {

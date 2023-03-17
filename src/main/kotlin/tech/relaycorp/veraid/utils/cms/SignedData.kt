@@ -1,6 +1,7 @@
 package tech.relaycorp.veraid.utils.cms
 
 import org.bouncycastle.asn1.ASN1EncodableVector
+import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.cms.Attribute
 import org.bouncycastle.asn1.cms.AttributeTable
 import org.bouncycastle.asn1.cms.ContentInfo
@@ -126,7 +127,7 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
             encapsulatedCertificates: Set<Certificate> = setOf(),
             hashingAlgorithm: Hash? = null,
             encapsulatePlaintext: Boolean = true,
-            extraSignedAttrs: List<Attribute> = emptyList(),
+            extraSignedAttrs: Collection<Attribute> = emptyList(),
         ): SignedData {
             val signerInfoGenerator = makeSignerInfoGenerator(
                 signerPrivateKey,
@@ -157,7 +158,7 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
         private fun makeSignerInfoGenerator(
             signerPrivateKey: PrivateKey,
             hashingAlgorithm: Hash?,
-            extraSignedAttrs: List<Attribute>,
+            extraSignedAttrs: Collection<Attribute>,
             signerCertificate: Certificate,
         ): SignerInfoGenerator? {
             val contentSigner = makeContentSigner(signerPrivateKey, hashingAlgorithm)
@@ -190,7 +191,12 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
         }
 
         @JvmStatic
-        fun decode(contentInfo: ContentInfo): SignedData {
+        fun decode(contentInfoTagged: ASN1TaggedObject): SignedData {
+            val contentInfo = try {
+                ContentInfo.getInstance(contentInfoTagged, false)
+            } catch (exc: IllegalStateException) {
+                throw SignedDataException("Encoding is not an implicitly-tagged ContentInfo", exc)
+            }
             val bcSignedData = try {
                 CMSSignedData(contentInfo)
             } catch (_: CMSException) {

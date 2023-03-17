@@ -1,7 +1,9 @@
 package tech.relaycorp.veraid.pki
 
+import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.cert.X509CertificateHolder
 import tech.relaycorp.veraid.utils.x509.Certificate
+import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.security.KeyPair
 import java.time.ZonedDateTime
 
@@ -24,5 +26,9 @@ public class OrgCertificate internal constructor(certificateHolder: X509Certific
                 validityStartDate = startDate,
             ).certificateHolder,
         )
+
+        @Throws(CertificateException::class)
+        internal fun decode(encoding: ASN1TaggedObject): OrgCertificate =
+            OrgCertificate(Certificate.decode(encoding).certificateHolder)
     }
 }

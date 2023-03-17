@@ -31,6 +31,8 @@ import tech.relaycorp.veraid.ORG_KEY_SPEC
 import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.SERVICE_OID
 import tech.relaycorp.veraid.utils.asn1.parseDer
+import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
+import java.lang.IllegalStateException
 import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -188,20 +190,45 @@ class VeraDnssecChainTest {
     }
 
     @Nested
-    inner class Decode {
+    inner class DecodeTaggedObject {
         @Test
-        fun `Non-OCTET STRING item should be refused`() {
-            val vector = ASN1EncodableVector(1)
-            vector.add(DERNull.INSTANCE)
-            val invalidSet = DERSet(vector)
+        fun `Encoding should be a SET`() {
+            val malformedSet = DERNull.INSTANCE.toDlTaggedObject(false)
 
-            val error = shouldThrow<InvalidChainException> {
-                VeraDnssecChain.decode(ORG_NAME, invalidSet)
+            val exception = shouldThrow<InvalidChainException> {
+                VeraDnssecChain.decode(ORG_NAME, malformedSet)
             }
 
-            error.message shouldBe "Chain SET contains non-OCTET STRING item (${DERNull.INSTANCE})"
+            exception.message shouldBe "Chain is not an implicitly-tagged SET"
+            exception.cause should beInstanceOf<IllegalStateException>()
         }
 
+        @Test
+        fun `Encoding should be implicitly-tagged`() {
+            val malformedSet = DERSet().toDlTaggedObject(true)
+
+            val exception = shouldThrow<InvalidChainException> {
+                VeraDnssecChain.decode(ORG_NAME, malformedSet)
+            }
+
+            exception.message shouldBe "Chain is not an implicitly-tagged SET"
+            exception.cause should beInstanceOf<IllegalStateException>()
+        }
+
+        @Test
+        fun `Chain should be initialised from valid SET`() {
+            val chain = VeraDnssecChain(ORG_NAME, listOf(RECORD.makeResponse()))
+            val encoding = parseDer(chain.serialise()) as ASN1Set
+
+            val chainDecoded = VeraDnssecChain.decode(ORG_NAME, encoding)
+
+            chainDecoded.orgName shouldBe ORG_NAME
+            chainDecoded.responses shouldHaveSize 1
+        }
+    }
+
+    @Nested
+    inner class DecodeSet {
         @Test
         fun `Empty set should be supported`() {
             val set = DERSet()
@@ -217,12 +244,26 @@ class VeraDnssecChainTest {
             vector.add(DEROctetString("malformed message".toByteArray()))
             val invalidSet = DERSet(vector)
 
-            val error = shouldThrow<InvalidChainException> {
+            val exception = shouldThrow<InvalidChainException> {
                 VeraDnssecChain.decode(ORG_NAME, invalidSet)
             }
 
-            error.message shouldBe "Chain contains a malformed DNS message"
-            error.cause should beInstanceOf<WireParseException>()
+            exception.message shouldBe "Chain contains a malformed DNS message"
+            exception.cause should beInstanceOf<WireParseException>()
+        }
+
+        @Test
+        fun `Non-OCTET STRING item should be refused`() {
+            val vector = ASN1EncodableVector(1)
+            vector.add(DERNull.INSTANCE)
+            val invalidSet = DERSet(vector)
+
+            val exception = shouldThrow<InvalidChainException> {
+                VeraDnssecChain.decode(ORG_NAME, invalidSet)
+            }
+
+            exception.message shouldBe
+                "Chain SET contains non-OCTET STRING item (${DERNull::class.simpleName})"
         }
 
         @Test
