@@ -25,24 +25,21 @@ import org.bouncycastle.cms.CMSProcessableByteArray
 import org.bouncycastle.cms.CMSSignedData
 import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.CMSTypedData
-import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
-import org.bouncycastle.operator.ContentSigner
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
-import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
-import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
+import tech.relaycorp.veraid.utils.generateWithDetachedPlaintext
+import tech.relaycorp.veraid.utils.makeSignerInfoGenerator
 import tech.relaycorp.veraid.utils.x509.Certificate
 import java.security.MessageDigest
 import java.time.ZonedDateTime
 
 internal class SignedDataTest {
-    companion object {
+    private companion object {
         val stubPlaintext = "The plaintext".toByteArray()
         val stubKeyPair = generateRSAKeyPair()
         val stubCertificate = Certificate.issue(
@@ -537,14 +534,8 @@ internal class SignedDataTest {
         @Test
         fun `Plaintext should be null if not encapsulated`() {
             val signedDataGenerator = CMSSignedDataGenerator()
-
-            val signerBuilder =
-                JcaContentSignerBuilder("SHA256WITHRSAANDMGF1").setProvider(BC_PROVIDER)
-            val contentSigner: ContentSigner = signerBuilder.build(stubKeyPair.private)
-            val signerInfoGenerator = JcaSignerInfoGeneratorBuilder(
-                JcaDigestCalculatorProviderBuilder()
-                    .build(),
-            ).build(contentSigner, stubCertificate.certificateHolder)
+            val signerInfoGenerator =
+                stubKeyPair.private.makeSignerInfoGenerator(stubCertificate.certificateHolder)
             signedDataGenerator.addSignerInfoGenerator(
                 signerInfoGenerator,
             )
@@ -692,21 +683,15 @@ internal class SignedDataTest {
 
     private fun generateSignedDataWithoutSigners(): SignedData {
         val signedDataGenerator = CMSSignedDataGenerator()
-        val plaintextCms: CMSTypedData = CMSProcessableByteArray(stubPlaintext)
-        val bcSignedData = signedDataGenerator.generate(plaintextCms, true)
+        val bcSignedData = signedDataGenerator.generateWithDetachedPlaintext(stubPlaintext)
         return SignedData(bcSignedData)
     }
 
     private fun generateSignedDataWithMultipleSigners(): SignedData {
         val signedDataGenerator = CMSSignedDataGenerator()
 
-        val signerBuilder =
-            JcaContentSignerBuilder("SHA256WITHRSAANDMGF1").setProvider(BC_PROVIDER)
-        val contentSigner: ContentSigner = signerBuilder.build(stubKeyPair.private)
-        val signerInfoGenerator = JcaSignerInfoGeneratorBuilder(
-            JcaDigestCalculatorProviderBuilder()
-                .build(),
-        ).build(contentSigner, stubCertificate.certificateHolder)
+        val signerInfoGenerator =
+            stubKeyPair.private.makeSignerInfoGenerator(stubCertificate.certificateHolder)
         // Add the same SignerInfo twice
         signedDataGenerator.addSignerInfoGenerator(
             signerInfoGenerator,
@@ -715,10 +700,7 @@ internal class SignedDataTest {
             signerInfoGenerator,
         )
 
-        val bcSignedData = signedDataGenerator.generate(
-            CMSProcessableByteArray(stubPlaintext),
-            true,
-        )
+        val bcSignedData = signedDataGenerator.generateWithDetachedPlaintext(stubPlaintext)
         return SignedData(bcSignedData)
     }
 }

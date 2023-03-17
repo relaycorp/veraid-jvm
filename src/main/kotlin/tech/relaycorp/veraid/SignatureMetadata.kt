@@ -1,5 +1,6 @@
 package tech.relaycorp.veraid
 
+import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DERSequence
@@ -24,11 +25,11 @@ internal class SignatureMetadata(
 
     companion object {
         @Throws(SignatureException::class)
-        fun decode(attributeValueTagged: ASN1TaggedObject): SignatureMetadata {
+        fun decode(attributeValueTagged: ASN1Encodable): SignatureMetadata {
             val attributeValue = try {
-                DERSequence.getInstance(attributeValueTagged, false)
-            } catch (exc: IllegalStateException) {
-                throw SignatureException("Metadata isn't an implicitly-tagged SEQUENCE", exc)
+                DERSequence.getInstance(attributeValueTagged)
+            } catch (exc: IllegalArgumentException) {
+                throw SignatureException("Encoding isn't a SEQUENCE", exc)
             }
 
             if (attributeValue.size() < 2) {

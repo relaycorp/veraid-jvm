@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
-import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
 import tech.relaycorp.veraid.utils.asn1.toGeneralizedTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -45,7 +44,7 @@ class SignatureMetadataTest {
     @Nested
     inner class Encode {
         @Test
-        fun `Attribute value should be be implicitly-tagged SEQUENCE`() {
+        fun `SEQUENCE should have implicitly-tagged items`() {
             val attributeValue = metadata.encode()
 
             shouldNotThrowAny {
@@ -113,32 +112,19 @@ class SignatureMetadataTest {
     inner class Decode {
         @Test
         fun `Encoding should be a SEQUENCE`() {
-            val malformedAttributeValue = DERNull.INSTANCE.toDlTaggedObject(false)
+            val malformedAttributeValue = DERNull.INSTANCE
 
             val exception = shouldThrow<SignatureException> {
                 SignatureMetadata.decode(malformedAttributeValue)
             }
 
-            exception.message shouldBe
-                "Metadata attribute value isn't an implicitly-tagged SEQUENCE"
-        }
-
-        @Test
-        fun `Encoding should be implicitly tagged`() {
-            val malformedAttributeValue = DERSequence().toDlTaggedObject(true)
-
-            val exception = shouldThrow<SignatureException> {
-                SignatureMetadata.decode(malformedAttributeValue)
-            }
-
-            exception.message shouldBe
-                "Metadata attribute value isn't an implicitly-tagged SEQUENCE"
+            exception.message shouldBe "Encoding isn't a SEQUENCE"
+            exception.cause should beInstanceOf<IllegalArgumentException>()
         }
 
         @Test
         fun `Metadata should have at least 2 items`() {
-            val attributeValue =
-                ASN1Utils.makeSequence(listOf(SERVICE_OID), false).toDlTaggedObject(false)
+            val attributeValue = ASN1Utils.makeSequence(listOf(SERVICE_OID), false)
 
             val exception = shouldThrow<SignatureException> {
                 SignatureMetadata.decode(attributeValue)
@@ -152,7 +138,6 @@ class SignatureMetadataTest {
             val invalidOid = DERNull.INSTANCE
             val attributeValue =
                 ASN1Utils.makeSequence(listOf(invalidOid, validityPeriod.encode()), false)
-                    .toDlTaggedObject(false)
 
             val exception = shouldThrow<SignatureException> {
                 SignatureMetadata.decode(attributeValue)
@@ -169,7 +154,6 @@ class SignatureMetadataTest {
                 val invalidPeriod = DERNull.INSTANCE
                 val attributeValue =
                     ASN1Utils.makeSequence(listOf(SERVICE_OID, invalidPeriod), false)
-                        .toDlTaggedObject(false)
 
                 val exception = shouldThrow<SignatureException> {
                     SignatureMetadata.decode(attributeValue)
@@ -184,7 +168,6 @@ class SignatureMetadataTest {
                 val invalidPeriod = ASN1Utils.makeSequence(listOf(DERNull.INSTANCE))
                 val attributeValue =
                     ASN1Utils.makeSequence(listOf(SERVICE_OID, invalidPeriod), false)
-                        .toDlTaggedObject(false)
 
                 val exception = shouldThrow<SignatureException> {
                     SignatureMetadata.decode(attributeValue)
@@ -206,7 +189,6 @@ class SignatureMetadataTest {
                 )
                 val attributeValue =
                     ASN1Utils.makeSequence(listOf(SERVICE_OID, invalidPeriod), false)
-                        .toDlTaggedObject(false)
 
                 val exception = shouldThrow<SignatureException> {
                     SignatureMetadata.decode(attributeValue)
@@ -228,7 +210,6 @@ class SignatureMetadataTest {
                 )
                 val attributeValue =
                     ASN1Utils.makeSequence(listOf(SERVICE_OID, invalidPeriod), false)
-                        .toDlTaggedObject(false)
 
                 val exception = shouldThrow<SignatureException> {
                     SignatureMetadata.decode(attributeValue)
@@ -241,7 +222,7 @@ class SignatureMetadataTest {
 
         @Test
         fun `Valid metadata should use have service OID extracted`() {
-            val attribute = metadata.encode().toDlTaggedObject(false)
+            val attribute = metadata.encode()
 
             val decodedMetadata = SignatureMetadata.decode(attribute)
 
@@ -250,7 +231,7 @@ class SignatureMetadataTest {
 
         @Test
         fun `Valid metadata should use have validity period extracted`() {
-            val attribute = metadata.encode().toDlTaggedObject(false)
+            val attribute = metadata.encode()
 
             val decodedMetadata = SignatureMetadata.decode(attribute)
 

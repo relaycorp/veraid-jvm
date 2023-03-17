@@ -1,16 +1,27 @@
 package tech.relaycorp.veraid
 
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.argumentCaptor
+import com.nhaarman.mockitokotlin2.doNothing
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
+import io.kotest.matchers.comparables.shouldNotBeGreaterThan
+import io.kotest.matchers.comparables.shouldNotBeLessThan
 import io.kotest.matchers.date.shouldBeAfter
 import io.kotest.matchers.date.shouldBeBefore
 import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.beInstanceOf
 import io.kotest.matchers.types.instanceOf
+import kotlinx.coroutines.test.runTest
 import org.bouncycastle.asn1.ASN1Integer
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DERNull
 import org.bouncycastle.asn1.DERSet
+import org.bouncycastle.asn1.cms.Attribute
 import org.bouncycastle.asn1.cms.ContentInfo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -19,7 +30,10 @@ import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.RECORD
 import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.dns.makeResponse
+import tech.relaycorp.veraid.pki.Member
 import tech.relaycorp.veraid.pki.MemberIdBundle
+import tech.relaycorp.veraid.pki.OrgCertificate
+import tech.relaycorp.veraid.pki.PkiException
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.cms.SignedData
@@ -29,7 +43,6 @@ import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
-import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
 
 class SignatureBundleTest {
     private val response = RECORD.makeResponse()
@@ -203,7 +216,7 @@ class SignatureBundleTest {
                     val signedAttrs = this.signedAttrs
                     val metadataAttribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
                     return SignatureMetadata.decode(
-                        metadataAttribute!!.attrValues!!.getObjectAt(0).toDlTaggedObject(false),
+                        metadataAttribute!!.attrValues!!.getObjectAt(0),
                     )
                 }
         }
@@ -411,6 +424,303 @@ class SignatureBundleTest {
             val deserialisedBundle = SignatureBundle.deserialise(bundle)
 
             deserialisedBundle.memberIdBundle.dnssecChain.orgName shouldBe ORG_CERT.commonName
+        }
+    }
+
+    @Nested
+    inner class Verify {
+        private val validBundle = SignatureBundle.generate(
+            plaintext,
+            SERVICE_OID.id,
+            memberIdBundle,
+            MEMBER_KEY_PAIR.private,
+            validityPeriod.endInclusive,
+        )
+
+        @Test
+        fun `Signature should correspond to specified plaintext`() = runTest {
+            val otherPlaintext = "not".toByteArray() + plaintext
+
+            val exception = assertThrows<SignatureException> {
+                validBundle.verify(otherPlaintext, SERVICE_OID.id)
+            }
+
+            exception.message shouldBe "Signature is invalid"
+            exception.cause shouldBe instanceOf<SignedDataException>()
+        }
+
+        @Test
+        fun `Member id bundle should be valid`() = runTest {
+            val invalidMemberIdBundle = MemberIdBundle(
+                memberIdBundle.dnssecChain,
+                OrgCertificate(MEMBER_CERT.certificateHolder), // Invalid
+                MEMBER_CERT,
+            )
+            val invalidBundle = SignatureBundle(invalidMemberIdBundle, validBundle.signedData)
+
+            val exception = assertThrows<SignatureException> {
+                invalidBundle.verify(plaintext, SERVICE_OID.id)
+            }
+
+            exception.message shouldBe "Member id bundle is invalid"
+            exception.cause shouldBe instanceOf<PkiException>()
+        }
+
+        @Nested
+        inner class VerificationPeriod {
+            @Test
+            fun `End date should not be before start date`() = runTest {
+                val now = ZonedDateTime.now()
+                val invalidPeriod = now..now.minusSeconds(1)
+
+                val exception = assertThrows<SignatureException> {
+                    validBundle.verify(plaintext, SERVICE_OID.id, invalidPeriod)
+                }
+
+                exception.message shouldBe "Verification expiry date cannot be before start date"
+            }
+
+            @Test
+            fun `Period should default to the current time`() = runTest {
+                val memberIdBundleMock = mockMemberIdBundle()
+                val bundle = SignatureBundle(memberIdBundleMock, validBundle.signedData)
+                val beforeVerification = ZonedDateTime.now()
+
+                bundle.verify(plaintext, SERVICE_OID.id)
+
+                val afterVerification = ZonedDateTime.now()
+                argumentCaptor<DatePeriod>().apply {
+                    verify(memberIdBundleMock).verify(any(), capture())
+
+                    firstValue.start shouldBe firstValue.endInclusive
+                    firstValue.start shouldNotBeGreaterThan afterVerification
+                    firstValue.start shouldNotBeLessThan beforeVerification
+                }
+            }
+
+            @Test
+            fun `Period as a single date should be supported`() = runTest {
+                val memberIdBundleMock = mockMemberIdBundle()
+                val bundle = SignatureBundle(memberIdBundleMock, validBundle.signedData)
+                val verificationDate = ZonedDateTime.now()
+
+                bundle.verify(plaintext, SERVICE_OID.id, verificationDate)
+
+                argumentCaptor<DatePeriod>().apply {
+                    verify(memberIdBundleMock).verify(any(), capture())
+
+                    firstValue.start shouldBe verificationDate.withZoneSameInstant(ZoneOffset.UTC)
+                    firstValue.endInclusive shouldBe
+                        verificationDate.withZoneSameInstant(ZoneOffset.UTC)
+                }
+            }
+
+            @Test
+            fun `Period should overlap with that of signature`() = runTest {
+                val metadata = SignatureMetadata(
+                    SERVICE_OID,
+                    validityPeriod.start..validityPeriod.start.plusSeconds(1),
+                )
+                val attribute = Attribute(
+                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    DERSet(metadata.encode()),
+                )
+                val signedData = SignedData.sign(
+                    plaintext,
+                    MEMBER_KEY_PAIR.private,
+                    MEMBER_CERT,
+                    setOf(MEMBER_CERT),
+                    encapsulatePlaintext = false,
+                    extraSignedAttrs = setOf(attribute),
+                )
+                val bundle = SignatureBundle(mockMemberIdBundle(), signedData)
+
+                val exception = assertThrows<SignatureException> {
+                    bundle.verify(plaintext, SERVICE_OID.id, validityPeriod.endInclusive)
+                }
+
+                exception.message shouldBe "Signature period does not overlap with required period"
+            }
+
+            @Test
+            fun `Period should overlap with that of member id bundle`() = runTest {
+                val memberIdBundleMock = mockMemberIdBundle()
+                val bundle = SignatureBundle(memberIdBundleMock, validBundle.signedData)
+                val verificationPeriod =
+                    validityPeriod.start.plusSeconds(1)..validityPeriod.endInclusive.plusSeconds(1)
+
+                bundle.verify(plaintext, SERVICE_OID.id, verificationPeriod)
+
+                argumentCaptor<DatePeriod>().apply {
+                    verify(memberIdBundleMock).verify(any(), capture())
+
+                    firstValue.start shouldBe
+                        verificationPeriod.start.withZoneSameInstant(ZoneOffset.UTC)
+                    firstValue.endInclusive shouldBe
+                        validityPeriod.endInclusive.withZoneSameInstant(ZoneOffset.UTC)
+                }
+            }
+        }
+
+        @Nested
+        inner class Metadata {
+            private val otherService = SERVICE_OID.branch("1")
+
+            @Test
+            fun `Signed attributes should not be empty`() = runTest {
+                val incompleteSignedData = mock<SignedData>()
+                doNothing().whenever(incompleteSignedData).verify(plaintext)
+                whenever(incompleteSignedData.signedAttrs).thenReturn(null)
+                val incompleteBundle = SignatureBundle(mockMemberIdBundle(), incompleteSignedData)
+
+                val exception = assertThrows<SignatureException> {
+                    incompleteBundle.verify(plaintext, SERVICE_OID.id)
+                }
+
+                exception.message shouldBe "SignedData should have VeraId metadata attribute"
+            }
+
+            @Test
+            fun `Attribute should be present in signature`() = runTest {
+                val incompleteSignedData = SignedData.sign(
+                    plaintext,
+                    MEMBER_KEY_PAIR.private,
+                    MEMBER_CERT,
+                    setOf(MEMBER_CERT),
+                    encapsulatePlaintext = false,
+                )
+                val incompleteBundle = SignatureBundle(mockMemberIdBundle(), incompleteSignedData)
+
+                val exception = assertThrows<SignatureException> {
+                    incompleteBundle.verify(plaintext, SERVICE_OID.id)
+                }
+
+                exception.message shouldBe "SignedData should have VeraId metadata attribute"
+            }
+
+            @Test
+            fun `Attribute should have at least one value`() = runTest {
+                val invalidValue = Attribute(
+                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    DERSet(),
+                )
+                val invalidSignedData = SignedData.sign(
+                    plaintext,
+                    MEMBER_KEY_PAIR.private,
+                    MEMBER_CERT,
+                    setOf(MEMBER_CERT),
+                    encapsulatePlaintext = false,
+                    extraSignedAttrs = setOf(invalidValue),
+                )
+                val invalidBundle = SignatureBundle(mockMemberIdBundle(), invalidSignedData)
+
+                val exception = assertThrows<SignatureException> {
+                    invalidBundle.verify(plaintext, SERVICE_OID.id)
+                }
+
+                exception.message shouldBe "Metadata attribute should have at least one value"
+            }
+
+            @Test
+            fun `Attribute should be well-formed`() = runTest {
+                val malformedAttribute = Attribute(
+                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    DERSet(DERNull.INSTANCE),
+                )
+                val invalidSignedData = SignedData.sign(
+                    plaintext,
+                    MEMBER_KEY_PAIR.private,
+                    MEMBER_CERT,
+                    setOf(MEMBER_CERT),
+                    extraSignedAttrs = setOf(malformedAttribute),
+                    encapsulatePlaintext = false,
+                )
+                val malformedBundle = SignatureBundle(mockMemberIdBundle(), invalidSignedData)
+
+                val exception = assertThrows<SignatureException> {
+                    malformedBundle.verify(plaintext, SERVICE_OID.id)
+                }
+
+                exception.message shouldBe "Metadata attribute is malformed"
+                exception.cause shouldBe instanceOf<SignatureException>()
+            }
+
+            @Test
+            fun `Service OID should match that of the signature metadata`() = runTest {
+                val otherMetadata = SignatureMetadata(otherService, validityPeriod)
+                val attribute = Attribute(
+                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    DERSet(otherMetadata.encode()),
+                )
+                val signedData = SignedData.sign(
+                    plaintext,
+                    MEMBER_KEY_PAIR.private,
+                    MEMBER_CERT,
+                    setOf(MEMBER_CERT),
+                    extraSignedAttrs = setOf(attribute),
+                    encapsulatePlaintext = false,
+                )
+                val bundle = SignatureBundle(mockMemberIdBundle(), signedData)
+
+                val exception = assertThrows<SignatureException> {
+                    bundle.verify(plaintext, SERVICE_OID.id)
+                }
+
+                exception.message shouldBe
+                    "Signature is bound to a different service (${otherService.id})"
+            }
+
+            @Test
+            fun `Service OID in signature should match that of member id bundle`() = runTest {
+                val mockMemberIdBundle = mockMemberIdBundle()
+                val bundle = SignatureBundle(mockMemberIdBundle, validBundle.signedData)
+
+                bundle.verify(plaintext, SERVICE_OID.id)
+
+                argumentCaptor<ASN1ObjectIdentifier>().apply {
+                    verify(mockMemberIdBundle).verify(capture(), any())
+
+                    firstValue shouldBe SERVICE_OID
+                }
+            }
+        }
+
+        @Nested
+        inner class ValidResult {
+            @Test
+            fun `Organisation name should be output`() = runTest {
+                val bundle = SignatureBundle(mockMemberIdBundle(), validBundle.signedData)
+
+                val result = bundle.verify(plaintext, SERVICE_OID.id)
+
+                result.orgName shouldBe ORG_NAME
+            }
+
+            @Test
+            fun `User name should be output if member is a user`() = runTest {
+                val bundle = SignatureBundle(mockMemberIdBundle(), validBundle.signedData)
+
+                val result = bundle.verify(plaintext, SERVICE_OID.id)
+
+                result.userName shouldBe USER_NAME
+            }
+
+            @Test
+            fun `User name should not be output if member is a bot`() = runTest {
+                val memberIdBundleMock = mockMemberIdBundle(userName = null)
+                val bundle = SignatureBundle(memberIdBundleMock, validBundle.signedData)
+
+                val result = bundle.verify(plaintext, SERVICE_OID.id)
+
+                result.userName shouldBe null
+            }
+        }
+
+        private suspend fun mockMemberIdBundle(userName: String? = USER_NAME): MemberIdBundle {
+            val memberIdBundleMock = mock<MemberIdBundle>()
+            val member = Member(ORG_NAME, userName)
+            whenever(memberIdBundleMock.verify(any(), any())).thenReturn(member)
+            return memberIdBundleMock
         }
     }
 }

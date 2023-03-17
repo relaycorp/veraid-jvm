@@ -14,6 +14,7 @@ import org.bouncycastle.cert.X509CertificateHolder
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import tech.relaycorp.veraid.DatePeriod
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.generateRandomBigInteger
@@ -183,7 +184,7 @@ public open class Certificate internal constructor(
     public val issuerCommonName: String
         get() = getCommonName(certificateHolder.issuer)
 
-    public val validityPeriod: ClosedRange<ZonedDateTime> by lazy {
+    public val validityPeriod: DatePeriod by lazy {
         val start = dateToZonedDateTime(certificateHolder.notBefore)
         val end = dateToZonedDateTime(certificateHolder.notAfter)
         start..end

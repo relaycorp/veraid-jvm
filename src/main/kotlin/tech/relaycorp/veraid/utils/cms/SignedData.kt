@@ -127,7 +127,7 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
             encapsulatedCertificates: Set<Certificate> = setOf(),
             hashingAlgorithm: Hash? = null,
             encapsulatePlaintext: Boolean = true,
-            extraSignedAttrs: List<Attribute> = emptyList(),
+            extraSignedAttrs: Collection<Attribute> = emptyList(),
         ): SignedData {
             val signerInfoGenerator = makeSignerInfoGenerator(
                 signerPrivateKey,
@@ -158,7 +158,7 @@ internal class SignedData(val bcSignedData: CMSSignedData) {
         private fun makeSignerInfoGenerator(
             signerPrivateKey: PrivateKey,
             hashingAlgorithm: Hash?,
-            extraSignedAttrs: List<Attribute>,
+            extraSignedAttrs: Collection<Attribute>,
             signerCertificate: Certificate,
         ): SignerInfoGenerator? {
             val contentSigner = makeContentSigner(signerPrivateKey, hashingAlgorithm)

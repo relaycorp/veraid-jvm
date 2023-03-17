@@ -6,9 +6,11 @@ import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.Attribute
 import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.VeraDnssecChain
+import tech.relaycorp.veraid.pki.Member
 import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.MemberIdBundle
 import tech.relaycorp.veraid.pki.OrgCertificate
+import tech.relaycorp.veraid.pki.PkiException
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.cms.SignedData
@@ -30,6 +32,62 @@ public class SignatureBundle internal constructor(
         ),
         false,
     )
+
+    public suspend fun verify(
+        plaintext: ByteArray,
+        serviceOid: String,
+        date: ZonedDateTime,
+    ): Member = verify(plaintext, serviceOid, date..date)
+
+    public suspend fun verify(
+        plaintext: ByteArray,
+        serviceOid: String,
+        datePeriod: DatePeriod? = null,
+    ): Member {
+        val now = ZonedDateTime.now()
+        val verificationPeriod = datePeriod ?: now..now
+        if (verificationPeriod.endInclusive < verificationPeriod.start) {
+            throw SignatureException("Verification expiry date cannot be before start date")
+        }
+
+        try {
+            signedData.verify(plaintext)
+        } catch (exc: SignedDataException) {
+            throw SignatureException("Signature is invalid", exc)
+        }
+
+        val metadata = getSignatureMetadata()
+
+        val signaturePeriodIntersection = metadata.validityPeriod.intersect(verificationPeriod)
+            ?: throw SignatureException("Signature period does not overlap with required period")
+
+        if (metadata.service.id != serviceOid) {
+            throw SignatureException(
+                "Signature is bound to a different service (${metadata.service.id})",
+            )
+        }
+
+        return try {
+            memberIdBundle.verify(ASN1ObjectIdentifier(serviceOid), signaturePeriodIntersection)
+        } catch (exc: PkiException) {
+            throw SignatureException("Member id bundle is invalid", exc)
+        }
+    }
+
+    private fun getSignatureMetadata(): SignatureMetadata {
+        val signedAttrs = signedData.signedAttrs
+        val metadataAttribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+            ?: throw SignatureException("SignedData should have VeraId metadata attribute")
+        if (metadataAttribute.attrValues.size() == 0) {
+            throw SignatureException("Metadata attribute should have at least one value")
+        }
+        val metadataAttributeValue = metadataAttribute.attrValues.getObjectAt(0)
+        return try {
+            SignatureMetadata.decode(metadataAttributeValue)
+        } catch (exc: SignatureException) {
+            throw SignatureException("Metadata attribute is malformed", exc)
+        }
+    }
 
     public companion object {
         public fun generate(
