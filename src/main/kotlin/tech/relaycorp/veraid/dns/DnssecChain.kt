@@ -27,7 +27,7 @@ import kotlin.time.toJavaDuration
  *
  * It contains the DNSSEC chain for the Vera TXT RRSet (e.g., `_veraid.example.com./TXT`).
  */
-public class VeraDnssecChain internal constructor(
+public class DnssecChain internal constructor(
     internal val orgName: String,
     responses: List<Message>,
 ) : BaseDnssecChain("_veraid.$orgName.", VERA_RECORD_TYPE, responses) {
@@ -159,18 +159,18 @@ public class VeraDnssecChain internal constructor(
         public suspend fun retrieve(
             organisationName: String,
             resolverHost: String = CLOUDFLARE_RESOLVER,
-        ): VeraDnssecChain {
+        ): DnssecChain {
             val organisationNameNormalised = organisationName.trimEnd('.')
             val domainName = "_veraid.$organisationNameNormalised."
             val dnssecChain = chainRetriever(domainName, VERA_RECORD_TYPE, resolverHost)
-            return VeraDnssecChain(organisationName, dnssecChain.responses)
+            return DnssecChain(organisationName, dnssecChain.responses)
         }
 
         @Throws(InvalidChainException::class)
         internal fun decode(
             organisationName: String,
             setTagged: ASN1TaggedObject,
-        ): VeraDnssecChain {
+        ): DnssecChain {
             val set = try {
                 ASN1Set.getInstance(setTagged, false)
             } catch (exc: IllegalStateException) {
@@ -180,7 +180,7 @@ public class VeraDnssecChain internal constructor(
         }
 
         @Throws(InvalidChainException::class)
-        internal fun decode(organisationName: String, set: ASN1Set): VeraDnssecChain {
+        internal fun decode(organisationName: String, set: ASN1Set): DnssecChain {
             val responses = set.map {
                 if (it !is DEROctetString) {
                     throw InvalidChainException(
@@ -193,7 +193,7 @@ public class VeraDnssecChain internal constructor(
                     throw InvalidChainException("Chain contains a malformed DNS message", exc)
                 }
             }
-            return VeraDnssecChain(organisationName, responses)
+            return DnssecChain(organisationName, responses)
         }
     }
 }

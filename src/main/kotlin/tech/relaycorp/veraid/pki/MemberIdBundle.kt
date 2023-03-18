@@ -4,15 +4,15 @@ import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import tech.relaycorp.veraid.DatePeriod
 import tech.relaycorp.veraid.dns.DnsException
+import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException
-import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.intersect
 import tech.relaycorp.veraid.utils.x509.CertificateException
 
 public class MemberIdBundle(
-    internal val dnssecChain: VeraDnssecChain,
+    internal val dnssecChain: DnssecChain,
     internal val orgCertificate: OrgCertificate,
     internal val memberCertificate: MemberCertificate,
 ) {
@@ -84,8 +84,8 @@ public class MemberIdBundle(
                 throw PkiException("Organisation certificate is malformed", exc)
             }
 
-            val veraDnssecChain = try {
-                VeraDnssecChain.decode(orgCertificate.commonName, sequence[1])
+            val dnssecChain = try {
+                DnssecChain.decode(orgCertificate.commonName, sequence[1])
             } catch (exc: InvalidChainException) {
                 throw PkiException("DNSSEC chain is malformed", exc)
             }
@@ -96,7 +96,7 @@ public class MemberIdBundle(
                 throw PkiException("Member certificate is malformed", exc)
             }
 
-            return MemberIdBundle(veraDnssecChain, orgCertificate, memberCertificate)
+            return MemberIdBundle(dnssecChain, orgCertificate, memberCertificate)
         }
     }
 }

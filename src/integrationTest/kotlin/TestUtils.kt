@@ -1,12 +1,12 @@
 import kotlinx.coroutines.delay
-import tech.relaycorp.veraid.dns.VeraDnssecChain
+import tech.relaycorp.veraid.dns.DnssecChain
 
-suspend fun retrieveVeraidDnssecChain(orgName: String, maxRetries: Int): VeraDnssecChain {
-    var result: VeraDnssecChain? = null
+suspend fun retrieveVeraidDnssecChain(orgName: String, maxRetries: Int): DnssecChain {
+    var result: DnssecChain? = null
     var lastException: Throwable? = null
     for (i in 0 until maxRetries) {
         try {
-            result = VeraDnssecChain.retrieve(orgName)
+            result = DnssecChain.retrieve(orgName)
             break
         } catch (exc: Throwable) {
             lastException = exc

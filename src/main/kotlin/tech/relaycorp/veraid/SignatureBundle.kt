@@ -4,8 +4,8 @@ import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.Attribute
+import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException
-import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.pki.Member
 import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.MemberIdBundle
@@ -135,8 +135,8 @@ public class SignatureBundle internal constructor(
                 throw SignatureException("Organisation certificate is malformed", exc)
             }
 
-            val veraDnssecChain = try {
-                VeraDnssecChain.decode(orgCertificate.commonName, sequence[1])
+            val dnssecChain = try {
+                DnssecChain.decode(orgCertificate.commonName, sequence[1])
             } catch (exc: InvalidChainException) {
                 throw SignatureException("VeraId DNSSEC chain is malformed", exc)
             }
@@ -151,7 +151,7 @@ public class SignatureBundle internal constructor(
                 ?: throw SignatureException("SignedData should have signer certificate attached")
 
             val memberIdBundle = MemberIdBundle(
-                veraDnssecChain,
+                dnssecChain,
                 orgCertificate,
                 MemberCertificate(signerCertificate.certificateHolder),
             )
