@@ -48,9 +48,7 @@ private val rsaModulusHashMap: Map<RsaModulus, Hash> = mapOf(
  * Generate an RSA key pair.
  *
  * @param modulus The modulus
- * @throws PkiException If `modulus` is less than 2048
  */
-@Throws(PkiException::class)
 public fun generateRSAKeyPair(modulus: RsaModulus = RsaModulus.RSA_2048): KeyPair {
     val keyGen = KeyPairGenerator.getInstance("RSA", BC_PROVIDER)
     keyGen.initialize(modulus.modulus)

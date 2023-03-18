@@ -19,6 +19,9 @@ import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.security.PrivateKey
 import java.time.ZonedDateTime
 
+/**
+ * VeraId Signature Bundle.
+ */
 public class SignatureBundle internal constructor(
     internal val memberIdBundle: MemberIdBundle,
     internal val signedData: SignedData,

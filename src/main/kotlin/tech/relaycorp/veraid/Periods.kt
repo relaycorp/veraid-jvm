@@ -11,6 +11,10 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 internal typealias InstantPeriod = ClosedRange<Instant>
+
+/**
+ * A period of time represented by a start and end date (inclusive).
+ */
 public typealias DatePeriod = ClosedRange<ZonedDateTime>
 
 internal fun DatePeriod.toInstantPeriod(): InstantPeriod =
