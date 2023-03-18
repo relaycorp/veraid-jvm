@@ -112,8 +112,6 @@ public class SignatureBundle internal constructor(
         }
     }
 
-    /**
-     */
     public companion object {
         /**
          * Generate a new signature bundle.

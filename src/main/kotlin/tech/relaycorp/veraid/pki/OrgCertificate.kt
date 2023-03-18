@@ -7,9 +7,20 @@ import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.security.KeyPair
 import java.time.ZonedDateTime
 
+/**
+ * VeraId organisation certificate.
+ */
 public class OrgCertificate internal constructor(certificateHolder: X509CertificateHolder) :
     Certificate(certificateHolder) {
     public companion object {
+        /**
+         * Issue a new organisation certificate.
+         *
+         * @param orgName The organisation name.
+         * @param orgKeyPair The organisation's key pair.
+         * @param expiryDate The certificate's expiry date.
+         * @param startDate The certificate's start date.
+         */
         public fun selfIssue(
             orgName: String,
             orgKeyPair: KeyPair,

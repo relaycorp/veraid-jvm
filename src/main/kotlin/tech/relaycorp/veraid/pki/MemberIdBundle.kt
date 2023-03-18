@@ -12,11 +12,20 @@ import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.intersect
 import tech.relaycorp.veraid.utils.x509.CertificateException
 
+/**
+ * Member Id bundle.
+ *
+ * It contains the DNSSEC chain for the VeraId TXT RRSet (e.g., `_veraid.example.com./TXT`), the
+ * organisation certificate and the member certificate.
+ */
 public class MemberIdBundle(
     internal val dnssecChain: DnssecChain,
     internal val orgCertificate: OrgCertificate,
     internal val memberCertificate: MemberCertificate,
 ) {
+    /**
+     * Serialise the bundle.
+     */
     public fun serialise(): ByteArray = ASN1Utils.serializeSequence(
         listOf(
             ASN1Integer(0),
@@ -67,6 +76,9 @@ public class MemberIdBundle(
     }
 
     public companion object {
+        /**
+         * Deserialise a bundle.
+         */
         @Throws(PkiException::class)
         public fun deserialise(serialisation: ByteArray): MemberIdBundle {
             val sequence = try {
