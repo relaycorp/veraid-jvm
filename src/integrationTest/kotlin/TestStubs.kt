@@ -1,4 +1,4 @@
-import tech.relaycorp.veraid.pki.deserializeRSAKeyPair
+import tech.relaycorp.veraid.pki.deserialiseRSAKeyPair
 import tech.relaycorp.veraid.pki.generateRSAKeyPair
 
 object TestStubs {
@@ -6,7 +6,7 @@ object TestStubs {
 
     private val ORG_PRIVATE_KEY =
         TestStubs::class.java.getResourceAsStream("/organisationPrivateKey.der")!!.readAllBytes()
-    val ORG_KEY_PAIR = ORG_PRIVATE_KEY.deserializeRSAKeyPair()
+    val ORG_KEY_PAIR = ORG_PRIVATE_KEY.deserialiseRSAKeyPair()
 
     const val USER_NAME = "alice"
     val MEMBER_KEY_PAIR = generateRSAKeyPair()

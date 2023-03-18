@@ -20,6 +20,9 @@ import java.security.spec.RSAPublicKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
+/**
+ * RSA modulus.
+ */
 public enum class RsaModulus(internal val modulus: Int) {
     RSA_2048(2048),
     RSA_3072(3072),
@@ -48,9 +51,7 @@ private val rsaModulusHashMap: Map<RsaModulus, Hash> = mapOf(
  * Generate an RSA key pair.
  *
  * @param modulus The modulus
- * @throws PkiException If `modulus` is less than 2048
  */
-@Throws(PkiException::class)
 public fun generateRSAKeyPair(modulus: RsaModulus = RsaModulus.RSA_2048): KeyPair {
     val keyGen = KeyPairGenerator.getInstance("RSA", BC_PROVIDER)
     keyGen.initialize(modulus.modulus)
@@ -74,18 +75,18 @@ internal val PublicKey.orgKeySpec: OrganisationKeySpec
     }
 
 /**
- * Deserialize the RSA key pair from a private key serialization.
+ * Deserialise the RSA key pair from a private key serialization.
  */
 @Throws(PkiException::class)
-public fun ByteArray.deserializeRSAKeyPair(): KeyPair {
-    val privateKey = this.deserializePrivateKey("RSA") as RSAPrivateCrtKey
+public fun ByteArray.deserialiseRSAKeyPair(): KeyPair {
+    val privateKey = this.deserialisePrivateKey("RSA") as RSAPrivateCrtKey
     val keyFactory = KeyFactory.getInstance("RSA", BC_PROVIDER)
     val publicKeySpec = RSAPublicKeySpec(privateKey.modulus, privateKey.publicExponent)
     val publicKey = keyFactory.generatePublic(publicKeySpec)
     return KeyPair(publicKey, privateKey)
 }
 
-private fun ByteArray.deserializePrivateKey(algorithm: String): PrivateKey {
+private fun ByteArray.deserialisePrivateKey(algorithm: String): PrivateKey {
     val privateKeySpec = PKCS8EncodedKeySpec(this)
     val keyFactory = KeyFactory.getInstance(algorithm, BC_PROVIDER)
     return try {
@@ -95,10 +96,13 @@ private fun ByteArray.deserializePrivateKey(algorithm: String): PrivateKey {
     }
 }
 
-public fun ByteArray.deserializeRSAPublicKey(): RSAPublicKey =
-    deserializePublicKey("RSA") as RSAPublicKey
+/**
+ * Deserialise the RSA public key from a public key serialisation.
+ */
+public fun ByteArray.deserialiseRSAPublicKey(): RSAPublicKey =
+    deserialisePublicKey("RSA") as RSAPublicKey
 
-private fun ByteArray.deserializePublicKey(algorithm: String): PublicKey {
+private fun ByteArray.deserialisePublicKey(algorithm: String): PublicKey {
     val spec = X509EncodedKeySpec(this)
     val factory = KeyFactory.getInstance(algorithm, BC_PROVIDER)
     return try {

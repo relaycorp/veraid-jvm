@@ -7,6 +7,11 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.time.ZonedDateTime
 
+/**
+ * VeraId Member Certificate.
+ *
+ * @property userName The user's name if the member is a user, or `null` if it's a bot.
+ */
 public class MemberCertificate internal constructor(certificateHolder: X509CertificateHolder) :
     Certificate(certificateHolder) {
     internal val userName: String? by lazy {
@@ -21,6 +26,16 @@ public class MemberCertificate internal constructor(certificateHolder: X509Certi
         private val FORBIDDEN_USER_NAME_CHARS_REGEX = "[@\t\r\n]".toRegex()
         private const val BOT_NAME = "@"
 
+        /**
+         * Issue a new member certificate.
+         *
+         * @param userName The user's name if the member is a user, or `null` if it's a bot.
+         * @param memberPublicKey The member's public key.
+         * @param orgCertificate The organisation's certificate.
+         * @param orgPrivateKey The organisation's private key.
+         * @param expiryDate The certificate's expiry date.
+         * @param startDate The certificate's start date.
+         */
         public fun issue(
             userName: String?,
             memberPublicKey: PublicKey,

@@ -97,6 +97,7 @@ ktlint {
 dokkaHtml.configure {
   dokkaSourceSets {
     configureEach {
+      includes.from(project.files(), "api.md")
       reportUndocumented.set(true)
     }
   }

@@ -29,7 +29,6 @@ import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.RECORD
 import tech.relaycorp.veraid.dns.makeResponse
-import tech.relaycorp.veraid.pki.Member
 import tech.relaycorp.veraid.pki.MemberIdBundle
 import tech.relaycorp.veraid.pki.OrgCertificate
 import tech.relaycorp.veraid.pki.PkiException

@@ -51,68 +51,68 @@ class KeysTest {
     }
 
     @Nested
-    inner class DeserializeRSAKeyPair {
+    inner class DeserialiseRSAKeyPair {
         @Test
-        fun `Deserialize invalid key`() {
+        fun `Deserialise invalid key`() {
             val exception =
-                shouldThrow<PkiException> { "s".toByteArray().deserializeRSAKeyPair() }
+                shouldThrow<PkiException> { "s".toByteArray().deserialiseRSAKeyPair() }
 
             exception.message shouldBe "Value is not a valid RSA private key"
             exception.cause should beInstanceOf<InvalidKeySpecException>()
         }
 
         @Test
-        fun `Deserialize valid private key`() {
+        fun `Deserialise valid private key`() {
             val keyPair = generateRSAKeyPair()
-            val privateKeySerialized = keyPair.private.encoded
+            val privateKeySerialised = keyPair.private.encoded
 
-            val keyPairDeserialized = privateKeySerialized.deserializeRSAKeyPair()
+            val keyPairDeserialised = privateKeySerialised.deserialiseRSAKeyPair()
 
-            keyPairDeserialized.private shouldBe keyPair.private
-            keyPairDeserialized.public shouldBe keyPair.public
+            keyPairDeserialised.private shouldBe keyPair.private
+            keyPairDeserialised.public shouldBe keyPair.public
         }
 
         @Test
         fun `BouncyCastle provider should be used`() {
             val keyPair = generateRSAKeyPair()
-            val privateKeySerialized = keyPair.private.encoded
+            val privateKeySerialised = keyPair.private.encoded
 
-            val keyPairDeserialized = privateKeySerialized.deserializeRSAKeyPair()
+            val keyPairDeserialised = privateKeySerialised.deserialiseRSAKeyPair()
 
-            keyPairDeserialized.public should beInstanceOf<BCRSAPublicKey>()
-            keyPairDeserialized.private should beInstanceOf<BCRSAPrivateKey>()
+            keyPairDeserialised.public should beInstanceOf<BCRSAPublicKey>()
+            keyPairDeserialised.private should beInstanceOf<BCRSAPrivateKey>()
         }
     }
 
     @Nested
-    inner class DeserializeRSAPublicKey {
+    inner class DeserialiseRSAPublicKey {
         @Test
-        fun `Deserialize invalid key`() {
+        fun `Deserialise invalid key`() {
             val exception =
-                shouldThrow<PkiException> { "s".toByteArray().deserializeRSAPublicKey() }
+                shouldThrow<PkiException> { "s".toByteArray().deserialiseRSAPublicKey() }
 
             exception.message shouldBe "Value is not a valid RSA public key"
             exception.cause should beInstanceOf<InvalidKeySpecException>()
         }
 
         @Test
-        fun `Deserialize valid key`() {
+        fun `Deserialise valid key`() {
             val keyPair = generateRSAKeyPair()
-            val publicKeySerialized = keyPair.public.encoded
+            val publicKeySerialised = keyPair.public.encoded
 
-            val publicKeyDeserialized = publicKeySerialized.deserializeRSAPublicKey()
+            val publicKeyDeserialised = publicKeySerialised.deserialiseRSAPublicKey()
 
-            publicKeyDeserialized shouldBe keyPair.public
+            publicKeyDeserialised shouldBe keyPair.public
         }
 
         @Test
         fun `BouncyCastle provider should be used`() {
             val keyPair = generateRSAKeyPair()
-            val publicKeySerialized = keyPair.public.encoded
+            val publicKeySerialised = keyPair.public.encoded
 
-            val publicKeyDeserialized = publicKeySerialized.deserializeRSAPublicKey()
+            val publicKeyDeserialised = publicKeySerialised.deserialiseRSAPublicKey()
 
-            publicKeyDeserialized should beInstanceOf<BCRSAPublicKey>()
+            publicKeyDeserialised should beInstanceOf<BCRSAPublicKey>()
         }
     }
 

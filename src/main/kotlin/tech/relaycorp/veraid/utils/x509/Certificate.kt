@@ -41,6 +41,7 @@ import org.bouncycastle.asn1.x509.Certificate as BCCertificate
  * Certificate.
  *
  * @param certificateHolder Bouncy Castle representation of the X.509 certificate
+ * @suppress
  */
 public open class Certificate internal constructor(
     internal val certificateHolder: X509CertificateHolder,
@@ -169,22 +170,22 @@ public open class Certificate internal constructor(
     /**
      * Return the Common Name of the subject
      */
-    public val commonName: String
+    internal val commonName: String
         get() = getCommonName(certificateHolder.subject)
 
     /**
      * The public key of the subject.
      */
-    public val subjectPublicKey: PublicKey
+    internal val subjectPublicKey: PublicKey
         get() = convertCertToJava(this).publicKey
 
     /**
      * Return the Common Name of the issuer
      */
-    public val issuerCommonName: String
+    internal val issuerCommonName: String
         get() = getCommonName(certificateHolder.issuer)
 
-    public val validityPeriod: DatePeriod by lazy {
+    internal val validityPeriod: DatePeriod by lazy {
         val start = dateToZonedDateTime(certificateHolder.notBefore)
         val end = dateToZonedDateTime(certificateHolder.notAfter)
         start..end
