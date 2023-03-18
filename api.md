@@ -63,7 +63,7 @@ import tech.relaycorp.veraid.SignatureException
 val TTL = 30.days
 val SERVICE_OID = "1.2.3.4.5"
 
-fun verifySignature(
+suspend fun verifySignature(
     plaintext: ByteArray,
     signatureBundleSerialised: ByteArray,
 ): String {
