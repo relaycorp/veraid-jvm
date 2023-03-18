@@ -31,7 +31,7 @@ internal typealias ChainRetriever = suspend (
 ) -> BaseDnssecChain
 
 /**
- * Vera-agnostic DNSSEC chain processing.
+ * VeraId-agnostic DNSSEC chain processing.
  */
 public open class BaseDnssecChain internal constructor(
     internal val domainName: String,

@@ -1,5 +1,5 @@
 package tech.relaycorp.veraid.dns
 
-import tech.relaycorp.veraid.VeraException
+import tech.relaycorp.veraid.VeraidException
 
-public class InvalidRdataException(message: String) : VeraException(message)
+public class InvalidRdataException(message: String) : VeraidException(message)

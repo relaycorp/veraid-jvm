@@ -1,9 +1,9 @@
 package tech.relaycorp.veraid.utils.x509
 
-import tech.relaycorp.veraid.VeraException
+import tech.relaycorp.veraid.VeraidException
 
 /**
- * Vera PKI certificate exception.
+ * VeraId PKI certificate exception.
  */
 public class CertificateException(message: String, cause: Throwable? = null) :
-    VeraException(message, cause)
+    VeraidException(message, cause)

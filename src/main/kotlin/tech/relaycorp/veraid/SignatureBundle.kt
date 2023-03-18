@@ -76,7 +76,7 @@ public class SignatureBundle internal constructor(
 
     private fun getSignatureMetadata(): SignatureMetadata {
         val signedAttrs = signedData.signedAttrs
-        val metadataAttribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+        val metadataAttribute = signedAttrs?.get(VeraidOids.SIGNATURE_METADATA_ATTR)
             ?: throw SignatureException("SignedData should have VeraId metadata attribute")
         if (metadataAttribute.attrValues.size() == 0) {
             throw SignatureException("Metadata attribute should have at least one value")
@@ -103,7 +103,7 @@ public class SignatureBundle internal constructor(
                 startDate..expiryDate,
             )
             val metadataAttribute = Attribute(
-                VeraOids.SIGNATURE_METADATA_ATTR,
+                VeraidOids.SIGNATURE_METADATA_ATTR,
                 DERSet(metadata.encode()),
             )
             val signedData = SignedData.sign(

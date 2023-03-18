@@ -142,7 +142,7 @@ class SignatureBundleTest {
                 )
 
                 val signedAttrs = signatureBundle.signedData.signedAttrs
-                val attribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+                val attribute = signedAttrs?.get(VeraidOids.SIGNATURE_METADATA_ATTR)
                 attribute?.attrValues?.size() shouldBe 1
             }
 
@@ -215,7 +215,7 @@ class SignatureBundleTest {
             private val SignedData.metadata: SignatureMetadata
                 get() {
                     val signedAttrs = this.signedAttrs
-                    val metadataAttribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+                    val metadataAttribute = signedAttrs?.get(VeraidOids.SIGNATURE_METADATA_ATTR)
                     return SignatureMetadata.decode(
                         metadataAttribute!!.attrValues!!.getObjectAt(0),
                     )
@@ -522,7 +522,7 @@ class SignatureBundleTest {
                     validityPeriod.start..validityPeriod.start.plusSeconds(1),
                 )
                 val attribute = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(metadata.encode()),
                 )
                 val signedData = SignedData.sign(
@@ -601,7 +601,7 @@ class SignatureBundleTest {
             @Test
             fun `Attribute should have at least one value`() = runTest {
                 val invalidValue = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(),
                 )
                 val invalidSignedData = SignedData.sign(
@@ -624,7 +624,7 @@ class SignatureBundleTest {
             @Test
             fun `Attribute should be well-formed`() = runTest {
                 val malformedAttribute = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(DERNull.INSTANCE),
                 )
                 val invalidSignedData = SignedData.sign(
@@ -649,7 +649,7 @@ class SignatureBundleTest {
             fun `Service OID should match that of the signature metadata`() = runTest {
                 val otherMetadata = SignatureMetadata(otherService, validityPeriod)
                 val attribute = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(otherMetadata.encode()),
                 )
                 val signedData = SignedData.sign(

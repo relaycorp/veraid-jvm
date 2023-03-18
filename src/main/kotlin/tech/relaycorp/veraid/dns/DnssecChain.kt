@@ -25,7 +25,7 @@ import kotlin.time.toJavaDuration
 /**
  * VeraId DNSSEC chain.
  *
- * It contains the DNSSEC chain for the Vera TXT RRSet (e.g., `_veraid.example.com./TXT`).
+ * It contains the DNSSEC chain for the VeraId TXT RRSet (e.g., `_veraid.example.com./TXT`).
  */
 public class DnssecChain internal constructor(
     internal val orgName: String,
@@ -94,27 +94,29 @@ public class DnssecChain internal constructor(
         val answers = getVeraTxtAnswers()
         val fieldSet = answers.map {
             val rdata = it.strings.singleOrNull() ?: throw InvalidChainException(
-                "Vera TXT answer rdata must contain one string (got ${it.strings.size})",
+                "VeraId TXT answer rdata must contain one string (got ${it.strings.size})",
             )
             try {
                 RdataFieldSet.parse(rdata)
             } catch (exc: InvalidRdataException) {
-                throw InvalidChainException("Vera TXT response contains invalid RDATA", exc)
+                throw InvalidChainException("VeraId TXT response contains invalid RDATA", exc)
             }
         }
         val matchingSet = fieldSet.filter {
             it.orgKeySpec == orgKeySpec && (it.service == null || it.service == serviceOid)
         }.ifEmpty {
-            throw InvalidChainException("Could not find Vera record for specified key or service")
+            throw InvalidChainException("Could not find VeraId record for specified key or service")
         }
         val concreteFields = matchingSet.filter { it.service == serviceOid }
         if (1 < concreteFields.size) {
-            throw InvalidChainException("Found multiple Vera records for the same key and service")
+            throw InvalidChainException(
+                "Found multiple VeraId records for the same key and service",
+            )
         }
         val wildcardFields = matchingSet.filter { it.service == null }
         if (1 < wildcardFields.size) {
             throw InvalidChainException(
-                "Found multiple Vera records for the same key and no service",
+                "Found multiple VeraId records for the same key and no service",
             )
         }
         return concreteFields.singleOrNull() ?: wildcardFields.single()
@@ -125,17 +127,17 @@ public class DnssecChain internal constructor(
             Record.newRecord(Name.fromString(domainName), Type.value(recordType), DClass.IN)
         val veraTxtResponses = responses.filter { it.question == veraRecordQuery }
         if (veraTxtResponses.isEmpty()) {
-            throw InvalidChainException("Chain is missing Vera TXT response")
+            throw InvalidChainException("Chain is missing VeraId TXT response")
         }
         if (1 < veraTxtResponses.size) {
             // If DNSSEC verification were to succeed, we wouldn't know which message was used, so
-            // we have to require exactly one response for the Vera TXT RRset. Without this check,
+            // we have to require exactly one response for the VeraId TXT RRset. Without this check,
             // we could be reading the TTL override from a bogus response.
-            throw InvalidChainException("Chain contains multiple Vera TXT responses")
+            throw InvalidChainException("Chain contains multiple VeraId TXT responses")
         }
         val veraTxtResponse = veraTxtResponses.single()
         val rrset = veraTxtResponse.getRrset(veraRecordQuery, Section.ANSWER)
-            ?: throw InvalidChainException("Vera TXT response does not contain an answer")
+            ?: throw InvalidChainException("VeraId TXT response does not contain an answer")
 
         @Suppress("UNCHECKED_CAST")
         return rrset.rrs() as List<TXTRecord>

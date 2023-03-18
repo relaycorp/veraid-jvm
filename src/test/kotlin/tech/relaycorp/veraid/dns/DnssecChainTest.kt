@@ -54,7 +54,7 @@ class DnssecChainTest {
         }
 
         @Test
-        fun `Vera TXT subdomain should be stored`() {
+        fun `VeraId TXT subdomain should be stored`() {
             val chain = DnssecChain(ORG_NAME, emptyList())
 
             chain.domainName shouldBe "_veraid.$DOMAIN_NAME"
@@ -319,7 +319,7 @@ class DnssecChainTest {
         @Nested
         inner class VeraTxtResponse {
             @Test
-            fun `Vera response should use the _vera subdomain`() = runTest {
+            fun `VeraId response should use the _vera subdomain`() = runTest {
                 val record = RECORD.copy(name = RECORD.name.makeSubdomain("sub"))
                 val response = record.makeResponse()
                 val chain = DnssecChain(ORG_NAME, listOf(response))
@@ -328,11 +328,11 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Chain is missing Vera TXT response"
+                exception.message shouldBe "Chain is missing VeraId TXT response"
             }
 
             @Test
-            fun `Vera response should use the TXT record type`() = runTest {
+            fun `VeraId response should use the TXT record type`() = runTest {
                 val record = Record.newRecord(
                     RECORD.name,
                     Type.A,
@@ -347,11 +347,11 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Chain is missing Vera TXT response"
+                exception.message shouldBe "Chain is missing VeraId TXT response"
             }
 
             @Test
-            fun `Vera response should use the IN class`() = runTest {
+            fun `VeraId response should use the IN class`() = runTest {
                 val record = RECORD.copy(dClass = RECORD.dClass + 1)
                 val response = record.makeResponse()
                 val chain = DnssecChain(ORG_NAME, listOf(response))
@@ -360,11 +360,11 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Chain is missing Vera TXT response"
+                exception.message shouldBe "Chain is missing VeraId TXT response"
             }
 
             @Test
-            fun `Multiple Vera TXT responses should be refused`() = runTest {
+            fun `Multiple VeraId TXT responses should be refused`() = runTest {
                 val responses = listOf(RECORD.makeResponse(), RECORD.makeResponse())
                 val chain = DnssecChain(ORG_NAME, responses)
 
@@ -372,11 +372,11 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Chain contains multiple Vera TXT responses"
+                exception.message shouldBe "Chain contains multiple VeraId TXT responses"
             }
 
             @Test
-            fun `Vera TXT response should contain an answer`() = runTest {
+            fun `VeraId TXT response should contain an answer`() = runTest {
                 val response = RECORD.makeResponse()
                 response.removeAllRecords(Section.ANSWER)
                 val chain = DnssecChain(ORG_NAME, listOf(response))
@@ -385,7 +385,7 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Vera TXT response does not contain an answer"
+                exception.message shouldBe "VeraId TXT response does not contain an answer"
             }
 
             @Test
@@ -398,7 +398,7 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Vera TXT answer rdata must contain one string (got 0)"
+                exception.message shouldBe "VeraId TXT answer rdata must contain one string (got 0)"
             }
 
             @Test
@@ -414,7 +414,7 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Vera TXT answer rdata must contain one string (got 2)"
+                exception.message shouldBe "VeraId TXT answer rdata must contain one string (got 2)"
             }
 
             @Test
@@ -427,7 +427,7 @@ class DnssecChainTest {
                     chain.verify(orgKeySpec, serviceOid, datePeriod)
                 }
 
-                exception.message shouldBe "Vera TXT response contains invalid RDATA"
+                exception.message shouldBe "VeraId TXT response contains invalid RDATA"
                 exception.cause should beInstanceOf<InvalidRdataException>()
             }
         }
@@ -449,7 +449,7 @@ class DnssecChainTest {
                 }
 
                 exception.message shouldBe
-                    "Could not find Vera record for specified key or service"
+                    "Could not find VeraId record for specified key or service"
             }
 
             @Test
@@ -466,7 +466,7 @@ class DnssecChainTest {
                 }
 
                 exception.message shouldBe
-                    "Could not find Vera record for specified key or service"
+                    "Could not find VeraId record for specified key or service"
             }
         }
 
@@ -505,7 +505,7 @@ class DnssecChainTest {
                 }
 
                 exception.message shouldBe
-                    "Could not find Vera record for specified key or service"
+                    "Could not find VeraId record for specified key or service"
             }
         }
 
@@ -657,7 +657,7 @@ class DnssecChainTest {
                 chain.verify(orgKeySpec, serviceOid, datePeriod)
             }
 
-            exception.message shouldBe "Found multiple Vera records for the same key and service"
+            exception.message shouldBe "Found multiple VeraId records for the same key and service"
         }
 
         @Test
@@ -675,7 +675,8 @@ class DnssecChainTest {
                 chain.verify(orgKeySpec, serviceOid, datePeriod)
             }
 
-            exception.message shouldBe "Found multiple Vera records for the same key and no service"
+            exception.message shouldBe
+                "Found multiple VeraId records for the same key and no service"
         }
 
         @Test
