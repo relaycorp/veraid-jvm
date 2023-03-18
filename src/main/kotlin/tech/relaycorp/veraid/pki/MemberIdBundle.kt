@@ -3,6 +3,7 @@ package tech.relaycorp.veraid.pki
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import tech.relaycorp.veraid.DatePeriod
+import tech.relaycorp.veraid.Member
 import tech.relaycorp.veraid.dns.DnsException
 import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException

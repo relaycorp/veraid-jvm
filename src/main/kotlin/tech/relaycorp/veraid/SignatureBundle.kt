@@ -6,7 +6,6 @@ import org.bouncycastle.asn1.DERSet
 import org.bouncycastle.asn1.cms.Attribute
 import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException
-import tech.relaycorp.veraid.pki.Member
 import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.MemberIdBundle
 import tech.relaycorp.veraid.pki.OrgCertificate

@@ -20,6 +20,9 @@ import java.security.spec.RSAPublicKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
+/**
+ * RSA modulus.
+ */
 public enum class RsaModulus(internal val modulus: Int) {
     RSA_2048(2048),
     RSA_3072(3072),

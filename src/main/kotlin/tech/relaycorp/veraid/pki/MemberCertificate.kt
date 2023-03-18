@@ -7,6 +7,11 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.time.ZonedDateTime
 
+/**
+ * VeraId Member Certificate.
+ *
+ * @property userName The user's name if the member is a user, or `null` if it's a bot.
+ */
 public class MemberCertificate internal constructor(certificateHolder: X509CertificateHolder) :
     Certificate(certificateHolder) {
     internal val userName: String? by lazy {
