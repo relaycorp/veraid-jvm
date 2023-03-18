@@ -90,14 +90,14 @@ public class DnssecChain internal constructor(
     private fun getRdataFields(
         orgKeySpec: OrganisationKeySpec,
         serviceOid: ASN1ObjectIdentifier,
-    ): VeraRdataFields {
+    ): RdataFieldSet {
         val answers = getVeraTxtAnswers()
         val fieldSet = answers.map {
             val rdata = it.strings.singleOrNull() ?: throw InvalidChainException(
                 "Vera TXT answer rdata must contain one string (got ${it.strings.size})",
             )
             try {
-                VeraRdataFields.parse(rdata)
+                RdataFieldSet.parse(rdata)
             } catch (exc: InvalidRdataException) {
                 throw InvalidChainException("Vera TXT response contains invalid RDATA", exc)
             }
