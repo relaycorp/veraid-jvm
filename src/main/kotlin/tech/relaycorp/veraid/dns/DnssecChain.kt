@@ -143,6 +143,8 @@ public class DnssecChain internal constructor(
         return rrset.rrs() as List<TXTRecord>
     }
 
+    /**
+     */
     public companion object {
         private const val VERA_RECORD_TYPE = "TXT"
         private const val CLOUDFLARE_RESOLVER = "1.1.1.1"
