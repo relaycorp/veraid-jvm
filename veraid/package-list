@@ -13,13 +13,9 @@ $dokka.location:tech.relaycorp.veraid.dns/InvalidChainException/InvalidChainExce
 $dokka.location:tech.relaycorp.veraid.dns/InvalidRdataException///PointingToDeclaration/veraid/tech.relaycorp.veraid.dns/-invalid-rdata-exception/index.html
 $dokka.location:tech.relaycorp.veraid.dns/InvalidRdataException/InvalidRdataException/#kotlin.String/PointingToDeclaration/veraid/tech.relaycorp.veraid.dns/-invalid-rdata-exception/-invalid-rdata-exception.html
 $dokka.location:tech.relaycorp.veraid.pki////PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/index.html
-$dokka.location:tech.relaycorp.veraid.pki//deserializeRSAKeyPair/kotlin.ByteArray#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/deserialize-r-s-a-key-pair.html
-$dokka.location:tech.relaycorp.veraid.pki//deserializeRSAPublicKey/kotlin.ByteArray#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/deserialize-r-s-a-public-key.html
+$dokka.location:tech.relaycorp.veraid.pki//deserialiseRSAKeyPair/kotlin.ByteArray#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/deserialise-r-s-a-key-pair.html
+$dokka.location:tech.relaycorp.veraid.pki//deserialiseRSAPublicKey/kotlin.ByteArray#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/deserialise-r-s-a-public-key.html
 $dokka.location:tech.relaycorp.veraid.pki//generateRSAKeyPair/#tech.relaycorp.veraid.pki.RsaModulus/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/generate-r-s-a-key-pair.html
-$dokka.location:tech.relaycorp.veraid.pki/Member///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member/index.html
-$dokka.location:tech.relaycorp.veraid.pki/Member/Member/#kotlin.String#kotlin.String?/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member/-member.html
-$dokka.location:tech.relaycorp.veraid.pki/Member/orgName/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member/org-name.html
-$dokka.location:tech.relaycorp.veraid.pki/Member/userName/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member/user-name.html
 $dokka.location:tech.relaycorp.veraid.pki/MemberCertificate.Companion///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-certificate/-companion/index.html
 $dokka.location:tech.relaycorp.veraid.pki/MemberCertificate.Companion/issue/#kotlin.String?#java.security.PublicKey#tech.relaycorp.veraid.pki.OrgCertificate#java.security.PrivateKey#java.time.ZonedDateTime#java.time.ZonedDateTime/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-certificate/-companion/issue.html
 $dokka.location:tech.relaycorp.veraid.pki/MemberCertificate///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-certificate/index.html
@@ -39,18 +35,11 @@ $dokka.location:tech.relaycorp.veraid.pki/RsaModulus.RSA_4096///PointingToDeclar
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-rsa-modulus/index.html
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus/valueOf/#kotlin.String/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-rsa-modulus/value-of.html
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus/values/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-rsa-modulus/values.html
-$dokka.location:tech.relaycorp.veraid.utils.x509////PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/index.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate///PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/index.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/commonName/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/common-name.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/equals/#kotlin.Any?/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/equals.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/hashCode/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/hash-code.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/issuerCommonName/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/issuer-common-name.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/serialise/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/serialise.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/subjectPublicKey/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/subject-public-key.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/validityPeriod/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/validity-period.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/CertificateException///PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate-exception/index.html
-$dokka.location:tech.relaycorp.veraid.utils.x509/CertificateException/CertificateException/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate-exception/-certificate-exception.html
 $dokka.location:tech.relaycorp.veraid////PointingToDeclaration/veraid/tech.relaycorp.veraid/index.html
+$dokka.location:tech.relaycorp.veraid/Member///PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/index.html
+$dokka.location:tech.relaycorp.veraid/Member/Member/#kotlin.String#kotlin.String?/PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/-member.html
+$dokka.location:tech.relaycorp.veraid/Member/orgName/#/PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/org-name.html
+$dokka.location:tech.relaycorp.veraid/Member/userName/#/PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/user-name.html
 $dokka.location:tech.relaycorp.veraid/SignatureBundle.Companion///PointingToDeclaration/veraid/tech.relaycorp.veraid/-signature-bundle/-companion/index.html
 $dokka.location:tech.relaycorp.veraid/SignatureBundle.Companion/deserialise/#kotlin.ByteArray/PointingToDeclaration/veraid/tech.relaycorp.veraid/-signature-bundle/-companion/deserialise.html
 $dokka.location:tech.relaycorp.veraid/SignatureBundle.Companion/generate/#kotlin.ByteArray#kotlin.String#tech.relaycorp.veraid.pki.MemberIdBundle#java.security.PrivateKey#java.time.ZonedDateTime#java.time.ZonedDateTime/PointingToDeclaration/veraid/tech.relaycorp.veraid/-signature-bundle/-companion/generate.html
@@ -65,5 +54,4 @@ $dokka.location:tech.relaycorp.veraid/VeraidException/VeraidException/#kotlin.St
 tech.relaycorp.veraid
 tech.relaycorp.veraid.dns
 tech.relaycorp.veraid.pki
-tech.relaycorp.veraid.utils.x509
 
