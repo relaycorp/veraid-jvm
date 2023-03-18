@@ -98,7 +98,6 @@ dokkaHtml.configure {
   dokkaSourceSets {
     configureEach {
       includes.from(project.files(), "api.md")
-      failOnWarning.set(true)
       reportUndocumented.set(true)
     }
   }

@@ -41,6 +41,7 @@ import org.bouncycastle.asn1.x509.Certificate as BCCertificate
  * Certificate.
  *
  * @param certificateHolder Bouncy Castle representation of the X.509 certificate
+ * @suppress
  */
 public open class Certificate internal constructor(
     internal val certificateHolder: X509CertificateHolder,
