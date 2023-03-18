@@ -26,6 +26,9 @@ public class SignatureBundle internal constructor(
     internal val memberIdBundle: MemberIdBundle,
     internal val signedData: SignedData,
 ) {
+    /**
+     * Serialise the bundle.
+     */
     public fun serialise(): ByteArray = ASN1Utils.serializeSequence(
         listOf(
             ASN1Integer(0),
@@ -36,12 +39,30 @@ public class SignatureBundle internal constructor(
         false,
     )
 
+    /**
+     * Verify the bundle.
+     *
+     * @param plaintext The plaintext whose signature is to be verified.
+     * @param serviceOid The OID of the service to which the signature is bound.
+     * @param date The date against which to verify the signature.
+     * @return The member that signed the signature, if verification succeeds.
+     * @throws SignatureException If the bundle is invalid.
+     */
     public suspend fun verify(
         plaintext: ByteArray,
         serviceOid: String,
         date: ZonedDateTime,
     ): Member = verify(plaintext, serviceOid, date..date)
 
+    /**
+     * Verify the bundle.
+     *
+     * @param plaintext The plaintext whose signature is to be verified.
+     * @param serviceOid The OID of the service to which the signature is bound.
+     * @param datePeriod The period against which to verify the signature.
+     * @return The member that signed the signature, if verification succeeds.
+     * @throws SignatureException If the bundle is invalid.
+     */
     public suspend fun verify(
         plaintext: ByteArray,
         serviceOid: String,
@@ -93,6 +114,19 @@ public class SignatureBundle internal constructor(
     }
 
     public companion object {
+        /**
+         * Generate a new signature bundle.
+         *
+         * @param plaintext The plaintext to sign.
+         * @param serviceOid The OID of the service to which the signature is bound.
+         * @param memberIdBundle The member id bundle to use for signing.
+         * @param signingKey The private key for the member certificate in [memberIdBundle].
+         * @param expiryDate The date after which the signature will be considered invalid.
+         * @param startDate The date from which the signature will be considered valid.
+         * @return The bundle.
+         * @throws SignatureException If the bundle cannot be generated.
+         */
+        @Throws(SignatureException::class)
         public fun generate(
             plaintext: ByteArray,
             serviceOid: String,
@@ -120,6 +154,13 @@ public class SignatureBundle internal constructor(
             return SignatureBundle(memberIdBundle, signedData)
         }
 
+        /**
+         * Deserialise a bundle.
+         *
+         * @param serialisation The serialised bundle.
+         * @return The bundle, if it's valid.
+         * @throws SignatureException If the bundle is invalid.
+         */
         @Throws(SignatureException::class)
         public fun deserialise(serialisation: ByteArray): SignatureBundle {
             val sequence = try {
