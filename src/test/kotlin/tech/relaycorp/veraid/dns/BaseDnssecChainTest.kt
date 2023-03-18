@@ -32,19 +32,19 @@ import java.time.Clock
 import java.time.Instant
 import java.util.concurrent.CompletableFuture
 
-class DnssecChainTest {
+class BaseDnssecChainTest {
     private val recordType = "TXT"
 
     @Nested
     @Isolated("We alter the resolver initialisers")
     inner class Retrieve {
-        private val originalPersistingInitialiser = DnssecChain.persistingResolverInitialiser
-        private val originalValidatingInitialiser = DnssecChain.onlineResolverInitialiser
+        private val originalPersistingInitialiser = BaseDnssecChain.persistingResolverInitialiser
+        private val originalValidatingInitialiser = BaseDnssecChain.onlineResolverInitialiser
 
         @BeforeEach
         fun storeOriginalInitialiser() {
-            DnssecChain.persistingResolverInitialiser = originalPersistingInitialiser
-            DnssecChain.onlineResolverInitialiser = originalValidatingInitialiser
+            BaseDnssecChain.persistingResolverInitialiser = originalPersistingInitialiser
+            BaseDnssecChain.onlineResolverInitialiser = originalValidatingInitialiser
         }
 
         @Test
@@ -54,7 +54,7 @@ class DnssecChainTest {
             whenever(headResolver.sendAsync(any())).thenReturn(
                 CompletableFuture.completedFuture(response),
             )
-            val validatingResolver = DnssecChain.onlineResolverInitialiser(headResolver)
+            val validatingResolver = BaseDnssecChain.onlineResolverInitialiser(headResolver)
             val queryMessage = RECORD.makeQuery()
 
             validatingResolver.sendAsync(queryMessage).await()
@@ -66,7 +66,7 @@ class DnssecChainTest {
         fun `Validating resolver should be configured with IANA root keys`() = runTest {
             val mockResolver = mockValidatingResolver()
 
-            DnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
+            BaseDnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
 
             argumentCaptor<ByteArrayInputStream>().apply {
                 verify(mockResolver).loadTrustAnchors(capture())
@@ -80,13 +80,13 @@ class DnssecChainTest {
         @Test
         fun `Specified DNS resolver host should be honoured`() = runTest {
             var hostName: String? = null
-            DnssecChain.persistingResolverInitialiser = { resolverHostName ->
+            BaseDnssecChain.persistingResolverInitialiser = { resolverHostName ->
                 hostName = resolverHostName
                 PersistingResolver(resolverHostName)
             }
             mockValidatingResolver()
 
-            DnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
+            BaseDnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
 
             hostName shouldBe REMOTE_RESOLVER
         }
@@ -95,7 +95,7 @@ class DnssecChainTest {
         fun `Specified domain name should be queried`() = runTest {
             val mockResolver = mockValidatingResolver()
 
-            DnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
+            BaseDnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
 
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
@@ -108,7 +108,7 @@ class DnssecChainTest {
         fun `Specified record type should be queried`() = runTest {
             val mockResolver = mockValidatingResolver()
 
-            DnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
+            BaseDnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
 
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
@@ -121,7 +121,7 @@ class DnssecChainTest {
         fun `Queried record class should be IN`() = runTest {
             val mockResolver = mockValidatingResolver()
 
-            DnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
+            BaseDnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
 
             argumentCaptor<Message>().apply {
                 verify(mockResolver).sendAsync(capture())
@@ -144,7 +144,7 @@ class DnssecChainTest {
             mockValidatingResolver(response)
 
             val exception = shouldThrow<DnsException> {
-                DnssecChain.retrieve(
+                BaseDnssecChain.retrieve(
                     DOMAIN_NAME,
                     recordType,
                     REMOTE_RESOLVER,
@@ -162,7 +162,7 @@ class DnssecChainTest {
             mockValidatingResolver(response)
 
             val exception = shouldThrow<DnsException> {
-                DnssecChain.retrieve(
+                BaseDnssecChain.retrieve(
                     DOMAIN_NAME,
                     recordType,
                     REMOTE_RESOLVER,
@@ -185,7 +185,7 @@ class DnssecChainTest {
             mockPersistingResolver(response)
             mockValidatingResolver()
 
-            val chain = DnssecChain.retrieve(
+            val chain = BaseDnssecChain.retrieve(
                 DOMAIN_NAME,
                 recordType,
                 REMOTE_RESOLVER,
@@ -199,7 +199,7 @@ class DnssecChainTest {
         fun `Domain name should be stored in chain`() = runTest {
             mockValidatingResolver()
 
-            val chain = DnssecChain.retrieve(
+            val chain = BaseDnssecChain.retrieve(
                 DOMAIN_NAME,
                 recordType,
                 REMOTE_RESOLVER,
@@ -212,7 +212,7 @@ class DnssecChainTest {
         fun `Record type should be stored in chain`() = runTest {
             mockValidatingResolver()
 
-            val chain = DnssecChain.retrieve(
+            val chain = BaseDnssecChain.retrieve(
                 DOMAIN_NAME,
                 recordType,
                 REMOTE_RESOLVER,
@@ -223,7 +223,7 @@ class DnssecChainTest {
 
         private fun mockValidatingResolver(response: Message? = null): ValidatingResolver {
             val mockResolver = makeMockValidatingResolver(response)
-            DnssecChain.onlineResolverInitialiser = { mockResolver }
+            BaseDnssecChain.onlineResolverInitialiser = { mockResolver }
             return mockResolver
         }
 
@@ -233,7 +233,7 @@ class DnssecChainTest {
                 CompletableFuture.completedFuture(response),
             )
             whenever(mockResolver.responses).thenReturn(listOf(response))
-            DnssecChain.persistingResolverInitialiser = { mockResolver }
+            BaseDnssecChain.persistingResolverInitialiser = { mockResolver }
             return mockResolver
         }
     }
@@ -243,19 +243,19 @@ class DnssecChainTest {
     inner class Verify {
         private val instant = Instant.now()
 
-        private val originalValidatingInitialiser = DnssecChain.offlineResolverInitialiser
+        private val originalValidatingInitialiser = BaseDnssecChain.offlineResolverInitialiser
 
         @BeforeEach
         fun storeOriginalInitialiser() {
-            DnssecChain.offlineResolverInitialiser = originalValidatingInitialiser
+            BaseDnssecChain.offlineResolverInitialiser = originalValidatingInitialiser
         }
 
         @Test
         fun `Offline resolver should be configured with stored responses`() = runTest {
-            val chain = DnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
             var receivedHeadResolver: OfflineResolver? = null
             val mockResolver = makeMockValidatingResolver()
-            DnssecChain.offlineResolverInitialiser = { headResolver, _ ->
+            BaseDnssecChain.offlineResolverInitialiser = { headResolver, _ ->
                 receivedHeadResolver = headResolver
                 mockResolver
             }
@@ -272,7 +272,7 @@ class DnssecChainTest {
                 CompletableFuture.completedFuture(makeSuccessfulEmptyResponse()),
             )
             val validatingResolver =
-                DnssecChain.offlineResolverInitialiser(headResolver, Clock.systemUTC())
+                BaseDnssecChain.offlineResolverInitialiser(headResolver, Clock.systemUTC())
             val queryMessage = RECORD.makeQuery()
 
             validatingResolver.sendAsync(queryMessage).await()
@@ -283,7 +283,7 @@ class DnssecChainTest {
         @Test
         fun `Validating resolver should be configured with IANA root keys`() = runTest {
             val mockResolver = mockValidatingResolver()
-            val chain = DnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
 
             chain.verify(instant)
 
@@ -299,7 +299,7 @@ class DnssecChainTest {
         @Test
         fun `Specified domain name should be queried`() = runTest {
             val mockResolver = mockValidatingResolver()
-            val chain = DnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
 
             chain.verify(instant)
 
@@ -313,7 +313,7 @@ class DnssecChainTest {
         @Test
         fun `Specified record type should be queried`() = runTest {
             val mockResolver = mockValidatingResolver()
-            val chain = DnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
 
             chain.verify(instant)
 
@@ -327,7 +327,7 @@ class DnssecChainTest {
         @Test
         fun `Queried record class should be IN`() = runTest {
             val mockResolver = mockValidatingResolver()
-            val chain = DnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
 
             chain.verify(instant)
 
@@ -340,10 +340,10 @@ class DnssecChainTest {
 
         @Test
         fun `Specified clock should be passed to validating resolver`() = runTest {
-            val chain = DnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, listOf(Message()))
             var receivedClock: Clock? = null
             val mockResolver = makeMockValidatingResolver()
-            DnssecChain.offlineResolverInitialiser = { _, clock ->
+            BaseDnssecChain.offlineResolverInitialiser = { _, clock ->
                 receivedClock = clock
                 mockResolver
             }
@@ -365,7 +365,7 @@ class DnssecChainTest {
             )
             response.addRecord(failureRecord, Section.ADDITIONAL)
             mockValidatingResolver(response)
-            val chain = DnssecChain(DOMAIN_NAME, recordType, emptyList())
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, emptyList())
 
             val exception = shouldThrow<DnsException> {
                 chain.verify(instant)
@@ -380,7 +380,7 @@ class DnssecChainTest {
             val response = makeSuccessfulEmptyResponse()
             response.header.rcode = Rcode.NXDOMAIN
             mockValidatingResolver(response)
-            val chain = DnssecChain(DOMAIN_NAME, recordType, emptyList())
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, emptyList())
 
             val exception = shouldThrow<DnsException> {
                 chain.verify(instant)
@@ -401,14 +401,14 @@ class DnssecChainTest {
             val response = makeSuccessfulEmptyResponse()
             response.addRecord(record, Section.ANSWER)
             mockValidatingResolver(response)
-            val chain = DnssecChain(DOMAIN_NAME, recordType, emptyList())
+            val chain = BaseDnssecChain(DOMAIN_NAME, recordType, emptyList())
 
             chain.verify(instant)
         }
 
         private fun mockValidatingResolver(response: Message? = null): ValidatingResolver {
             val mockResolver = makeMockValidatingResolver(response)
-            DnssecChain.offlineResolverInitialiser = { _, _ -> mockResolver }
+            BaseDnssecChain.offlineResolverInitialiser = { _, _ -> mockResolver }
             return mockResolver
         }
     }

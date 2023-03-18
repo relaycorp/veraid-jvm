@@ -28,12 +28,12 @@ internal typealias ChainRetriever = suspend (
     domainName: String,
     recordType: String,
     resolverHostName: String,
-) -> DnssecChain
+) -> BaseDnssecChain
 
 /**
  * Vera-agnostic DNSSEC chain processing.
  */
-public open class DnssecChain internal constructor(
+public open class BaseDnssecChain internal constructor(
     internal val domainName: String,
     internal val recordType: String,
     internal val responses: List<Message>,
@@ -63,11 +63,11 @@ public open class DnssecChain internal constructor(
             domainName: String,
             recordType: String,
             resolverHostName: String,
-        ): DnssecChain {
+        ): BaseDnssecChain {
             val persistingResolver = persistingResolverInitialiser(resolverHostName)
             val validatingResolver = onlineResolverInitialiser(persistingResolver)
             validatingResolver.resolve(domainName, recordType)
-            return DnssecChain(domainName, recordType, persistingResolver.responses)
+            return BaseDnssecChain(domainName, recordType, persistingResolver.responses)
         }
 
         @Throws(DnsException::class)

@@ -30,7 +30,7 @@ import kotlin.time.toJavaDuration
 public class VeraDnssecChain internal constructor(
     internal val orgName: String,
     responses: List<Message>,
-) : DnssecChain("_veraid.$orgName.", VERA_RECORD_TYPE, responses) {
+) : BaseDnssecChain("_veraid.$orgName.", VERA_RECORD_TYPE, responses) {
     internal fun encode(): ASN1Set {
         val responsesWrapped = responses.map { DEROctetString(it.toWire()) }
         val vector = ASN1EncodableVector(responsesWrapped.size)
@@ -145,7 +145,7 @@ public class VeraDnssecChain internal constructor(
         private const val VERA_RECORD_TYPE = "TXT"
         private const val CLOUDFLARE_RESOLVER = "1.1.1.1"
 
-        internal var dnssecChainRetriever: ChainRetriever = DnssecChain.Companion::retrieve
+        internal var chainRetriever: ChainRetriever = BaseDnssecChain.Companion::retrieve
 
         /**
          * Retrieve VeraId DNSSEC chain for [organisationName].
@@ -162,7 +162,7 @@ public class VeraDnssecChain internal constructor(
         ): VeraDnssecChain {
             val organisationNameNormalised = organisationName.trimEnd('.')
             val domainName = "_veraid.$organisationNameNormalised."
-            val dnssecChain = dnssecChainRetriever(domainName, VERA_RECORD_TYPE, resolverHost)
+            val dnssecChain = chainRetriever(domainName, VERA_RECORD_TYPE, resolverHost)
             return VeraDnssecChain(organisationName, dnssecChain.responses)
         }
 

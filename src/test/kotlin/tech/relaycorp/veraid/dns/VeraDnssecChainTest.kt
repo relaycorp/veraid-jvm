@@ -63,12 +63,12 @@ class VeraDnssecChainTest {
 
     @Nested
     inner class Retrieve {
-        private val originalChainRetriever = VeraDnssecChain.dnssecChainRetriever
+        private val originalChainRetriever = VeraDnssecChain.chainRetriever
         private var retrieverCallArgs: RetrieverCallArgs? = null
 
         @AfterEach
         fun restoreRetriever() {
-            VeraDnssecChain.dnssecChainRetriever = originalChainRetriever
+            VeraDnssecChain.chainRetriever = originalChainRetriever
         }
 
         @BeforeEach
@@ -78,7 +78,7 @@ class VeraDnssecChainTest {
 
         @Test
         fun `Subdomain _vera of specified domain should be queried`() = runTest {
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever()
+            VeraDnssecChain.chainRetriever = makeRetriever()
 
             VeraDnssecChain.retrieve(ORG_NAME)
 
@@ -87,7 +87,7 @@ class VeraDnssecChainTest {
 
         @Test
         fun `Trailing dot should be dropped from organisation name if present`() = runTest {
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever()
+            VeraDnssecChain.chainRetriever = makeRetriever()
 
             VeraDnssecChain.retrieve(DOMAIN_NAME)
 
@@ -96,7 +96,7 @@ class VeraDnssecChainTest {
 
         @Test
         fun `TXT record type should be queried`() = runTest {
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever()
+            VeraDnssecChain.chainRetriever = makeRetriever()
 
             VeraDnssecChain.retrieve(ORG_NAME)
 
@@ -105,7 +105,7 @@ class VeraDnssecChainTest {
 
         @Test
         fun `Cloudflare DNS resolver should be used by default`() = runTest {
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever()
+            VeraDnssecChain.chainRetriever = makeRetriever()
 
             VeraDnssecChain.retrieve(ORG_NAME)
 
@@ -115,7 +115,7 @@ class VeraDnssecChainTest {
         @Test
         fun `Another DNS resolver should be used if explicitly set`() = runTest {
             val resolverHost = "1.2.3.4"
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever()
+            VeraDnssecChain.chainRetriever = makeRetriever()
 
             VeraDnssecChain.retrieve(ORG_NAME, resolverHost)
 
@@ -126,7 +126,7 @@ class VeraDnssecChainTest {
         fun `Responses should be stored in chain`() = runTest {
             val response = Message()
             response.header.id = 42
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever(listOf(response))
+            VeraDnssecChain.chainRetriever = makeRetriever(listOf(response))
 
             val chain = VeraDnssecChain.retrieve(ORG_NAME)
 
@@ -136,7 +136,7 @@ class VeraDnssecChainTest {
 
         @Test
         fun `Org name should be stored in chain`() = runTest {
-            VeraDnssecChain.dnssecChainRetriever = makeRetriever()
+            VeraDnssecChain.chainRetriever = makeRetriever()
 
             val chain = VeraDnssecChain.retrieve(ORG_NAME)
 
@@ -146,7 +146,7 @@ class VeraDnssecChainTest {
         private fun makeRetriever(responses: List<Message> = emptyList()): ChainRetriever =
             { domainName, recordType, resolverHostName ->
                 retrieverCallArgs = RetrieverCallArgs(domainName, recordType, resolverHostName)
-                DnssecChain(DOMAIN_NAME, "TXT", responses)
+                BaseDnssecChain(DOMAIN_NAME, "TXT", responses)
             }
     }
 
@@ -303,17 +303,17 @@ class VeraDnssecChainTest {
         private val now = ZonedDateTime.now()
         private val datePeriod = now..now.plusSeconds(10)
 
-        private val originalValidatingInitialiser = DnssecChain.offlineResolverInitialiser
+        private val originalValidatingInitialiser = BaseDnssecChain.offlineResolverInitialiser
 
         @BeforeEach
         fun spyOnValidatingInitialiser() {
             val resolverSpy = makeMockValidatingResolver()
-            DnssecChain.offlineResolverInitialiser = { _, _ -> resolverSpy }
+            BaseDnssecChain.offlineResolverInitialiser = { _, _ -> resolverSpy }
         }
 
         @AfterAll
         fun restoreValidatingInitialiser() {
-            DnssecChain.offlineResolverInitialiser = originalValidatingInitialiser
+            BaseDnssecChain.offlineResolverInitialiser = originalValidatingInitialiser
         }
 
         @Nested
