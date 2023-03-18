@@ -7,7 +7,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
-internal data class VeraRdataFields(
+internal data class RdataFieldSet(
     val orgKeySpec: OrganisationKeySpec,
     val ttlOverride: Duration,
     val service: ASN1ObjectIdentifier? = null,
@@ -25,7 +25,7 @@ internal data class VeraRdataFields(
         private val MAX_TTL = 90.days
 
         @Throws(InvalidRdataException::class)
-        fun parse(rdata: String): VeraRdataFields {
+        fun parse(rdata: String): RdataFieldSet {
             val fieldsOrdered = rdata.trim().split("\\s+".toRegex())
             if (fieldsOrdered.size < 3) {
                 throw InvalidRdataException(
@@ -57,7 +57,7 @@ internal data class VeraRdataFields(
                 null
             }
 
-            return VeraRdataFields(keySpec, ttlOverride, serviceOid)
+            return RdataFieldSet(keySpec, ttlOverride, serviceOid)
         }
     }
 }

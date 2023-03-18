@@ -26,9 +26,9 @@ import tech.relaycorp.veraid.ORG_NAME
 import tech.relaycorp.veraid.SERVICE_OID
 import tech.relaycorp.veraid.USER_NAME
 import tech.relaycorp.veraid.dns.DnsException
+import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.RECORD
-import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.dns.makeResponse
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
@@ -38,11 +38,11 @@ import java.math.BigInteger
 
 class MemberIdBundleTest {
     private val response = RECORD.makeResponse()
-    private val veraDnssecChain = VeraDnssecChain(ORG_NAME, listOf(response))
+    private val dnssecChain = DnssecChain(ORG_NAME, listOf(response))
 
     @Nested
     inner class Serialise {
-        private val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
+        private val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
 
         @Test
         fun `Version should be 0`() {
@@ -59,7 +59,7 @@ class MemberIdBundleTest {
 
             val sequence = ASN1Utils.deserializeHeterogeneousSequence(serialisation)
             val item = ASN1Set.getInstance(sequence[1], false)
-            val chainDecoded = VeraDnssecChain.decode(ORG_NAME, item)
+            val chainDecoded = DnssecChain.decode(ORG_NAME, item)
             chainDecoded.responses.map { it.toWire() } shouldContain response.toWire()
         }
 
@@ -103,7 +103,7 @@ class MemberIdBundleTest {
             val malformedBundle = ASN1Utils.serializeSequence(
                 listOf(
                     ASN1Integer(0),
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     ORG_CERT.encode(),
                 ),
                 false,
@@ -141,7 +141,7 @@ class MemberIdBundleTest {
             val malformedBundle = ASN1Utils.serializeSequence(
                 listOf(
                     ASN1Integer(0),
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     DERNull.INSTANCE,
                     MEMBER_CERT.encode(),
                 ),
@@ -161,7 +161,7 @@ class MemberIdBundleTest {
             val malformedBundle = ASN1Utils.serializeSequence(
                 listOf(
                     ASN1Integer(0),
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     ORG_CERT.encode(),
                     DERNull.INSTANCE,
                 ),
@@ -177,12 +177,12 @@ class MemberIdBundleTest {
 
         @Test
         fun `Valid Member Id Bundle should be returned`() {
-            val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
+            val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
             val serialisation = bundle.serialise()
 
             val deserialisedBundle = MemberIdBundle.deserialise(serialisation)
 
-            deserialisedBundle.dnssecChain.serialise() shouldBe veraDnssecChain.serialise()
+            deserialisedBundle.dnssecChain.serialise() shouldBe dnssecChain.serialise()
             deserialisedBundle.orgCertificate shouldBe ORG_CERT
             deserialisedBundle.memberCertificate shouldBe MEMBER_CERT
         }
@@ -199,7 +199,7 @@ class MemberIdBundleTest {
                     generateRSAKeyPair(),
                     ORG_CERT.validityPeriod.endInclusive,
                 )
-                val bundle = MemberIdBundle(veraDnssecChain, otherOrgCert, MEMBER_CERT)
+                val bundle = MemberIdBundle(dnssecChain, otherOrgCert, MEMBER_CERT)
 
                 val exception = shouldThrow<PkiException> {
                     bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
@@ -211,7 +211,7 @@ class MemberIdBundleTest {
 
             @Test
             fun `Certificates should overlap with specified period`() = runTest {
-                val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
+                val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
                 val start = ORG_CERT.validityPeriod.endInclusive.plusSeconds(1)
                 val period = start..start.plusSeconds(1)
 
@@ -232,7 +232,7 @@ class MemberIdBundleTest {
             @Test
             fun `should not contain at signs`() = runTest {
                 val memberCert = issueInvalidMemberCertificate("@$USER_NAME")
-                val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, memberCert)
+                val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
                     bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
@@ -244,7 +244,7 @@ class MemberIdBundleTest {
             @Test
             fun `should not contain tabs`() = runTest {
                 val memberCert = issueInvalidMemberCertificate("\t$USER_NAME")
-                val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, memberCert)
+                val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
                     bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
@@ -256,7 +256,7 @@ class MemberIdBundleTest {
             @Test
             fun `should not contain carriage returns`() = runTest {
                 val memberCert = issueInvalidMemberCertificate("\r$USER_NAME")
-                val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, memberCert)
+                val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
                     bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
@@ -268,7 +268,7 @@ class MemberIdBundleTest {
             @Test
             fun `should not contain line feeds`() = runTest {
                 val memberCert = issueInvalidMemberCertificate("\n$USER_NAME")
-                val bundle = MemberIdBundle(veraDnssecChain, ORG_CERT, memberCert)
+                val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
                     bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
@@ -291,7 +291,7 @@ class MemberIdBundleTest {
         }
 
         @Nested
-        inner class DnssecChain {
+        inner class Chain {
             @Test
             fun `Service OID should be verified`() = runTest {
                 val chainSpy = mockChain()
@@ -335,7 +335,7 @@ class MemberIdBundleTest {
 
             @Test
             fun `Organisation name should match that of DNSSEC chain`() = runTest {
-                val invalidChain = VeraDnssecChain("sub.$ORG_NAME", listOf(response))
+                val invalidChain = DnssecChain("sub.$ORG_NAME", listOf(response))
                 val bundle = MemberIdBundle(mockChain(invalidChain), ORG_CERT, MEMBER_CERT)
 
                 val exception = shouldThrow<PkiException> {
@@ -414,14 +414,14 @@ class MemberIdBundleTest {
             }
         }
 
-        private suspend fun mockChain(chain: VeraDnssecChain = veraDnssecChain): VeraDnssecChain {
+        private suspend fun mockChain(chain: DnssecChain = dnssecChain): DnssecChain {
             val chainSpy = spy(chain)
             doReturn(Unit).whenever(chainSpy).verify(any(), any(), any())
             return chainSpy
         }
 
-        private suspend fun mockChain(exc: Throwable): VeraDnssecChain {
-            val chainSpy = spy(veraDnssecChain)
+        private suspend fun mockChain(exc: Throwable): DnssecChain {
+            val chainSpy = spy(dnssecChain)
             doThrow(exc).whenever(chainSpy).verify(any(), any(), any())
             return chainSpy
         }

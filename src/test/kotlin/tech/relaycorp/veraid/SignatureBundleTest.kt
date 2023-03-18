@@ -25,9 +25,9 @@ import org.bouncycastle.asn1.cms.ContentInfo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.RECORD
-import tech.relaycorp.veraid.dns.VeraDnssecChain
 import tech.relaycorp.veraid.dns.makeResponse
 import tech.relaycorp.veraid.pki.Member
 import tech.relaycorp.veraid.pki.MemberIdBundle
@@ -47,8 +47,8 @@ import kotlin.time.toJavaDuration
 
 class SignatureBundleTest {
     private val response = RECORD.makeResponse()
-    private val veraDnssecChain = VeraDnssecChain(ORG_NAME, listOf(response))
-    private val memberIdBundle = MemberIdBundle(veraDnssecChain, ORG_CERT, MEMBER_CERT)
+    private val dnssecChain = DnssecChain(ORG_NAME, listOf(response))
+    private val memberIdBundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
     private val validityPeriod = MEMBER_CERT.validityPeriod
 
     private val plaintext = "the plaintext".toByteArray()
@@ -68,7 +68,7 @@ class SignatureBundleTest {
                 validityPeriod.endInclusive,
             )
 
-            signatureBundle.memberIdBundle.dnssecChain shouldBe veraDnssecChain
+            signatureBundle.memberIdBundle.dnssecChain shouldBe dnssecChain
         }
 
         @Test
@@ -142,7 +142,7 @@ class SignatureBundleTest {
                 )
 
                 val signedAttrs = signatureBundle.signedData.signedAttrs
-                val attribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+                val attribute = signedAttrs?.get(VeraidOids.SIGNATURE_METADATA_ATTR)
                 attribute?.attrValues?.size() shouldBe 1
             }
 
@@ -215,7 +215,7 @@ class SignatureBundleTest {
             private val SignedData.metadata: SignatureMetadata
                 get() {
                     val signedAttrs = this.signedAttrs
-                    val metadataAttribute = signedAttrs?.get(VeraOids.SIGNATURE_METADATA_ATTR)
+                    val metadataAttribute = signedAttrs?.get(VeraidOids.SIGNATURE_METADATA_ATTR)
                     return SignatureMetadata.decode(
                         metadataAttribute!!.attrValues!!.getObjectAt(0),
                     )
@@ -247,7 +247,7 @@ class SignatureBundleTest {
             val sequence = ASN1Sequence.getInstance(serialisation)
             val chainRaw = sequence.getObjectAt(1)
             val chainSet = DERSet.getInstance(chainRaw as ASN1TaggedObject, false)
-            chainSet.encoded shouldBe veraDnssecChain.encode().encoded
+            chainSet.encoded shouldBe dnssecChain.encode().encoded
         }
 
         @Test
@@ -303,7 +303,7 @@ class SignatureBundleTest {
             val malformedBundle = ASN1Utils.serializeSequence(
                 listOf(
                     bundleVersion,
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     ORG_CERT.encode(),
                 ),
                 false,
@@ -341,7 +341,7 @@ class SignatureBundleTest {
             val malformedBundle = ASN1Utils.serializeSequence(
                 listOf(
                     bundleVersion,
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     DERNull.INSTANCE, // Malformed
                     signedData.encode(),
                 ),
@@ -361,7 +361,7 @@ class SignatureBundleTest {
             val malformedBundle = ASN1Utils.serializeSequence(
                 listOf(
                     bundleVersion,
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     ORG_CERT.encode(),
                     DERNull.INSTANCE, // Malformed
                 ),
@@ -386,7 +386,7 @@ class SignatureBundleTest {
             val invalidBundle = ASN1Utils.serializeSequence(
                 listOf(
                     bundleVersion,
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     ORG_CERT.encode(),
                     incompleteSignedData.encode(),
                 ),
@@ -415,7 +415,7 @@ class SignatureBundleTest {
             val bundle = ASN1Utils.serializeSequence(
                 listOf(
                     bundleVersion,
-                    veraDnssecChain.encode(),
+                    dnssecChain.encode(),
                     ORG_CERT.encode(),
                     signedData.encode(),
                 ),
@@ -522,7 +522,7 @@ class SignatureBundleTest {
                     validityPeriod.start..validityPeriod.start.plusSeconds(1),
                 )
                 val attribute = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(metadata.encode()),
                 )
                 val signedData = SignedData.sign(
@@ -601,7 +601,7 @@ class SignatureBundleTest {
             @Test
             fun `Attribute should have at least one value`() = runTest {
                 val invalidValue = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(),
                 )
                 val invalidSignedData = SignedData.sign(
@@ -624,7 +624,7 @@ class SignatureBundleTest {
             @Test
             fun `Attribute should be well-formed`() = runTest {
                 val malformedAttribute = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(DERNull.INSTANCE),
                 )
                 val invalidSignedData = SignedData.sign(
@@ -649,7 +649,7 @@ class SignatureBundleTest {
             fun `Service OID should match that of the signature metadata`() = runTest {
                 val otherMetadata = SignatureMetadata(otherService, validityPeriod)
                 val attribute = Attribute(
-                    VeraOids.SIGNATURE_METADATA_ATTR,
+                    VeraidOids.SIGNATURE_METADATA_ATTR,
                     DERSet(otherMetadata.encode()),
                 )
                 val signedData = SignedData.sign(

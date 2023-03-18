@@ -1,8 +1,11 @@
 package tech.relaycorp.veraid.pki
 
-import tech.relaycorp.veraid.VeraException
+import tech.relaycorp.veraid.VeraidException
 
 /**
- * Vera PKI exception.
+ * VeraId PKI exception.
  */
-public class PkiException(message: String, cause: Throwable? = null) : VeraException(message, cause)
+public class PkiException(message: String, cause: Throwable? = null) : VeraidException(
+    message,
+    cause,
+)

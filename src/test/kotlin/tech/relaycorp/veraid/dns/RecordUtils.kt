@@ -72,7 +72,7 @@ internal fun Record.makeResponseWithRrsig(period: InstantPeriod): Message {
     return response
 }
 
-internal fun TXTRecord.copyWithDifferentRdata(fields: VeraRdataFields) = TXTRecord(
+internal fun TXTRecord.copyWithDifferentRdata(fields: RdataFieldSet) = TXTRecord(
     name,
     dClass,
     ttl,
@@ -85,7 +85,7 @@ internal fun ByteArray.txtRdataSerialise(): ByteArray {
 }
 
 internal val VERA_RDATA_FIELDS =
-    VeraRdataFields(ORG_KEY_SPEC, 2.days, SERVICE_OID)
+    RdataFieldSet(ORG_KEY_SPEC, 2.days, SERVICE_OID)
 val RECORD = TXTRecord(
     Name.fromString("_veraid.$DOMAIN_NAME"),
     DClass.IN,

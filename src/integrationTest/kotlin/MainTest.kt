@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import tech.relaycorp.veraid.SignatureBundle
 import tech.relaycorp.veraid.SignatureException
-import tech.relaycorp.veraid.dns.VeraDnssecChain
+import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.MemberIdBundle
 import tech.relaycorp.veraid.pki.OrgCertificate
@@ -31,16 +31,16 @@ class MainTest {
         now,
     )
 
-    private lateinit var veraDnssecChain: VeraDnssecChain
+    private lateinit var dnssecChain: DnssecChain
 
     @BeforeAll
     fun retrieveVeraDnssecChain() = runBlocking {
-        veraDnssecChain = retrieveVeraidDnssecChain(TestStubs.ORG_NAME, 3)
+        dnssecChain = retrieveVeraidDnssecChain(TestStubs.ORG_NAME, 3)
     }
 
     @Test
     fun validSignatureBundle() = runBlocking {
-        val memberIdBundle = MemberIdBundle(veraDnssecChain, orgCertificate, memberCertificate)
+        val memberIdBundle = MemberIdBundle(dnssecChain, orgCertificate, memberCertificate)
         val signatureBundle = SignatureBundle.generate(
             TestStubs.PLAINTEXT,
             TestStubs.TEST_SERVICE_OID,
@@ -59,7 +59,7 @@ class MainTest {
     @Test
     fun invalidSignatureBundle(): Unit = runBlocking {
         val otherMemberKeyPair = generateRSAKeyPair()
-        val memberIdBundle = MemberIdBundle(veraDnssecChain, orgCertificate, memberCertificate)
+        val memberIdBundle = MemberIdBundle(dnssecChain, orgCertificate, memberCertificate)
         val signatureBundle = SignatureBundle.generate(
             TestStubs.PLAINTEXT,
             TestStubs.TEST_SERVICE_OID,
@@ -76,7 +76,7 @@ class MainTest {
 
     @Test
     fun differentService(): Unit = runBlocking {
-        val memberIdBundle = MemberIdBundle(veraDnssecChain, orgCertificate, memberCertificate)
+        val memberIdBundle = MemberIdBundle(dnssecChain, orgCertificate, memberCertificate)
         val signatureBundle = SignatureBundle.generate(
             TestStubs.PLAINTEXT,
             TestStubs.TEST_SERVICE_OID,
