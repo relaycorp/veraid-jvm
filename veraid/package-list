@@ -33,9 +33,11 @@ $dokka.location:tech.relaycorp.veraid.pki/RsaModulus.RSA_2048///PointingToDeclar
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus.RSA_3072///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}veraid/tech.relaycorp.veraid.pki/-rsa-modulus/-r-s-a_3072/index.html
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus.RSA_4096///PointingToDeclaration/{"org.jetbrains.dokka.links.EnumEntryDRIExtra":{"key":"org.jetbrains.dokka.links.EnumEntryDRIExtra"}}veraid/tech.relaycorp.veraid.pki/-rsa-modulus/-r-s-a_4096/index.html
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-rsa-modulus/index.html
+$dokka.location:tech.relaycorp.veraid.pki/RsaModulus/entries/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-rsa-modulus/entries.html
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus/valueOf/#kotlin.String/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-rsa-modulus/value-of.html
 $dokka.location:tech.relaycorp.veraid.pki/RsaModulus/values/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-rsa-modulus/values.html
 $dokka.location:tech.relaycorp.veraid////PointingToDeclaration/veraid/tech.relaycorp.veraid/index.html
+$dokka.location:tech.relaycorp.veraid/DatePeriod///PointingToDeclaration/veraid/tech.relaycorp.veraid/-date-period/index.html
 $dokka.location:tech.relaycorp.veraid/Member///PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/index.html
 $dokka.location:tech.relaycorp.veraid/Member/Member/#kotlin.String#kotlin.String?/PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/-member.html
 $dokka.location:tech.relaycorp.veraid/Member/orgName/#/PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/org-name.html
