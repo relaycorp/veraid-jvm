@@ -202,7 +202,7 @@ class MemberIdBundleTest {
                 val bundle = MemberIdBundle(dnssecChain, otherOrgCert, MEMBER_CERT)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                    bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
                 }
 
                 exception.message shouldBe "Member certificate was not issued by organisation"
@@ -216,7 +216,7 @@ class MemberIdBundleTest {
                 val period = start..start.plusSeconds(1)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, period)
+                    bundle.verify(SERVICE_OID.id, period)
                 }
 
                 exception.message shouldBe
@@ -235,7 +235,7 @@ class MemberIdBundleTest {
                 val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                    bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
                 }
 
                 exception.message shouldBe errorMessage
@@ -247,7 +247,7 @@ class MemberIdBundleTest {
                 val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                    bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
                 }
 
                 exception.message shouldBe errorMessage
@@ -259,7 +259,7 @@ class MemberIdBundleTest {
                 val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                    bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
                 }
 
                 exception.message shouldBe errorMessage
@@ -271,7 +271,7 @@ class MemberIdBundleTest {
                 val bundle = MemberIdBundle(dnssecChain, ORG_CERT, memberCert)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                    bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
                 }
 
                 exception.message shouldBe errorMessage
@@ -297,7 +297,7 @@ class MemberIdBundleTest {
                 val chainSpy = mockChain()
                 val bundle = MemberIdBundle(chainSpy, ORG_CERT, MEMBER_CERT)
 
-                bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
 
                 verify(chainSpy).verify(any(), eq(SERVICE_OID), any())
             }
@@ -307,7 +307,7 @@ class MemberIdBundleTest {
                 val chainSpy = mockChain()
                 val bundle = MemberIdBundle(chainSpy, ORG_CERT, MEMBER_CERT)
 
-                bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
 
                 verify(chainSpy).verify(eq(ORG_KEY_PAIR.public.orgKeySpec), any(), any())
             }
@@ -328,7 +328,7 @@ class MemberIdBundleTest {
                 val verificationStart = memberCert.validityPeriod.start.minusSeconds(1)
                 val verificationEnd = ORG_CERT.validityPeriod.endInclusive.minusSeconds(1)
 
-                bundle.verify(SERVICE_OID, verificationStart..verificationEnd)
+                bundle.verify(SERVICE_OID.id, verificationStart..verificationEnd)
 
                 verify(chainSpy).verify(any(), any(), eq(memberCertStart..verificationEnd))
             }
@@ -340,7 +340,7 @@ class MemberIdBundleTest {
 
                 val exception = shouldThrow<PkiException> {
                     bundle.verify(
-                        SERVICE_OID,
+                        SERVICE_OID.id,
                         ORG_CERT.validityPeriod,
                     )
                 }
@@ -355,7 +355,7 @@ class MemberIdBundleTest {
                 val bundle = MemberIdBundle(mockChain(originalException), ORG_CERT, MEMBER_CERT)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                    bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
                 }
 
                 exception.message shouldBe "DNS/DNSSEC resolution failed"
@@ -368,7 +368,7 @@ class MemberIdBundleTest {
                 val bundle = MemberIdBundle(mockChain(originalException), ORG_CERT, MEMBER_CERT)
 
                 val exception = shouldThrow<PkiException> {
-                    bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                    bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
                 }
 
                 exception.message shouldBe "VeraId DNSSEC chain verification failed"
@@ -382,7 +382,7 @@ class MemberIdBundleTest {
             fun `Organisation name should be output`() = runTest {
                 val bundle = MemberIdBundle(mockChain(), ORG_CERT, MEMBER_CERT)
 
-                val member = bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                val member = bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
 
                 member.orgName shouldBe ORG_NAME
             }
@@ -391,7 +391,7 @@ class MemberIdBundleTest {
             fun `User name should be output if member is a user`() = runTest {
                 val bundle = MemberIdBundle(mockChain(), ORG_CERT, MEMBER_CERT)
 
-                val member = bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                val member = bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
 
                 member.userName shouldBe USER_NAME
             }
@@ -408,7 +408,7 @@ class MemberIdBundleTest {
                 )
                 val bundle = MemberIdBundle(mockChain(), ORG_CERT, botCert)
 
-                val member = bundle.verify(SERVICE_OID, ORG_CERT.validityPeriod)
+                val member = bundle.verify(SERVICE_OID.id, ORG_CERT.validityPeriod)
 
                 member.userName shouldBe null
             }

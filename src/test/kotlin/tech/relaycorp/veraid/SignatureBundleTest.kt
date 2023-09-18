@@ -15,7 +15,6 @@ import io.kotest.matchers.types.beInstanceOf
 import io.kotest.matchers.types.instanceOf
 import kotlinx.coroutines.test.runTest
 import org.bouncycastle.asn1.ASN1Integer
-import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.ASN1Sequence
 import org.bouncycastle.asn1.ASN1TaggedObject
 import org.bouncycastle.asn1.DERNull
@@ -676,10 +675,10 @@ class SignatureBundleTest {
 
                 bundle.verify(plaintext, SERVICE_OID.id)
 
-                argumentCaptor<ASN1ObjectIdentifier>().apply {
+                argumentCaptor<String>().apply {
                     verify(mockMemberIdBundle).verify(capture(), any())
 
-                    firstValue shouldBe SERVICE_OID
+                    firstValue shouldBe SERVICE_OID.id
                 }
             }
         }
