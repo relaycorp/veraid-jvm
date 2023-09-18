@@ -3,7 +3,7 @@ package tech.relaycorp.veraid
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.OrgCertificate
-import tech.relaycorp.veraid.pki.generateRSAKeyPair
+import tech.relaycorp.veraid.testing.generateRSAKeyPair
 import java.time.ZonedDateTime
 
 const val ORG_NAME = "example.com"

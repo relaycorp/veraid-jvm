@@ -30,6 +30,7 @@ import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.dns.InvalidChainException
 import tech.relaycorp.veraid.dns.RECORD
 import tech.relaycorp.veraid.dns.makeResponse
+import tech.relaycorp.veraid.testing.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.x509.Certificate
