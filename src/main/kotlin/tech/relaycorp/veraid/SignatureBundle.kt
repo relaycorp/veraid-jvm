@@ -91,7 +91,7 @@ public class SignatureBundle internal constructor(
         }
 
         return try {
-            memberIdBundle.verify(ASN1ObjectIdentifier(serviceOid), signaturePeriodIntersection)
+            memberIdBundle.verify(serviceOid, signaturePeriodIntersection)
         } catch (exc: PkiException) {
             throw SignatureException("Member id bundle is invalid", exc)
         }

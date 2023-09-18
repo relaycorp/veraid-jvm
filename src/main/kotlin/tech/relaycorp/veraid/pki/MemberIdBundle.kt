@@ -37,7 +37,7 @@ public class MemberIdBundle(
     )
 
     @Throws(PkiException::class)
-    internal suspend fun verify(service: ASN1ObjectIdentifier, datePeriod: DatePeriod): Member {
+    public suspend fun verify(serviceOid: String, datePeriod: DatePeriod): Member {
         try {
             memberCertificate.getCertificationPath(emptyList(), listOf(orgCertificate))
         } catch (exc: CertificateException) {
@@ -63,7 +63,7 @@ public class MemberIdBundle(
         try {
             dnssecChain.verify(
                 orgCertificate.subjectPublicKey.orgKeySpec,
-                service,
+                ASN1ObjectIdentifier(serviceOid),
                 verificationPeriod,
             )
         } catch (exc: DnsException) {
