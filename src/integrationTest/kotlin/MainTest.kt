@@ -8,7 +8,6 @@ import tech.relaycorp.veraid.dns.DnssecChain
 import tech.relaycorp.veraid.pki.MemberCertificate
 import tech.relaycorp.veraid.pki.MemberIdBundle
 import tech.relaycorp.veraid.pki.OrgCertificate
-import tech.relaycorp.veraid.pki.generateRSAKeyPair
 import java.time.ZonedDateTime
 
 class MainTest {

@@ -26,7 +26,7 @@ import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import tech.relaycorp.veraid.pki.generateRSAKeyPair
+import tech.relaycorp.veraid.testing.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.asn1.toDlTaggedObject
