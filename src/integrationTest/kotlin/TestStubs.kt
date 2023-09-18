@@ -1,6 +1,3 @@
-import tech.relaycorp.veraid.pki.deserialiseRSAKeyPair
-import tech.relaycorp.veraid.pki.generateRSAKeyPair
-
 object TestStubs {
     const val ORG_NAME = "lib-testing.veraid.net"
 

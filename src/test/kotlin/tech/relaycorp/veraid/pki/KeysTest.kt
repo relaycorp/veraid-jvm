@@ -1,121 +1,18 @@
 package tech.relaycorp.veraid.pki
 
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.beInstanceOf
-import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPrivateKey
-import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.KeyAlgorithm
+import tech.relaycorp.veraid.testing.generateRSAKeyPair
 import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.hash
 import java.security.KeyPairGenerator
-import java.security.interfaces.RSAPrivateKey
-import java.security.interfaces.RSAPublicKey
-import java.security.spec.InvalidKeySpecException
 import java.util.Base64
 
 class KeysTest {
-    @Nested
-    inner class GenerateRSAKeyPair {
-        @Test
-        fun `Key pair should be returned when a valid modulus is passed`() {
-            val keyPair = generateRSAKeyPair(RsaModulus.RSA_4096)
-
-            keyPair.private should beInstanceOf<RSAPrivateKey>()
-            (keyPair.private as RSAPrivateKey).modulus.bitLength() shouldBe 4096
-
-            keyPair.public should beInstanceOf<RSAPublicKey>()
-            (keyPair.public as RSAPublicKey).modulus.bitLength() shouldBe 4096
-        }
-
-        @Test
-        fun `Modulus should be 2048 by default`() {
-            val keyPair = generateRSAKeyPair()
-
-            (keyPair.private as RSAPrivateKey).modulus.bitLength() shouldBe 2048
-
-            (keyPair.public as RSAPublicKey).modulus.bitLength() shouldBe 2048
-        }
-
-        @Test
-        fun `BouncyCastle provider should be used`() {
-            val keyPair = generateRSAKeyPair()
-
-            keyPair.public should beInstanceOf<BCRSAPublicKey>()
-            keyPair.private should beInstanceOf<BCRSAPrivateKey>()
-        }
-    }
-
-    @Nested
-    inner class DeserialiseRSAKeyPair {
-        @Test
-        fun `Deserialise invalid key`() {
-            val exception =
-                shouldThrow<PkiException> { "s".toByteArray().deserialiseRSAKeyPair() }
-
-            exception.message shouldBe "Value is not a valid RSA private key"
-            exception.cause should beInstanceOf<InvalidKeySpecException>()
-        }
-
-        @Test
-        fun `Deserialise valid private key`() {
-            val keyPair = generateRSAKeyPair()
-            val privateKeySerialised = keyPair.private.encoded
-
-            val keyPairDeserialised = privateKeySerialised.deserialiseRSAKeyPair()
-
-            keyPairDeserialised.private shouldBe keyPair.private
-            keyPairDeserialised.public shouldBe keyPair.public
-        }
-
-        @Test
-        fun `BouncyCastle provider should be used`() {
-            val keyPair = generateRSAKeyPair()
-            val privateKeySerialised = keyPair.private.encoded
-
-            val keyPairDeserialised = privateKeySerialised.deserialiseRSAKeyPair()
-
-            keyPairDeserialised.public should beInstanceOf<BCRSAPublicKey>()
-            keyPairDeserialised.private should beInstanceOf<BCRSAPrivateKey>()
-        }
-    }
-
-    @Nested
-    inner class DeserialiseRSAPublicKey {
-        @Test
-        fun `Deserialise invalid key`() {
-            val exception =
-                shouldThrow<PkiException> { "s".toByteArray().deserialiseRSAPublicKey() }
-
-            exception.message shouldBe "Value is not a valid RSA public key"
-            exception.cause should beInstanceOf<InvalidKeySpecException>()
-        }
-
-        @Test
-        fun `Deserialise valid key`() {
-            val keyPair = generateRSAKeyPair()
-            val publicKeySerialised = keyPair.public.encoded
-
-            val publicKeyDeserialised = publicKeySerialised.deserialiseRSAPublicKey()
-
-            publicKeyDeserialised shouldBe keyPair.public
-        }
-
-        @Test
-        fun `BouncyCastle provider should be used`() {
-            val keyPair = generateRSAKeyPair()
-            val publicKeySerialised = keyPair.public.encoded
-
-            val publicKeyDeserialised = publicKeySerialised.deserialiseRSAPublicKey()
-
-            publicKeyDeserialised should beInstanceOf<BCRSAPublicKey>()
-        }
-    }
-
     @Nested
     inner class OrgKeySpec {
         @Test
@@ -130,7 +27,7 @@ class KeysTest {
 
         @Test
         fun `RSA-3072 should use SHA-384`() {
-            val publicKey = generateRSAKeyPair(RsaModulus.RSA_3072).public
+            val publicKey = generateRSAKeyPair(3072).public
 
             val spec = publicKey.orgKeySpec
 
@@ -140,7 +37,7 @@ class KeysTest {
 
         @Test
         fun `RSA-4096 should use SHA-512`() {
-            val publicKey = generateRSAKeyPair(RsaModulus.RSA_4096).public
+            val publicKey = generateRSAKeyPair(4096).public
 
             val spec = publicKey.orgKeySpec
 
