@@ -20,6 +20,7 @@ $dokka.location:tech.relaycorp.veraid.pki/MemberIdBundle.Companion///PointingToD
 $dokka.location:tech.relaycorp.veraid.pki/MemberIdBundle.Companion/deserialise/#kotlin.ByteArray/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-id-bundle/-companion/deserialise.html
 $dokka.location:tech.relaycorp.veraid.pki/MemberIdBundle///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-id-bundle/index.html
 $dokka.location:tech.relaycorp.veraid.pki/MemberIdBundle/MemberIdBundle/#tech.relaycorp.veraid.dns.DnssecChain#tech.relaycorp.veraid.pki.OrgCertificate#tech.relaycorp.veraid.pki.MemberCertificate/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-id-bundle/-member-id-bundle.html
+$dokka.location:tech.relaycorp.veraid.pki/MemberIdBundle/memberPublicKey/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-id-bundle/member-public-key.html
 $dokka.location:tech.relaycorp.veraid.pki/MemberIdBundle/serialise/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-id-bundle/serialise.html
 $dokka.location:tech.relaycorp.veraid.pki/MemberIdBundle/verify/#kotlin.String#kotlin.ranges.ClosedRange[java.time.ZonedDateTime]/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-member-id-bundle/verify.html
 $dokka.location:tech.relaycorp.veraid.pki/OrgCertificate.Companion///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-org-certificate/-companion/index.html
