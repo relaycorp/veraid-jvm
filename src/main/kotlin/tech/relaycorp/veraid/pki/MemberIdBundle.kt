@@ -80,6 +80,7 @@ public class MemberIdBundle(
          * Deserialise a bundle.
          */
         @Throws(PkiException::class)
+        @JvmStatic
         public fun deserialise(serialisation: ByteArray): MemberIdBundle {
             val sequence = try {
                 ASN1Utils.deserializeHeterogeneousSequence(serialisation)
