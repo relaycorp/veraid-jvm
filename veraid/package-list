@@ -27,6 +27,12 @@ $dokka.location:tech.relaycorp.veraid.pki/OrgCertificate.Companion/selfIssue/#ko
 $dokka.location:tech.relaycorp.veraid.pki/OrgCertificate///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-org-certificate/index.html
 $dokka.location:tech.relaycorp.veraid.pki/PkiException///PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-pki-exception/index.html
 $dokka.location:tech.relaycorp.veraid.pki/PkiException/PkiException/#kotlin.String#kotlin.Throwable?/PointingToDeclaration/veraid/tech.relaycorp.veraid.pki/-pki-exception/-pki-exception.html
+$dokka.location:tech.relaycorp.veraid.utils.x509////PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/index.html
+$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate///PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/index.html
+$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/equals/#kotlin.Any?/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/equals.html
+$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/hashCode/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/hash-code.html
+$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/serialise/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/serialise.html
+$dokka.location:tech.relaycorp.veraid.utils.x509/Certificate/subjectPublicKey/#/PointingToDeclaration/veraid/tech.relaycorp.veraid.utils.x509/-certificate/subject-public-key.html
 $dokka.location:tech.relaycorp.veraid////PointingToDeclaration/veraid/tech.relaycorp.veraid/index.html
 $dokka.location:tech.relaycorp.veraid/DatePeriod///PointingToDeclaration/veraid/tech.relaycorp.veraid/-date-period/index.html
 $dokka.location:tech.relaycorp.veraid/Member///PointingToDeclaration/veraid/tech.relaycorp.veraid/-member/index.html
@@ -47,4 +53,5 @@ $dokka.location:tech.relaycorp.veraid/VeraidException/VeraidException/#kotlin.St
 tech.relaycorp.veraid
 tech.relaycorp.veraid.dns
 tech.relaycorp.veraid.pki
+tech.relaycorp.veraid.utils.x509
 
