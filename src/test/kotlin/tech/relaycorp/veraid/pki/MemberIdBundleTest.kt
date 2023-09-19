@@ -42,6 +42,16 @@ class MemberIdBundleTest {
     private val dnssecChain = DnssecChain(ORG_NAME, listOf(response))
 
     @Nested
+    inner class MemberPublicKey {
+        @Test
+        fun `Should output member public key`() {
+            val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
+
+            bundle.memberPublicKey shouldBe MEMBER_CERT.subjectPublicKey
+        }
+    }
+
+    @Nested
     inner class Serialise {
         private val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
 

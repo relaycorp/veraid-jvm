@@ -11,6 +11,7 @@ import tech.relaycorp.veraid.utils.asn1.ASN1Exception
 import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.intersect
 import tech.relaycorp.veraid.utils.x509.CertificateException
+import java.security.PublicKey
 
 /**
  * Member Id bundle.
@@ -23,6 +24,12 @@ public class MemberIdBundle(
     internal val orgCertificate: OrgCertificate,
     internal val memberCertificate: MemberCertificate,
 ) {
+    /**
+     * Member public key.
+     */
+    public val memberPublicKey: PublicKey
+        get() = memberCertificate.subjectPublicKey
+
     /**
      * Serialise the bundle.
      */
