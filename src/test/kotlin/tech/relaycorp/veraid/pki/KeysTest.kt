@@ -2,6 +2,7 @@ package tech.relaycorp.veraid.pki
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
+import org.bouncycastle.util.encoders.Base64
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import tech.relaycorp.veraid.KeyAlgorithm
@@ -10,7 +11,6 @@ import tech.relaycorp.veraid.utils.BC_PROVIDER
 import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.hash
 import java.security.KeyPairGenerator
-import java.util.Base64
 
 class KeysTest {
     @Nested
@@ -68,6 +68,6 @@ class KeysTest {
             exception.message shouldBe "Key type (EC) is unsupported"
         }
 
-        private fun ByteArray.toBase64() = Base64.getEncoder().encodeToString(this)
+        private fun ByteArray.toBase64() = Base64.toBase64String(this)
     }
 }

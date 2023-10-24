@@ -2,13 +2,13 @@
 
 package tech.relaycorp.veraid.pki
 
+import org.bouncycastle.util.encoders.Base64
 import tech.relaycorp.veraid.KeyAlgorithm
 import tech.relaycorp.veraid.OrganisationKeySpec
 import tech.relaycorp.veraid.utils.Hash
 import tech.relaycorp.veraid.utils.hash
 import java.security.PublicKey
 import java.security.interfaces.RSAPublicKey
-import java.util.Base64
 
 private val SUPPORTED_RSA_MODULI = setOf(2048, 3072, 4096)
 
@@ -37,6 +37,6 @@ internal val PublicKey.orgKeySpec: OrganisationKeySpec
         val keyAlgorithm = rsaModulusKeyAlgorithmMap[modulus]!!
         val hash = rsaModulusHashMap[modulus]!!
         val digest = this.encoded.hash(hash)
-        val digestHex = Base64.getEncoder().encodeToString(digest)
+        val digestHex = Base64.toBase64String(digest)
         return OrganisationKeySpec(keyAlgorithm, digestHex)
     }
