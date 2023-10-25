@@ -44,7 +44,7 @@ public class SignatureBundle internal constructor(
      * @param plaintext The plaintext whose signature is to be verified.
      * @param serviceOid The OID of the service to which the signature is bound.
      * @param date The date against which to verify the signature.
-     * @return The member that produced the signature and the plaintext.
+     * @return The member that produced the signature and the respective plaintext.
      * @throws SignatureException If the bundle is invalid.
      */
     public suspend fun verify(
@@ -60,7 +60,7 @@ public class SignatureBundle internal constructor(
      *   expected to encapsulate it).
      * @param serviceOid The OID of the service to which the signature is bound.
      * @param datePeriod The period against which to verify the signature.
-     * @return The member that produced the signature and the plaintext.
+     * @return The member that produced the signature and the respective plaintext.
      * @throws SignatureException If the bundle is invalid.
      */
     public suspend fun verify(
