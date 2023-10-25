@@ -1,7 +1,17 @@
 package tech.relaycorp.veraid
 
+/**
+ * Successful signature bundle verification.
+ */
 public data class SignatureBundleVerification(
+    /**
+     * The plaintext whose signature was verified.
+     */
     public val plaintext: ByteArray,
+
+    /**
+     * The member that produced the signature.
+     */
     public val member: Member,
 ) {
     override fun equals(other: Any?): Boolean {
