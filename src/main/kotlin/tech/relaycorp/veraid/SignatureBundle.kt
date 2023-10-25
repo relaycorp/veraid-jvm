@@ -44,29 +44,30 @@ public class SignatureBundle internal constructor(
      * @param plaintext The plaintext whose signature is to be verified.
      * @param serviceOid The OID of the service to which the signature is bound.
      * @param date The date against which to verify the signature.
-     * @return The member that signed the signature, if verification succeeds.
+     * @return The member that produced the signature and the respective plaintext.
      * @throws SignatureException If the bundle is invalid.
      */
     public suspend fun verify(
-        plaintext: ByteArray,
+        plaintext: ByteArray?,
         serviceOid: String,
         date: ZonedDateTime,
-    ): Member = verify(plaintext, serviceOid, date..date)
+    ): SignatureBundleVerification = verify(plaintext, serviceOid, date..date)
 
     /**
      * Verify the bundle.
      *
-     * @param plaintext The plaintext whose signature is to be verified.
+     * @param plaintext The plaintext whose signature is to be verified (if the bundle isn't
+     *   expected to encapsulate it).
      * @param serviceOid The OID of the service to which the signature is bound.
      * @param datePeriod The period against which to verify the signature.
-     * @return The member that signed the signature, if verification succeeds.
+     * @return The member that produced the signature and the respective plaintext.
      * @throws SignatureException If the bundle is invalid.
      */
     public suspend fun verify(
-        plaintext: ByteArray,
+        plaintext: ByteArray?,
         serviceOid: String,
         datePeriod: DatePeriod? = null,
-    ): Member {
+    ): SignatureBundleVerification {
         val now = ZonedDateTime.now()
         val verificationPeriod = datePeriod ?: now..now
         if (verificationPeriod.endInclusive < verificationPeriod.start) {
@@ -90,11 +91,16 @@ public class SignatureBundle internal constructor(
             )
         }
 
-        return try {
+        val member = try {
             memberIdBundle.verify(serviceOid, signaturePeriodIntersection)
         } catch (exc: PkiException) {
             throw SignatureException("Member id bundle is invalid", exc)
         }
+
+        return SignatureBundleVerification(
+            signedData.plaintext ?: plaintext!!,
+            member,
+        )
     }
 
     private fun getSignatureMetadata(): SignatureMetadata {
@@ -133,6 +139,7 @@ public class SignatureBundle internal constructor(
             signingKey: PrivateKey,
             expiryDate: ZonedDateTime,
             startDate: ZonedDateTime = ZonedDateTime.now(),
+            encapsulatePlaintext: Boolean = false,
         ): SignatureBundle {
             val metadata = SignatureMetadata(
                 ASN1ObjectIdentifier(serviceOid),
@@ -147,7 +154,7 @@ public class SignatureBundle internal constructor(
                 signingKey,
                 memberIdBundle.memberCertificate,
                 setOf(memberIdBundle.memberCertificate, memberIdBundle.orgCertificate),
-                encapsulatePlaintext = false,
+                encapsulatePlaintext = encapsulatePlaintext,
                 extraSignedAttrs = listOf(metadataAttribute),
             )
             return SignatureBundle(memberIdBundle, signedData)
