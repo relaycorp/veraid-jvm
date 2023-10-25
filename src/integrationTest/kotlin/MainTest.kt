@@ -49,8 +49,12 @@ class MainTest {
             now,
         )
 
-        val member = signatureBundle.verify(TestStubs.PLAINTEXT, TestStubs.TEST_SERVICE_OID)
+        val (plaintext, member) = signatureBundle.verify(
+            TestStubs.PLAINTEXT,
+            TestStubs.TEST_SERVICE_OID,
+        )
 
+        assert(plaintext.contentEquals(TestStubs.PLAINTEXT))
         assert(member.orgName == TestStubs.ORG_NAME)
         assert(member.userName == TestStubs.USER_NAME)
     }

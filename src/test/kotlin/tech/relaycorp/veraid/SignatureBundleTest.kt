@@ -125,6 +125,20 @@ class SignatureBundleTest {
 
                 signatureBundle.signedData.plaintext shouldBe null
             }
+
+            @Test
+            fun `Plaintext should be attached if requested`() {
+                val signatureBundle = SignatureBundle.generate(
+                    plaintext,
+                    SERVICE_OID.id,
+                    memberIdBundle,
+                    MEMBER_KEY_PAIR.private,
+                    signatureExpiry,
+                    encapsulatePlaintext = true,
+                )
+
+                signatureBundle.signedData.plaintext shouldBe plaintext
+            }
         }
 
         @Nested
@@ -684,14 +698,93 @@ class SignatureBundleTest {
         }
 
         @Nested
+        inner class Plaintext {
+            @Test
+            fun `Verification should fail if plaintext is attached and passed`() = runTest {
+                val bundle = SignatureBundle.generate(
+                    plaintext,
+                    SERVICE_OID.id,
+                    memberIdBundle,
+                    MEMBER_KEY_PAIR.private,
+                    validityPeriod.endInclusive,
+                    validityPeriod.start,
+                    encapsulatePlaintext = true,
+                )
+
+                val exception = assertThrows<SignatureException> {
+                    bundle.verify(plaintext, SERVICE_OID.id)
+                }
+
+                exception.cause shouldBe instanceOf<SignedDataException>()
+            }
+
+            @Test
+            fun `Verification should fail if plaintext is detached and not passed`() = runTest {
+                val bundle = SignatureBundle.generate(
+                    plaintext,
+                    SERVICE_OID.id,
+                    memberIdBundle,
+                    MEMBER_KEY_PAIR.private,
+                    validityPeriod.endInclusive,
+                    validityPeriod.start,
+                    encapsulatePlaintext = false,
+                )
+
+                val exception = assertThrows<SignatureException> {
+                    bundle.verify(null, SERVICE_OID.id)
+                }
+
+                exception.cause shouldBe instanceOf<SignedDataException>()
+            }
+        }
+
+        @Nested
         inner class ValidResult {
+            @Test
+            fun `Plaintext should be taken from bundle if attached`() = runTest {
+                val attachedPlaintext = "attached".toByteArray()
+                val signedData = SignatureBundle.generate(
+                    attachedPlaintext,
+                    SERVICE_OID.id,
+                    memberIdBundle,
+                    MEMBER_KEY_PAIR.private,
+                    validityPeriod.endInclusive,
+                    validityPeriod.start,
+                    encapsulatePlaintext = true,
+                ).signedData
+                val bundle = SignatureBundle(mockMemberIdBundle(), signedData)
+
+                val result = bundle.verify(null, SERVICE_OID.id)
+
+                result.plaintext shouldBe attachedPlaintext
+            }
+
+            @Test
+            fun `Plaintext should be taken from parameter if detached`() = runTest {
+                val detachedPlaintext = "deattached".toByteArray()
+                val signedData = SignatureBundle.generate(
+                    detachedPlaintext,
+                    SERVICE_OID.id,
+                    memberIdBundle,
+                    MEMBER_KEY_PAIR.private,
+                    validityPeriod.endInclusive,
+                    validityPeriod.start,
+                    encapsulatePlaintext = false,
+                ).signedData
+                val bundle = SignatureBundle(mockMemberIdBundle(), signedData)
+
+                val result = bundle.verify(detachedPlaintext, SERVICE_OID.id)
+
+                result.plaintext shouldBe detachedPlaintext
+            }
+
             @Test
             fun `Organisation name should be output`() = runTest {
                 val bundle = SignatureBundle(mockMemberIdBundle(), validBundle.signedData)
 
                 val result = bundle.verify(plaintext, SERVICE_OID.id)
 
-                result.orgName shouldBe ORG_NAME
+                result.member.orgName shouldBe ORG_NAME
             }
 
             @Test
@@ -700,7 +793,7 @@ class SignatureBundleTest {
 
                 val result = bundle.verify(plaintext, SERVICE_OID.id)
 
-                result.userName shouldBe USER_NAME
+                result.member.userName shouldBe USER_NAME
             }
 
             @Test
@@ -710,7 +803,7 @@ class SignatureBundleTest {
 
                 val result = bundle.verify(plaintext, SERVICE_OID.id)
 
-                result.userName shouldBe null
+                result.member.userName shouldBe null
             }
         }
 
