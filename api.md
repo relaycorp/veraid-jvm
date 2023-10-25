@@ -71,7 +71,7 @@ suspend fun verifySignature(
     
     val now = ZonedDateTime.now()
     val verificationPeriod = now.minus(TTL.toJavaDuration())..now
-    val member = try {
+    val (_, member) = try {
         signatureBundle.verify(plaintext, SERVICE_OID, verificationPeriod)
     } catch (exc: SignatureException) {
         throw Exception("Invalid signature bundle", exc)
