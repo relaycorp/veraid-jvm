@@ -168,6 +168,7 @@ public class SignatureBundle internal constructor(
          * @throws SignatureException If the bundle is invalid.
          */
         @Throws(SignatureException::class)
+        @JvmStatic
         public fun deserialise(serialisation: ByteArray): SignatureBundle {
             val sequence = try {
                 ASN1Utils.deserializeHeterogeneousSequence(serialisation)
