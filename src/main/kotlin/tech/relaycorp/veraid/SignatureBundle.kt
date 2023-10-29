@@ -132,6 +132,7 @@ public class SignatureBundle internal constructor(
          * @throws SignatureException If the bundle cannot be generated.
          */
         @Throws(SignatureException::class)
+        @JvmStatic
         public fun generate(
             plaintext: ByteArray,
             serviceOid: String,
