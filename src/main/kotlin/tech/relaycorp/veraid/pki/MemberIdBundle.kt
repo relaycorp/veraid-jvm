@@ -12,6 +12,7 @@ import tech.relaycorp.veraid.utils.asn1.ASN1Utils
 import tech.relaycorp.veraid.utils.intersect
 import tech.relaycorp.veraid.utils.x509.CertificateException
 import java.security.PublicKey
+import java.time.ZonedDateTime
 
 /**
  * Member Id bundle.
@@ -29,6 +30,12 @@ public class MemberIdBundle(
      */
     public val memberPublicKey: PublicKey
         get() = memberCertificate.subjectPublicKey
+
+    /**
+     * Expiry date of the bundle.
+     */
+    public val expiryDate: ZonedDateTime
+        get() = memberCertificate.expiryDate
 
     /**
      * Serialise the bundle.
