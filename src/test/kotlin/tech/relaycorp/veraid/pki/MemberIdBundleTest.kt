@@ -52,6 +52,16 @@ class MemberIdBundleTest {
     }
 
     @Nested
+    inner class ExpiryDate {
+        @Test
+        fun `Should output member expiry date`() {
+            val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
+
+            bundle.expiryDate shouldBe MEMBER_CERT.validityPeriod.endInclusive
+        }
+    }
+
+    @Nested
     inner class Serialise {
         private val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
 
