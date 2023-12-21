@@ -57,7 +57,7 @@ class MemberIdBundleTest {
         fun `Should output member expiry date`() {
             val bundle = MemberIdBundle(dnssecChain, ORG_CERT, MEMBER_CERT)
 
-            bundle.expiryDate shouldBe MEMBER_CERT.expiryDate
+            bundle.expiryDate shouldBe MEMBER_CERT.validityPeriod.endInclusive
         }
     }
 

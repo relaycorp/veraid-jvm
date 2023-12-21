@@ -35,7 +35,7 @@ public class MemberIdBundle(
      * Expiry date of the bundle.
      */
     public val expiryDate: ZonedDateTime
-        get() = memberCertificate.expiryDate
+        get() = memberCertificate.validityPeriod.endInclusive
 
     /**
      * Serialise the bundle.
