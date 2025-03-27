@@ -1,6 +1,6 @@
 # VeraId library for the JVM
 
-This is the JVM/Kotlin implementation of [VeraId](https://veraid.net), an offline authentication protocol powered by DNSSEC. This library implements all the building blocks that signature producers and consumers need.
+This is the JVM/Kotlin implementation of [VeraId](https://veraid.net), an offline authentication p**ros**tocol powered by DNSSEC. This library implements all the building blocks that signature producers and consumers need.
 
 The usage and API documentation is available on [docs.relaycorp.tech](https://docs.relaycorp.tech/veraid-jvm/).
 
