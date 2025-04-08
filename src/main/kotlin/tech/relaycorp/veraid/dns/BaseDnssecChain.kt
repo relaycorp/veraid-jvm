@@ -33,10 +33,10 @@ internal typealias ChainRetriever = suspend (
 /**
  * VeraId-agnostic DNSSEC chain processing.
  */
-public open class BaseDnssecChain internal constructor(
+public open class BaseDnssecChain public constructor(
     internal val domainName: String,
     internal val recordType: String,
-    internal val responses: List<Message>,
+    public val responses: List<Message>,
 ) {
     @Throws(DnsException::class)
     internal suspend fun verify(instant: Instant) {
