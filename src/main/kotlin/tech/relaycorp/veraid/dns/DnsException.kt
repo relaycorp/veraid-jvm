@@ -5,4 +5,7 @@ import tech.relaycorp.veraid.VeraidException
 /**
  * Exception representing a DNS- or DNSSEC-related error.
  */
-public class DnsException(message: String) : VeraidException(message)
+public class DnsException(message: String, cause: Throwable? = null) : VeraidException(
+    message,
+    cause,
+)
