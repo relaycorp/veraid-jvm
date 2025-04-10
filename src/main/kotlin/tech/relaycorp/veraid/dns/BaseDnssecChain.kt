@@ -8,6 +8,7 @@ import org.xbill.DNS.Name
 import org.xbill.DNS.Rcode
 import org.xbill.DNS.Record
 import org.xbill.DNS.Resolver
+import org.xbill.DNS.TextParseException
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
 import tech.relaycorp.veraid.dns.resolvers.OfflineResolver
@@ -77,8 +78,12 @@ public open class BaseDnssecChain internal constructor(
         ) {
             this.loadTrustAnchors(ByteArrayInputStream(DNSSEC_ROOT_DS))
 
-            val queryRecord =
-                Record.newRecord(Name.fromString(domainName), Type.value(recordType), DClass.IN)
+            val name = try {
+                Name.fromString(domainName)
+            } catch (exc: TextParseException) {
+                throw DnsException("Domain name is malformed ($domainName)", exc)
+            }
+            val queryRecord = Record.newRecord(name, Type.value(recordType), DClass.IN)
             val queryMessage = Message.newQuery(queryRecord)
             val response = this.sendAsync(queryMessage).await()
 

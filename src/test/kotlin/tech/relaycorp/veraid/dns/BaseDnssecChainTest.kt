@@ -7,8 +7,10 @@ import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.should
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
+import io.kotest.matchers.types.beInstanceOf
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
@@ -22,6 +24,7 @@ import org.xbill.DNS.Rcode
 import org.xbill.DNS.Section
 import org.xbill.DNS.SimpleResolver
 import org.xbill.DNS.TXTRecord
+import org.xbill.DNS.TextParseException
 import org.xbill.DNS.Type
 import org.xbill.DNS.dnssec.ValidatingResolver
 import tech.relaycorp.veraid.dns.resolvers.OfflineResolver
@@ -89,6 +92,22 @@ class BaseDnssecChainTest {
             BaseDnssecChain.retrieve(DOMAIN_NAME, recordType, REMOTE_RESOLVER)
 
             hostName shouldBe REMOTE_RESOLVER
+        }
+
+        @Test
+        fun `Malformed domain name should be refused`() = runTest {
+            val malformedDomainName = "$DOMAIN_NAME." // Additional trailing dot
+
+            val exception = shouldThrow<DnsException> {
+                BaseDnssecChain.retrieve(
+                    malformedDomainName,
+                    recordType,
+                    REMOTE_RESOLVER,
+                )
+            }
+
+            exception.message shouldBe "Domain name is malformed ($malformedDomainName)"
+            exception.cause should beInstanceOf<TextParseException>()
         }
 
         @Test
@@ -294,6 +313,19 @@ class BaseDnssecChainTest {
                 val anchors = firstValue.readAllBytes().toString(Charset.defaultCharset())
                 anchors shouldBe DnsUtils.DNSSEC_ROOT_DS
             }
+        }
+
+        @Test
+        fun `Malformed domain name should be refused`() = runTest {
+            val malformedDomainName = "$DOMAIN_NAME." // Additional trailing dot
+            val chain = BaseDnssecChain(malformedDomainName, recordType, listOf(Message()))
+
+            val exception = shouldThrow<DnsException> {
+                chain.verify(instant)
+            }
+
+            exception.message shouldBe "Domain name is malformed ($malformedDomainName)"
+            exception.cause should beInstanceOf<TextParseException>()
         }
 
         @Test
