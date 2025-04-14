@@ -4,7 +4,7 @@ buildscript{
   ext {
     bouncyCastleVersion = '1.70'
     kotlinCoroutinesVersion = '1.8.1'
-    junit5Version = '5.11.4'
+    junit5Version = '5.12.2'
     okhttpVersion = '4.12.0'
   }
 }
