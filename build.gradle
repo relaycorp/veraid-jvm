@@ -51,7 +51,7 @@ dependencies {
   implementation("org.bouncycastle:bcprov-jdk15on:$bouncyCastleVersion") // ASN.1 serialization
 
   implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
-  implementation("dnsjava:dnsjava:3.5.3")
+  implementation("dnsjava:dnsjava:3.6.3")
 
   testImplementation("org.junit.jupiter:junit-jupiter:$junit5Version")
   testImplementation("org.junit.jupiter:junit-jupiter-params:$junit5Version")
